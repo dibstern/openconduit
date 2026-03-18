@@ -124,7 +124,7 @@ Each project (directory) can be assigned to a specific OpenCode instance:
 
 Users can rename instances from both web UI and TUI:
 - **Web UI:** Click/edit icon on instance name in list -> sends `instance_rename` WS message
-- **TUI:** `opencode-relay rename <instance-id> "work"` command
+- **TUI:** `conduit rename <instance-id> "work"` command
 - Auto-discovered instances get default names from port: "OpenCode :4098"
 - Custom names persist across scanner re-discovery (matched by port)
 - Names must be unique

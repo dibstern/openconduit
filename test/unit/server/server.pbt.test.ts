@@ -19,7 +19,7 @@ const NUM_RUNS = 50;
 const sharedStaticDir = mkdtempSync(join(tmpdir(), "server-pbt-static-"));
 writeFileSync(
 	join(sharedStaticDir, "index.html"),
-	"<!DOCTYPE html><html><body>OpenCode Relay</body></html>",
+	"<!DOCTYPE html><html><body>Conduit</body></html>",
 	"utf-8",
 );
 
@@ -804,9 +804,7 @@ describe("HTTPS Server Mode (8.5)", () => {
 
 				expect(status).toBe(200);
 				expect(headers["content-type"]).toBe("application/x-pem-file");
-				expect(headers["content-disposition"]).toContain(
-					"opencode-relay-ca.pem",
-				);
+				expect(headers["content-disposition"]).toContain("conduit-ca.pem");
 				expect(body).toContain("-----BEGIN CERTIFICATE-----");
 			},
 		);

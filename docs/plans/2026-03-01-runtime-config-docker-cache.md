@@ -2,17 +2,17 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Fix the broken Dockerfile entrypoint, centralize all env var reads into a single module, and move the per-project MessageCache to `~/.opencode-relay/cache/<slug>/`.
+**Goal:** Fix the broken Dockerfile entrypoint, centralize all env var reads into a single module, and move the per-project MessageCache to `~/.conduit/cache/<slug>/`.
 
-**Architecture:** Create `src/lib/env.ts` as the single source of truth for all environment variables. Update the Dockerfile to use the real CLI entry point. Change `MessageCache` directory resolution from `<projectDir>/.opencode-relay/sessions/` to `<configDir>/cache/<slug>/sessions/`.
+**Architecture:** Create `src/lib/env.ts` as the single source of truth for all environment variables. Update the Dockerfile to use the real CLI entry point. Change `MessageCache` directory resolution from `<projectDir>/.conduit/sessions/` to `<configDir>/cache/<slug>/sessions/`.
 
 **Tech Stack:** Node.js, TypeScript, Docker, Vitest
 
 **Context from investigation:**
 - `skeleton.ts` was intentionally deleted; Dockerfile still references it
-- 12 env vars read across 5 files; `OPENCODE_RELAY_*` vars are parent→child IPC
+- 12 env vars read across 5 files; `CONDUIT_*` vars are parent→child IPC
 - `DEFAULT_CONFIG_DIR` is duplicated in 6 places
-- MessageCache currently writes to `<projectDir>/.opencode-relay/sessions/`
+- MessageCache currently writes to `<projectDir>/.conduit/sessions/`
 - OpenCode already scopes sessions by project via `x-opencode-directory` header (no relay-side mapping needed)
 - Session leak across projects is a separate bug (not addressed here)
 
@@ -44,13 +44,13 @@ describe("env module", () => {
 
 	it("exports DEFAULT_CONFIG_DIR from homedir", async () => {
 		const { DEFAULT_CONFIG_DIR } = await import("../../src/lib/env.js");
-		expect(DEFAULT_CONFIG_DIR).toMatch(/\.opencode-relay$/);
+		expect(DEFAULT_CONFIG_DIR).toMatch(/\.conduit$/);
 	});
 
 	it("respects XDG_CONFIG_HOME when set", async () => {
 		process.env.XDG_CONFIG_HOME = "/tmp/xdg-test";
 		const { DEFAULT_CONFIG_DIR } = await import("../../src/lib/env.js");
-		expect(DEFAULT_CONFIG_DIR).toBe("/tmp/xdg-test/opencode-relay");
+		expect(DEFAULT_CONFIG_DIR).toBe("/tmp/xdg-test/conduit");
 	});
 
 	it("DEFAULT_PORT is 2633", async () => {
@@ -93,8 +93,8 @@ function toInt(val: string | undefined, fallback: number): number {
 
 /** Base config directory. Respects XDG_CONFIG_HOME if set. */
 export const DEFAULT_CONFIG_DIR: string = process.env.XDG_CONFIG_HOME
-	? join(process.env.XDG_CONFIG_HOME, "opencode-relay")
-	: join(homedir(), ".opencode-relay");
+	? join(process.env.XDG_CONFIG_HOME, "conduit")
+	: join(homedir(), ".conduit");
 
 // ─── Defaults ───────────────────────────────────────────────────────────────
 
@@ -107,13 +107,13 @@ export const DEFAULT_OC_PORT = 4096;
 // not user-facing configuration.
 
 export const RELAY_ENV_KEYS = {
-	PORT: "OPENCODE_RELAY_PORT",
-	HOST: "OPENCODE_RELAY_HOST",
-	CONFIG_DIR: "OPENCODE_RELAY_CONFIG_DIR",
-	PIN_HASH: "OPENCODE_RELAY_PIN_HASH",
-	KEEP_AWAKE: "OPENCODE_RELAY_KEEP_AWAKE",
-	TLS: "OPENCODE_RELAY_TLS",
-	OC_URL: "OPENCODE_RELAY_OC_URL",
+	PORT: "CONDUIT_PORT",
+	HOST: "CONDUIT_HOST",
+	CONFIG_DIR: "CONDUIT_CONFIG_DIR",
+	PIN_HASH: "CONDUIT_PIN_HASH",
+	KEEP_AWAKE: "CONDUIT_KEEP_AWAKE",
+	TLS: "CONDUIT_TLS",
+	OC_URL: "CONDUIT_OC_URL",
 } as const;
 
 // ─── User-Facing Environment Variables ──────────────────────────────────────
@@ -171,7 +171,7 @@ For `tls.ts`, the `defaultConfigDir()` function should be replaced with a direct
 For `push.ts` line 72, change:
 ```typescript
 // Before:
-this.configDir = options?.configDir ?? join(homedir(), ".opencode-relay");
+this.configDir = options?.configDir ?? join(homedir(), ".conduit");
 // After:
 this.configDir = options?.configDir ?? DEFAULT_CONFIG_DIR;
 ```
@@ -243,8 +243,8 @@ Add import: `import { ENV } from "./env.js";`
 
 ```typescript
 // Before (lines 96-112):
-const daemonPort = Number.parseInt(process.env.OPENCODE_RELAY_PORT ?? ..., 10);
-const daemonHost = process.env.OPENCODE_RELAY_HOST || "127.0.0.1";
+const daemonPort = Number.parseInt(process.env.CONDUIT_PORT ?? ..., 10);
+const daemonHost = process.env.CONDUIT_HOST || "127.0.0.1";
 // After:
 const daemonPort = Number.parseInt(process.env[RELAY_ENV_KEYS.PORT] ?? ..., 10);
 const daemonHost = process.env[RELAY_ENV_KEYS.HOST] || "127.0.0.1";
@@ -256,8 +256,8 @@ Add import: `import { RELAY_ENV_KEYS, DEFAULT_PORT, DEFAULT_CONFIG_DIR } from ".
 
 ```typescript
 // Before (lines 28-36):
-OPENCODE_RELAY_PORT: String(port),
-OPENCODE_RELAY_CONFIG_DIR: configDir,
+CONDUIT_PORT: String(port),
+CONDUIT_CONFIG_DIR: configDir,
 // After:
 [RELAY_ENV_KEYS.PORT]: String(port),
 [RELAY_ENV_KEYS.CONFIG_DIR]: configDir,
@@ -327,7 +327,7 @@ git commit -m "fix: update Dockerfile entrypoint from deleted skeleton.js to cli
 
 ---
 
-## Task 5: Relocate MessageCache to `~/.opencode-relay/cache/<slug>/`
+## Task 5: Relocate MessageCache to `~/.conduit/cache/<slug>/`
 
 **Files:**
 - Modify: `src/lib/relay-stack.ts:122-129` — change cache dir resolution
@@ -340,7 +340,7 @@ git commit -m "fix: update Dockerfile entrypoint from deleted skeleton.js to cli
 
 In `src/lib/types.ts`, find `ProjectRelayConfig` and add:
 ```typescript
-/** Config directory for cache storage (default: ~/.opencode-relay) */
+/** Config directory for cache storage (default: ~/.conduit) */
 configDir?: string;
 ```
 
@@ -352,7 +352,7 @@ In `src/lib/relay-stack.ts`, change lines 122-129:
 // Before:
 const cacheDir = join(
     config.projectDir ?? process.cwd(),
-    ".opencode-relay",
+    ".conduit",
     "sessions",
 );
 
@@ -393,7 +393,7 @@ Expected: All tests pass. MessageCache tests use injected directories so should 
 
 ```
 git add -u
-git commit -m "feat: relocate MessageCache to ~/.opencode-relay/cache/<slug>/"
+git commit -m "feat: relocate MessageCache to ~/.conduit/cache/<slug>/"
 ```
 
 ---
@@ -417,7 +417,7 @@ Run: `grep -rn "process\.env\." src/ --include="*.ts" | grep -v node_modules | g
 Expected: The only remaining `process.env` reads should be:
 - `src/lib/env.ts` (the centralized module itself)
 - `src/lib/daemon-spawn.ts` (writes env vars to child process, but uses `RELAY_ENV_KEYS` constants)
-- `src/bin/cli-core.ts` (reads `OPENCODE_RELAY_*` in daemon child process, uses `RELAY_ENV_KEYS`)
+- `src/bin/cli-core.ts` (reads `CONDUIT_*` in daemon child process, uses `RELAY_ENV_KEYS`)
 - `src/bin/cli-core.ts` line 124: reads `process.env.OPENCODE_URL` in foreground mode (should also use `ENV.opencodeUrl`)
 
 Any stray `process.env` reads in other files → fix them.

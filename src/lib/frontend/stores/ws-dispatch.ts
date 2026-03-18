@@ -314,10 +314,7 @@ export function handleMessage(msg: RelayMessage): void {
 		// ─── History ─────────────────────────────────────────────────────
 		case "history_page": {
 			// Convert and prepend older messages into chatState.messages
-			const historyMsg = msg as Extract<
-				RelayMessage,
-				{ type: "history_page" }
-			>;
+			const historyMsg = msg as Extract<RelayMessage, { type: "history_page" }>;
 			const rawMessages = historyMsg.messages ?? [];
 			const chatMsgs = historyToChatMessages(rawMessages, renderMarkdown);
 			prependMessages(chatMsgs);

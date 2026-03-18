@@ -9,12 +9,12 @@ import type { LogFormat, LogLevel } from "./logger.js";
 
 // ─── Config Directory ───────────────────────────────────────────────────────
 
-/** Base config directory. Respects OPENCODE_RELAY_CONFIG_DIR or XDG_CONFIG_HOME if set. */
+/** Base config directory. Respects CONDUIT_CONFIG_DIR or XDG_CONFIG_HOME if set. */
 export const DEFAULT_CONFIG_DIR: string =
-	process.env["OPENCODE_RELAY_CONFIG_DIR"] ??
+	process.env["CONDUIT_CONFIG_DIR"] ??
 	(process.env["XDG_CONFIG_HOME"]
-		? join(process.env["XDG_CONFIG_HOME"], "opencode-relay")
-		: join(homedir(), ".opencode-relay"));
+		? join(process.env["XDG_CONFIG_HOME"], "conduit")
+		: join(homedir(), ".conduit"));
 
 // ─── Defaults ───────────────────────────────────────────────────────────────
 
@@ -27,13 +27,13 @@ export const DEFAULT_OC_PORT = 4096;
 // not user-facing configuration.
 
 export const RELAY_ENV_KEYS = {
-	PORT: "OPENCODE_RELAY_PORT",
-	HOST: "OPENCODE_RELAY_HOST",
-	CONFIG_DIR: "OPENCODE_RELAY_CONFIG_DIR",
-	PIN_HASH: "OPENCODE_RELAY_PIN_HASH",
-	KEEP_AWAKE: "OPENCODE_RELAY_KEEP_AWAKE",
-	TLS: "OPENCODE_RELAY_TLS",
-	OC_URL: "OPENCODE_RELAY_OC_URL",
+	PORT: "CONDUIT_PORT",
+	HOST: "CONDUIT_HOST",
+	CONFIG_DIR: "CONDUIT_CONFIG_DIR",
+	PIN_HASH: "CONDUIT_PIN_HASH",
+	KEEP_AWAKE: "CONDUIT_KEEP_AWAKE",
+	TLS: "CONDUIT_TLS",
+	OC_URL: "CONDUIT_OC_URL",
 } as const;
 
 // ─── User-Facing Environment Variables ──────────────────────────────────────

@@ -24,7 +24,7 @@ export interface TlsFs {
 }
 
 export interface TlsOptions {
-	/** Config directory — defaults to ~/.opencode-relay */
+	/** Config directory — defaults to ~/.conduit */
 	configDir?: string;
 	/** Injectable execSync for testing */
 	exec?: (cmd: string) => string;
@@ -183,7 +183,7 @@ export function getMkcertCaRoot(
 /**
  * Main TLS certificate management function.
  *
- * 1. Checks ~/.opencode-relay/certs/ for existing key.pem + cert.pem.
+ * 1. Checks ~/.conduit/certs/ for existing key.pem + cert.pem.
  * 2. If certs exist and all current IPs are covered, returns them.
  * 3. If certs exist but IPs changed and mkcert is available, regenerates.
  * 4. If certs exist but IPs changed and mkcert is NOT available, returns

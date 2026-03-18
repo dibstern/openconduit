@@ -32,7 +32,7 @@
 		{totalSteps}
 		{currentIdx}
 		title="Connect via Tailscale"
-		description="Tailscale creates a private VPN so you can access OpenCode Relay from anywhere. It needs to be installed on both the server (the machine running OpenCode Relay) and this device."
+		description="Tailscale creates a private VPN so you can access Conduit from anywhere. It needs to be installed on both the server (the machine running Conduit) and this device."
 	/>
 
 	<!-- Instruction 1 -->
@@ -43,7 +43,7 @@
 			1
 		</div>
 		<div class="text-sm leading-relaxed">
-			<b>Server:</b> Install Tailscale on the machine running OpenCode Relay.
+			<b>Server:</b> Install Tailscale on the machine running Conduit.
 			<div class="text-xs text-text-muted mt-1">
 				If you are viewing this page, the server likely already has
 				Tailscale. You can verify by checking its 100.x.x.x IP.

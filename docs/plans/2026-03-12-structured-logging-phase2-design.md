@@ -80,18 +80,18 @@ pino is an implementation detail — wrapped behind the `Logger` interface:
 
 **CLI flag** (takes precedence):
 ```
-opencode-relay foreground --log-level=verbose
-opencode-relay start --log-level=debug
+conduit foreground --log-level=verbose
+conduit start --log-level=debug
 ```
 
 **Environment variable** (fallback):
 ```
-LOG_LEVEL=verbose opencode-relay foreground
+LOG_LEVEL=verbose conduit foreground
 ```
 
 **Format override** (optional):
 ```
-opencode-relay foreground --log-format=json
+conduit foreground --log-format=json
 ```
 
 **Defaults:**

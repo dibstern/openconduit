@@ -182,8 +182,7 @@ export function startOnboardingServer(
 							}
 							res.writeHead(200, {
 								"Content-Type": "application/x-pem-file",
-								"Content-Disposition":
-									'attachment; filename="opencode-relay-ca.pem"',
+								"Content-Disposition": 'attachment; filename="conduit-ca.pem"',
 								"Content-Length": caCertBuf.length,
 							});
 							res.end(caCertBuf);

@@ -222,7 +222,7 @@ describe("disclaimer", () => {
 		await tick();
 
 		const all = stripAnsi(io.output.join(""));
-		expect(all).toContain("OpenCode Relay");
+		expect(all).toContain("Conduit");
 		expect(all).toContain("Unofficial, open-source project");
 
 		// Clean up

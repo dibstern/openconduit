@@ -1,5 +1,5 @@
 // ─── First-Run Setup Flow (Ticket 8.9) ───────────────────────────────────────
-// Interactive CLI setup wizard for opencode-relay. Prompts for port, PIN,
+// Interactive CLI setup wizard for conduit. Prompts for port, PIN,
 // keep-awake, and project restoration. Ported from claude-relay/bin/cli.js
 // lines 1109-1166 with OpenCode-specific adaptations.
 
@@ -61,7 +61,7 @@ async function defaultIsPortFree(port: number): Promise<boolean> {
 	});
 }
 
-/** Default recent projects loader: reads ~/.opencode-relay/recent.json. */
+/** Default recent projects loader: reads ~/.conduit/recent.json. */
 function defaultGetRecentProjects(): Array<{
 	path: string;
 	slug: string;
@@ -69,7 +69,7 @@ function defaultGetRecentProjects(): Array<{
 	lastUsed: number;
 }> {
 	try {
-		const recentPath = join(homedir(), ".opencode-relay", "recent.json");
+		const recentPath = join(homedir(), ".conduit", "recent.json");
 		const data = readFileSync(recentPath, "utf-8");
 		const projects = filterExistingProjects(deserializeRecent(data));
 		return projects.map((p) => ({
@@ -86,13 +86,14 @@ function defaultGetRecentProjects(): Array<{
 // ─── Logo ────────────────────────────────────────────────────────────────────
 
 /**
- * Pixel-art letter definitions for the OPENCODE logo.
- * Derived from the official SVG (logo-light.B0yzR0O5.svg) on a 6px grid.
+ * Pixel-art letter definitions for the CONDUIT logo.
+ * Derived from the official SVG (opencode-wordmark-dark.svg) on a 6px grid.
  *
  * Cell types: B = body, W = window (inner fill), . = empty.
  * Most letters are 4 cells wide × 5 rows. Exceptions:
- * - 'd' has 6 rows: row 0 is ascender, rows 1–5 are main body
+ * - 'd', 't' have 6 rows: row 0 is ascender, rows 1–5 are main body
  * - 'p' has 6 rows: rows 0–4 are main body, row 5 is descender
+ * - 'i' is 1 cell wide × 5 rows (variable width supported by renderer)
  *
  * Each cell is rendered at double character width (2 chars per cell)
  * to achieve the correct ~52:63 aspect ratio in terminal fonts.
@@ -104,37 +105,30 @@ const OC: Record<string, string[]> = {
 	n: ["BBB.", "B..B", "BWWB", "BWWB", "BWWB"],
 	c: ["BBBB", "B...", "BWWW", "BWWW", "BBBB"],
 	d: ["...B", "BBBB", "B..B", "BWWB", "BWWB", "BBBB"],
-};
-
-/** Pixel-art letter definitions for RELAY (body-only, no windows). */
-const RL: Record<string, string[]> = {
-	r: ["BBB.", "B..B", "BBB.", "B.B.", "B..B"],
-	e: ["BBBB", "B...", "BBBB", "B...", "BBBB"],
-	l: ["B...", "B...", "B...", "B...", "BBBB"],
-	a: [".BB.", "B..B", "BBBB", "B..B", "B..B"],
-	y: ["B..B", "B..B", ".BB.", ".B..", ".B.."],
+	u: ["B..B", "B..B", "BWWB", "BWWB", "BBBB"],
+	i: ["B", "B", "B", "B", "B"],
+	t: [".B..", "BBBB", ".B..", ".BWW", ".BWW", ".BBB"],
 };
 
 /** Chars per cell (doubled for correct terminal aspect ratio). */
 const CELL_W = 2;
 /** Gap chars between adjacent letters. */
 const LETTER_GAP = 2;
-/** Number of "open" letters (first 4); rest are "code" group. */
+/** Number of "open" letters (first 4); rest are "conduit" group. */
 const OPEN_LEN = 4;
 /** Total rows for opencode: 0=ascender, 1–5=main, 6=descender. */
 const TOTAL_ROWS = 7;
 
 /**
- * Print the OPENCODE RELAY logo to stdout.
+ * Print the CONDUIT logo to stdout.
  *
- * Renders a pixel-art reproduction of the official OpenCode SVG logo at
+ * Renders a pixel-art reproduction of the official OpenCode SVG logo style at
  * doubled character width for correct terminal aspect ratio (~52:63).
  *
  * Colors:
  * - "open" body: medium gray
- * - "code" body: white
+ * - "conduit" body: white
  * - Window (inner fill): dark gray (darker than "open")
- * - "relay" subtitle: white, same pixel-art style
  *
  * Clears the screen first.
  */
@@ -146,14 +140,13 @@ export function printLogo(stdout: Writable): void {
 	const openClr = basic ? a.dim : "\x1b[38;2;140;138;138m";
 	const codeClr = basic ? a.bold : "\x1b[38;2;240;240;240m";
 	const winClr = basic ? "" : "\x1b[38;2;70;68;68m";
-	const relayClr = basic ? a.bold : "\x1b[38;2;240;240;240m";
 
 	const blk = "\u2588".repeat(CELL_W);
 	const spc = " ".repeat(CELL_W);
 	const gap = " ".repeat(LETTER_GAP);
 
-	// ── Render "opencode" ─────────────────────────────────────────────
-	const ocWord = "opencode";
+	// ── Render "conduit" ──────────────────────────────────────────
+	const ocWord = "conduit";
 	const ocGlyphs = [...ocWord].map((ch) => OC[ch]);
 
 	for (let row = 0; row < TOTAL_ROWS; row++) {
@@ -168,9 +161,12 @@ export function printLogo(stdout: Writable): void {
 			const isCode = li >= OPEN_LEN;
 			if (!glyph || key === undefined) continue;
 
-			// Map logo row → glyph row (d has ascender, p has descender)
+			// Map logo row → glyph row
+			// Ascender letters (d, t): glyph starts at row 0
+			// Descender letter (p): glyph rows 0–4 at render rows 1–5, row 5 at render row 6
+			// Standard letters (including narrow 'i'): glyph rows 0–4 at render rows 1–5
 			let gr: string | undefined;
-			if (key === "d") {
+			if (key === "d" || key === "t") {
 				gr = row < glyph.length ? glyph[row] : undefined;
 			} else if (key === "p") {
 				if (row >= 1 && row <= 5) gr = glyph[row - 1];
@@ -180,7 +176,8 @@ export function printLogo(stdout: Writable): void {
 			}
 
 			if (!gr) {
-				line += spc.repeat(4);
+				const glyphWidth = glyph[0]?.length ?? 4;
+				line += spc.repeat(glyphWidth);
 				continue;
 			}
 
@@ -196,41 +193,6 @@ export function printLogo(stdout: Writable): void {
 					if (winClr !== prev) {
 						line += winClr;
 						prev = winClr;
-					}
-					line += blk;
-				} else {
-					line += spc;
-				}
-			}
-		}
-
-		line += a.reset;
-		stdout.write(`${line}\n`);
-	}
-
-	// ── Render "relay" subtitle centered below ────────────────────────
-	const rlWord = "relay";
-	const rlGlyphs = [...rlWord].map((ch) => RL[ch]);
-	const ocWidth = ocWord.length * 4 * CELL_W + (ocWord.length - 1) * LETTER_GAP;
-	const rlWidth = rlWord.length * 4 * CELL_W + (rlWord.length - 1) * LETTER_GAP;
-	const pad = " ".repeat(Math.floor((ocWidth - rlWidth) / 2));
-
-	stdout.write("\n");
-
-	for (let row = 0; row < 5; row++) {
-		let line = `  ${pad}`;
-		let prev = "";
-
-		for (let li = 0; li < rlGlyphs.length; li++) {
-			if (li > 0) line += gap;
-			const glyphRows = rlGlyphs[li];
-			const gr = glyphRows?.[row];
-			if (!gr) continue;
-			for (const cell of gr) {
-				if (cell === "B") {
-					if (relayClr !== prev) {
-						line += relayClr;
-						prev = relayClr;
 					}
 					line += blk;
 				} else {
@@ -271,7 +233,7 @@ export async function runSetup(opts: SetupOptions): Promise<SetupResult> {
 
 	// Step 2: Branding + disclaimer
 	log(
-		`${sym.pointer}  ${a.bold}OpenCode Relay${a.reset}${a.dim}  \u00B7  Unofficial, open-source project${a.reset}`,
+		`${sym.pointer}  ${a.bold}Conduit${a.reset}${a.dim}  \u00B7  Unofficial, open-source project${a.reset}`,
 		stdout,
 	);
 	log(sym.bar, stdout);
@@ -452,7 +414,7 @@ async function promptRestoreProjects(
 	} else {
 		log(`${sym.done}  ${a.dim}Starting fresh${a.reset}`, stdout);
 	}
-	log(`${sym.end}  ${a.dim}Starting relay...${a.reset}`, stdout);
+	log(`${sym.end}  ${a.dim}Starting daemon...${a.reset}`, stdout);
 	log("", stdout);
 
 	return selected.map((p) => ({

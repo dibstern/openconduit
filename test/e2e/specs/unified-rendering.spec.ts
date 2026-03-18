@@ -159,9 +159,7 @@ test.describe("Unified Rendering: Markdown", () => {
 		await expect(mdContent).toBeVisible();
 
 		const hasHtmlChildren = await mdContent.evaluate((el) => {
-			return (
-				el.querySelectorAll("p, pre, code, ul, ol, h1, h2, h3").length > 0
-			);
+			return el.querySelectorAll("p, pre, code, ul, ol, h1, h2, h3").length > 0;
 		});
 		expect(hasHtmlChildren).toBe(true);
 	});
@@ -255,8 +253,7 @@ test.describe("Unified Rendering: Scroll", () => {
 
 		// Verify we're actually at the bottom
 		const isAtBottom = await messagesEl.evaluate((el) => {
-			const distFromBottom =
-				el.scrollHeight - el.scrollTop - el.clientHeight;
+			const distFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
 			return distFromBottom < 50;
 		});
 		expect(isAtBottom).toBe(true);

@@ -814,8 +814,8 @@ In `src/lib/frontend/pages/DashboardPage.stories.ts`, add `status` to each mock 
 ```typescript
 const mockProjects: DashboardProject[] = [
 	{
-		slug: "opencode-relay",
-		path: "/Users/dev/projects/opencode-relay",
+		slug: "conduit",
+		path: "/Users/dev/projects/conduit",
 		title: "OpenCode Relay",
 		status: "ready",
 		sessions: 5,

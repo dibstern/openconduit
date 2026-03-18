@@ -82,7 +82,7 @@ Click X on a pending bubble to remove it. If all cancelled, nothing happens on n
 
 ### localStorage persistence
 
-- Mirrored to `localStorage` key `opencode-relay:queued-messages` on every mutation
+- Mirrored to `localStorage` key `conduit:queued-messages` on every mutation
 - Hydrated on page load, filtered to entries less than 1 week old
 - Each entry: `{ id: string, sessionId: string, text: string, createdAt: number }`
 - Crash recovery, not real-time cross-tab sync

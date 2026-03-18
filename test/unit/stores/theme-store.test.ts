@@ -227,11 +227,11 @@ describe("applyTheme", () => {
 		themeState.themes = { dark1: sampleTheme };
 		applyTheme("dark1");
 		expect(localStorageMock.setItem).toHaveBeenCalledWith(
-			"opencode-relay-theme",
+			"conduit-theme",
 			"dark1",
 		);
 		expect(localStorageMock.setItem).toHaveBeenCalledWith(
-			"opencode-relay-theme-variant",
+			"conduit-theme-variant",
 			"dark",
 		);
 	});
@@ -355,14 +355,14 @@ describe("loadThemes", () => {
 
 describe("initTheme", () => {
 	it("applies saved theme from localStorage", async () => {
-		localStorageMock.setItem("opencode-relay-theme", "dark1");
+		localStorageMock.setItem("conduit-theme", "dark1");
 		mockFetchSuccess({ dark1: sampleTheme });
 		await initTheme();
 		expect(themeState.currentThemeId).toBe("dark1");
 	});
 
 	it("falls back to opencode-light when saved theme not found", async () => {
-		localStorageMock.setItem("opencode-relay-theme", "deleted-theme");
+		localStorageMock.setItem("conduit-theme", "deleted-theme");
 		mockFetchSuccess({
 			dark1: sampleTheme,
 			"opencode-light": opencodeLight,
@@ -370,9 +370,7 @@ describe("initTheme", () => {
 		await initTheme();
 		expect(themeState.currentThemeId).toBe("opencode-light");
 		// Should have cleaned up stale storage
-		expect(localStorageMock.removeItem).toHaveBeenCalledWith(
-			"opencode-relay-theme",
-		);
+		expect(localStorageMock.removeItem).toHaveBeenCalledWith("conduit-theme");
 	});
 
 	it("applies opencode-light when no saved theme", async () => {
@@ -385,7 +383,7 @@ describe("initTheme", () => {
 	});
 
 	it("migrates legacy 'default' to opencode-light", async () => {
-		localStorageMock.setItem("opencode-relay-theme", "default");
+		localStorageMock.setItem("conduit-theme", "default");
 		mockFetchSuccess({
 			dark1: sampleTheme,
 			"opencode-light": opencodeLight,

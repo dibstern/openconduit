@@ -1,5 +1,5 @@
 // ─── Main Menu Loop (Ticket 8.10) ─────────────────────────────────────────────
-// Interactive CLI main menu for opencode-relay. Displays daemon status and
+// Interactive CLI main menu for conduit. Displays daemon status and
 // provides menu navigation for notifications, projects, settings, shutdown,
 // and keep-alive exit. Ported from claude-relay/bin/cli.js lines 1361-1482.
 
@@ -141,7 +141,7 @@ export async function showMainMenu(opts: MenuOptions): Promise<void> {
 		stdout: opts.stdout,
 		exit: opts.exit,
 		hint: [
-			"Run npx opencode-relay in other directories to add more projects.",
+			"Run npx conduit in other directories to add more projects.",
 			`Press ${a.bold}o${a.reset} to open in browser`,
 		],
 	};

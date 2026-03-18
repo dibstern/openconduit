@@ -15,13 +15,13 @@ describe("env module", () => {
 	it("exports DEFAULT_CONFIG_DIR from homedir when XDG_CONFIG_HOME is unset", async () => {
 		delete process.env["XDG_CONFIG_HOME"];
 		const { DEFAULT_CONFIG_DIR } = await import("../../src/lib/env.js");
-		expect(DEFAULT_CONFIG_DIR).toMatch(/\.opencode-relay$/);
+		expect(DEFAULT_CONFIG_DIR).toMatch(/\.conduit$/);
 	});
 
 	it("respects XDG_CONFIG_HOME when set", async () => {
 		process.env["XDG_CONFIG_HOME"] = "/tmp/xdg-test";
 		const { DEFAULT_CONFIG_DIR } = await import("../../src/lib/env.js");
-		expect(DEFAULT_CONFIG_DIR).toBe("/tmp/xdg-test/opencode-relay");
+		expect(DEFAULT_CONFIG_DIR).toBe("/tmp/xdg-test/conduit");
 	});
 
 	it("DEFAULT_PORT is 2633", async () => {

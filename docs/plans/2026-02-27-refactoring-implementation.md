@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Improve type safety, organization, readability, and pre-commit bug prevention across the opencode-relay codebase.
+**Goal:** Improve type safety, organization, readability, and pre-commit bug prevention across the conduit codebase.
 
 **Architecture:** Create a shared-types module importable by both server and frontend. Replace the frontend's loosely-typed `WsMessage` with the server's typed `RelayMessage` discriminated union. Enable stricter TypeScript checks. Remove dead code, wire up planned features, decompose large files, and consolidate error handling.
 

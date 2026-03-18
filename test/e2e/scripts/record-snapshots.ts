@@ -182,8 +182,9 @@ const SCENARIOS: ScenarioDefinition[] = [
 		// With default historyPageSize=50, the first REST history page
 		// returns hasMore:true, enabling pagination E2E tests.
 		name: "chat-paginated-history",
-		prompts: Array.from({ length: 26 }, (_, i) =>
-			`Reply with just the number ${i + 1}. Nothing else.`,
+		prompts: Array.from(
+			{ length: 26 },
+			(_, i) => `Reply with just the number ${i + 1}. Nothing else.`,
 		),
 		multiTurn: true,
 	},

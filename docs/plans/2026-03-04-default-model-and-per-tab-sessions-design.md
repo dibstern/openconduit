@@ -15,7 +15,7 @@
 
 ### Config
 
-File: `~/.opencode-relay/settings.jsonc` (new, alongside `daemon.json`, `recent.json`)
+File: `~/.conduit/settings.jsonc` (new, alongside `daemon.json`, `recent.json`)
 
 ```jsonc
 {

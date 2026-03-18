@@ -1,5 +1,5 @@
 // ─── Shared Types ───────────────────────────────────────────────────────────
-// Canonical type definitions for opencode-relay, derived from ticket specs.
+// Canonical type definitions for conduit, derived from ticket specs.
 
 import type { Logger } from "./logger.js";
 import type { PushNotificationManager } from "./server/push.js";
@@ -249,7 +249,7 @@ export interface ProjectRelayConfig {
 	}>;
 	/** Optional push notification manager for server-side push delivery */
 	pushManager?: PushNotificationManager;
-	/** Config directory for cache storage (default: projectDir/.opencode-relay) */
+	/** Config directory for cache storage (default: projectDir/.conduit) */
 	configDir?: string;
 	/**
 	 * Abort signal for cancelling relay creation mid-flight.

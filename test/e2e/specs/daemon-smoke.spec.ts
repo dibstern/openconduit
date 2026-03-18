@@ -16,7 +16,7 @@ test.describe("Daemon Smoke", () => {
 		await page.goto(daemonProjectUrl);
 
 		// SPA should load
-		await expect(page).toHaveTitle("OpenCode Relay", { timeout: 10_000 });
+		await expect(page).toHaveTitle("Conduit", { timeout: 10_000 });
 
 		// Connect overlay should disappear once WS connects and initClient runs.
 		// initClient sends instance_list, session_list, etc. The overlay fades

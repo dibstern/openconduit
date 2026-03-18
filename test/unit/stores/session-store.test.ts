@@ -183,7 +183,7 @@ describe("handleSessionList", () => {
 		handleSessionList(msg({ type: "session_list", sessions: [root, child] }));
 		// rootSessions should contain only non-subagent sessions
 		expect(sessionState.rootSessions).toHaveLength(1);
-		expect(sessionState.rootSessions[0]!.id).toBe("root1");
+		expect(sessionState.rootSessions[0]?.id).toBe("root1");
 		// allSessions should contain everything
 		expect(sessionState.allSessions).toHaveLength(2);
 	});

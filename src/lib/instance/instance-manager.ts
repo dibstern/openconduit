@@ -293,7 +293,7 @@ export class InstanceManager extends EventEmitter<InstanceManagerEvents> {
 			if (!effectiveEnv["XDG_DATA_HOME"]) {
 				const base =
 					process.env["XDG_DATA_HOME"] ?? `${homedir()}/.local/share`;
-				effectiveEnv["XDG_DATA_HOME"] = `${base}/opencode-relay/${id}`;
+				effectiveEnv["XDG_DATA_HOME"] = `${base}/conduit/${id}`;
 			}
 
 			// Ensure managed instances inherit the global OPENCODE_SERVER_PASSWORD

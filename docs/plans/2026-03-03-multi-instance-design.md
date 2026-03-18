@@ -186,23 +186,23 @@ private readonly instanceManager: InstanceManager;
 ### Instance subcommands
 
 ```
-opencode-relay instance list
-opencode-relay instance add <name> [--port N] [--managed] [--external URL]
+conduit instance list
+conduit instance add <name> [--port N] [--managed] [--external URL]
                                    [--env KEY=VALUE ...]
-opencode-relay instance remove <name>
-opencode-relay instance start <name>
-opencode-relay instance stop <name>
-opencode-relay instance status <name>
+conduit instance remove <name>
+conduit instance start <name>
+conduit instance stop <name>
+conduit instance status <name>
 ```
 
 ### Backward compatibility
 
 ```
 # Old: still works, creates a "default" instance
-opencode-relay --oc-port 4096
+conduit --oc-port 4096
 
 # New: starts daemon with configured instances
-opencode-relay
+conduit
 ```
 
 ### IPC protocol extensions

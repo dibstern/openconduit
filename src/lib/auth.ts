@@ -25,7 +25,7 @@ export interface AuthManagerOptions {
 
 /** Hash a PIN with a domain-specific prefix (one-way, deterministic). */
 export function hashPin(pin: string): string {
-	return createHash("sha256").update(`opencode-relay:${pin}`).digest("hex");
+	return createHash("sha256").update(`conduit:${pin}`).digest("hex");
 }
 
 export class AuthManager {

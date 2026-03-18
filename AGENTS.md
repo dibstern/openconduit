@@ -5,7 +5,7 @@ NEVER stash changes, you are interrupting other sessions and work.
 
 ## Purpose
 
-`opencode-relay` is a web UI relay for OpenCode. It lets one long-lived relay daemon expose OpenCode sessions to browser clients across multiple projects.
+`conduit` is a web UI relay for OpenCode. It lets one long-lived relay daemon expose OpenCode sessions to browser clients across multiple projects.
 
 ## Architecture At A Glance
 
@@ -55,7 +55,7 @@ Read `docs/agent-guide/testing.md` before choosing broader verification. Use the
 
 ## Troubleshooting Tips
 
-- Local opencode-relay: It runs at `http://localhost:2633/`.
+- Local conduit: It runs at `http://localhost:2633/`.
 - Local opencode instance Debug: You can hit the local instance of opencode, running on port 4096, using:
     - Authorized: `curl -s -u "opencode:$OPENCODE_SERVER_PASSWORD" http://localhost:4096/<DESIRED-PATH> 2>&1 | python3 -m json.tool`
     - Or just open `http://localhost:4096` in a browser and use dev

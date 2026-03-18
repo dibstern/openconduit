@@ -365,7 +365,7 @@ Create `src/lib/public/stores/queue-persistence.ts`:
 
 import type { QueuedMessage } from "../types.js";
 
-export const STORAGE_KEY = "opencode-relay:queued-messages";
+export const STORAGE_KEY = "conduit:queued-messages";
 export const EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 1 week
 
 /** Save the entire queue map to localStorage. */

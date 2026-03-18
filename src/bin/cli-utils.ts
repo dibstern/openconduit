@@ -368,7 +368,7 @@ export function generateQR(url: string): string {
 
 // ─── Help Text ──────────────────────────────────────────────────────────────
 
-export const HELP_TEXT = `Usage: opencode-relay [options]
+export const HELP_TEXT = `Usage: conduit [options]
 
   With no flags, launches the interactive setup wizard and main menu.
 

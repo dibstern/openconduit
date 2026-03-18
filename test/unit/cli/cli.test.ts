@@ -1211,7 +1211,7 @@ describe("Ticket 3.3 — CLI Interface", () => {
 			await run(["--pin", "123456"], cli);
 
 			expect(cli.state.errors).toContain("not running");
-			expect(cli.state.errors).toContain("npx opencode-relay");
+			expect(cli.state.errors).toContain("npx conduit");
 		});
 
 		it("--list failure shows error", async () => {

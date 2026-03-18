@@ -2,7 +2,7 @@
 
 Post-Svelte-migration audit. Supersedes both prior documents. Every issue verified against the current codebase at commit `af46e0b`.
 
-**Context:** opencode-relay is a stateless translation layer: Browser ←WS→ Server ←HTTP/SSE→ OpenCode (port 4096). A `MessageCache` records translated events per session (JSONL + memory) and replays them on session switch. The frontend is Svelte 5 with rune-based stores.
+**Context:** conduit is a stateless translation layer: Browser ←WS→ Server ←HTTP/SSE→ OpenCode (port 4096). A `MessageCache` records translated events per session (JSONL + memory) and replays them on session switch. The frontend is Svelte 5 with rune-based stores.
 
 ---
 

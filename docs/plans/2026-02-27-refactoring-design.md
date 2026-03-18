@@ -1,6 +1,6 @@
 # Codebase Refactoring Design
 
-**Goal:** Improve organization, readability, type safety, debuggability, and pre-commit bug prevention across the opencode-relay codebase.
+**Goal:** Improve organization, readability, type safety, debuggability, and pre-commit bug prevention across the conduit codebase.
 
 **Approach:** Type safety first (highest bug-prevention value), then cleanup, then structural decomposition, then error handling consolidation.
 

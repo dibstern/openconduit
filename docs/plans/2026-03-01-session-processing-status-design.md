@@ -2,7 +2,7 @@
 
 ## Problem
 
-Sessions started from the OpenCode TUI (or any non-active session) never show a processing indicator in the opencode-relay sidebar. Additionally, switching to a busy session doesn't show processing state in the chat view.
+Sessions started from the OpenCode TUI (or any non-active session) never show a processing indicator in the conduit sidebar. Additionally, switching to a busy session doesn't show processing state in the chat view.
 
 ### Root causes
 

@@ -49,7 +49,7 @@ test.describe("Debug Panel — URL Activation", () => {
 			localStorage.getItem("feature-flags"),
 		);
 		expect(flags).not.toBeNull();
-		const parsed = JSON.parse(flags!);
+		const parsed = JSON.parse(flags as string);
 		expect(parsed).toContain("debug");
 	});
 });

@@ -5,6 +5,6 @@ test-results/.playwright-artifacts-0
 .env
 .worktrees/
 .playwright-cli
-.opencode-relay/sessions
+.conduit/sessions
 /test-results
 docs/plans/audits/

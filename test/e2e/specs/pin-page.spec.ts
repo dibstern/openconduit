@@ -43,6 +43,6 @@ test.describe("PIN Page", () => {
 		const app = new AppPage(page);
 		await app.goto(relayUrl);
 
-		await expect(page).toHaveTitle("OpenCode Relay");
+		await expect(page).toHaveTitle("Conduit");
 	});
 });

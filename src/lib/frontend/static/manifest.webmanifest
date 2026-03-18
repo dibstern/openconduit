@@ -1,5 +1,5 @@
 {
-	"name": "OpenCode Relay",
+	"name": "Conduit",
 	"short_name": "OC Relay",
 	"description": "Access your OpenCode sessions from any device",
 	"start_url": "/",

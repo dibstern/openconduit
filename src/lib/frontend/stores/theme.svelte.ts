@@ -10,9 +10,9 @@ export type { Base16Theme };
 
 export const DEFAULT_THEME_ID = "opencode-light";
 
-const STORAGE_KEY_THEME = "opencode-relay-theme";
-const STORAGE_KEY_VARS = "opencode-relay-theme-vars";
-const STORAGE_KEY_VARIANT = "opencode-relay-theme-variant";
+const STORAGE_KEY_THEME = "conduit-theme";
+const STORAGE_KEY_VARS = "conduit-theme-vars";
+const STORAGE_KEY_VARIANT = "conduit-theme-variant";
 
 /** All CSS variable keys that computeVars() can produce.
  *  Used when switching themes to remove stale vars from the previous theme

@@ -20,6 +20,6 @@
 		class="inline-flex items-center justify-center gap-2 bg-accent text-bg no-underline px-6 py-3 rounded-xl font-semibold text-sm border-none cursor-pointer font-sans hover:opacity-90 transition-opacity"
 		onclick={ongotodone}
 	>
-		Open OpenCode Relay
+		Open Conduit
 	</button>
 </div>

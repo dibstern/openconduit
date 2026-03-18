@@ -253,7 +253,7 @@
 		id="sidebar-footer"
 		class="px-3.5 py-3 max-md:pb-[calc(env(safe-area-inset-bottom,0px)+12px)] border-t border-border-subtle shrink-0 flex items-center justify-between"
 	>
-		<span class="sidebar-footer-text text-xs text-text-dimmer">OpenCode Relay</span>
+		<span class="sidebar-footer-text text-xs text-text-dimmer">Conduit</span>
 		<div class="flex items-center gap-0.5">
 			<!-- Settings -->
 			<button

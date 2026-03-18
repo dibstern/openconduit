@@ -119,7 +119,7 @@ describe("--foreground handler", () => {
 		const joined = io.output.join("");
 
 		// Verify banner output
-		expect(joined).toContain("OpenCode Relay (foreground)");
+		expect(joined).toContain("Conduit (foreground)");
 		expect(joined).toContain("http://localhost:19876");
 		expect(joined).toContain("/test/project");
 		expect(joined).toContain("Ready.");

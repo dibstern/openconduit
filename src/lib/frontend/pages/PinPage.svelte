@@ -100,7 +100,7 @@
 <div class="bg-bg min-h-dvh flex items-center justify-center p-5">
 	<div class="max-w-[320px] w-full text-center">
 		<h1 class="text-text text-[22px] mb-2 font-semibold">
-			OpenCode Relay
+			Conduit
 		</h1>
 		<div class="text-text-muted text-sm mb-8">Enter PIN to continue</div>
 		<input

@@ -138,7 +138,7 @@ test.describe("Smart Default Detection", () => {
 		await page.goto(smartDaemonProjectUrl);
 
 		// SPA should load
-		await expect(page).toHaveTitle("OpenCode Relay", { timeout: 10_000 });
+		await expect(page).toHaveTitle("Conduit", { timeout: 10_000 });
 
 		// Connect overlay should disappear
 		await page.locator(".connect-overlay").waitFor({

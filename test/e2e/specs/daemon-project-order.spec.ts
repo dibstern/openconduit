@@ -117,7 +117,9 @@ test.beforeAll(async () => {
 	// Add projects with staggered timestamps so ordering is deterministic.
 	// alpha is oldest, gamma is newest.
 	for (let i = 0; i < testSlugs.length; i++) {
-		await daemon.addProject(projectDirs[i]!, testSlugs[i]);
+		const dir = projectDirs[i];
+		if (!dir) continue;
+		await daemon.addProject(dir, testSlugs[i]);
 		if (i < testSlugs.length - 1) await sleep(100);
 	}
 

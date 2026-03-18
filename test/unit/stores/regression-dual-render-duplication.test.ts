@@ -73,9 +73,7 @@ describe("Regression: no dual-render duplication", () => {
 		});
 
 		expect(historyState.hasMore).toBe(false);
-		expect(chatState.messages.filter((m) => m.type === "user")).toHaveLength(
-			1,
-		);
+		expect(chatState.messages.filter((m) => m.type === "user")).toHaveLength(1);
 	});
 
 	it("history_page after events replay does not duplicate messages", () => {
@@ -135,9 +133,7 @@ describe("Regression: no dual-render duplication", () => {
 		});
 
 		expect(historyState.hasMore).toBe(true);
-		expect(chatState.messages.filter((m) => m.type === "user")).toHaveLength(
-			1,
-		);
+		expect(chatState.messages.filter((m) => m.type === "user")).toHaveLength(1);
 	});
 
 	it("session switch clears historyState and messages", () => {

@@ -757,8 +757,8 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			});
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_PORT"]).toBe("7777");
-			expect(env["OPENCODE_RELAY_CONFIG_DIR"]).toBe("/tmp/my-relay");
+			expect(env["CONDUIT_PORT"]).toBe("7777");
+			expect(env["CONDUIT_CONFIG_DIR"]).toBe("/tmp/my-relay");
 		});
 
 		it("buildSpawnConfig uses process.execPath", () => {
@@ -777,11 +777,11 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			const config = Daemon.buildSpawnConfig();
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_PORT"]).toBe("2633");
-			expect(env["OPENCODE_RELAY_CONFIG_DIR"]).toBe(DEFAULT_CONFIG_DIR);
+			expect(env["CONDUIT_PORT"]).toBe("2633");
+			expect(env["CONDUIT_CONFIG_DIR"]).toBe(DEFAULT_CONFIG_DIR);
 		});
 
-		it("property: buildSpawnConfig always sets detached and OPENCODE_RELAY_PORT", () => {
+		it("property: buildSpawnConfig always sets detached and CONDUIT_PORT", () => {
 			fc.assert(
 				fc.property(
 					fc.integer({ min: 1024, max: 65535 }),
@@ -790,8 +790,8 @@ describe("Ticket 3.1 — Daemon Process", () => {
 						const config = Daemon.buildSpawnConfig({ port, configDir });
 						expect(config.options.detached).toBe(true);
 						const env = config.options.env as Record<string, string>;
-						expect(env["OPENCODE_RELAY_PORT"]).toBe(String(port));
-						expect(env["OPENCODE_RELAY_CONFIG_DIR"]).toBe(configDir);
+						expect(env["CONDUIT_PORT"]).toBe(String(port));
+						expect(env["CONDUIT_CONFIG_DIR"]).toBe(configDir);
 					},
 				),
 				{ seed: SEED, numRuns: NUM_RUNS, endOnFailure: true },
@@ -1134,7 +1134,7 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			mkdirSync(staticDir, { recursive: true });
 			writeFileSync(
 				join(staticDir, "index.html"),
-				"<!DOCTYPE html><html><body>OpenCode Relay</body></html>",
+				"<!DOCTYPE html><html><body>Conduit</body></html>",
 				"utf-8",
 			);
 		});
@@ -1171,7 +1171,7 @@ describe("Ticket 3.1 — Daemon Process", () => {
 				req.end();
 			});
 			expect(html).toContain("<!DOCTYPE html>");
-			expect(html).toContain("OpenCode Relay");
+			expect(html).toContain("Conduit");
 
 			await d.stop();
 		});
@@ -1661,7 +1661,7 @@ describe("Ticket 3.1 — Daemon Process", () => {
 
 			expect(result.status).toBe(200);
 			expect(result.body).toContain("SPA App");
-			expect(result.body).not.toContain("OpenCode Relay"); // Not the dashboard
+			expect(result.body).not.toContain("Conduit"); // Not the dashboard
 
 			await d.stop();
 		});
@@ -1761,7 +1761,7 @@ describe("Ticket 3.1 — Daemon Process", () => {
 	// ─── buildSpawnConfig: env var threading ─────────────────────────
 
 	describe("buildSpawnConfig: env var threading", () => {
-		it("includes OPENCODE_RELAY_OC_URL when opencodeUrl is set", () => {
+		it("includes CONDUIT_OC_URL when opencodeUrl is set", () => {
 			const config = Daemon.buildSpawnConfig({
 				port: 3000,
 				configDir: "/tmp/test",
@@ -1769,20 +1769,20 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			});
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_OC_URL"]).toBe("http://localhost:4096");
+			expect(env["CONDUIT_OC_URL"]).toBe("http://localhost:4096");
 		});
 
-		it("does not include OPENCODE_RELAY_OC_URL when opencodeUrl is not set", () => {
+		it("does not include CONDUIT_OC_URL when opencodeUrl is not set", () => {
 			const config = Daemon.buildSpawnConfig({
 				port: 3000,
 				configDir: "/tmp/test",
 			});
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_OC_URL"]).toBeUndefined();
+			expect(env["CONDUIT_OC_URL"]).toBeUndefined();
 		});
 
-		it("includes OPENCODE_RELAY_PIN_HASH when pinHash is set", () => {
+		it("includes CONDUIT_PIN_HASH when pinHash is set", () => {
 			const config = Daemon.buildSpawnConfig({
 				port: 3000,
 				configDir: "/tmp/test",
@@ -1790,20 +1790,20 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			});
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_PIN_HASH"]).toBe("abc123def456");
+			expect(env["CONDUIT_PIN_HASH"]).toBe("abc123def456");
 		});
 
-		it("does not include OPENCODE_RELAY_PIN_HASH when pinHash is not set", () => {
+		it("does not include CONDUIT_PIN_HASH when pinHash is not set", () => {
 			const config = Daemon.buildSpawnConfig({
 				port: 3000,
 				configDir: "/tmp/test",
 			});
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_PIN_HASH"]).toBeUndefined();
+			expect(env["CONDUIT_PIN_HASH"]).toBeUndefined();
 		});
 
-		it("includes OPENCODE_RELAY_KEEP_AWAKE when keepAwake is true", () => {
+		it("includes CONDUIT_KEEP_AWAKE when keepAwake is true", () => {
 			const config = Daemon.buildSpawnConfig({
 				port: 3000,
 				configDir: "/tmp/test",
@@ -1811,27 +1811,27 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			});
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_KEEP_AWAKE"]).toBe("1");
+			expect(env["CONDUIT_KEEP_AWAKE"]).toBe("1");
 		});
 
-		it("does not include OPENCODE_RELAY_KEEP_AWAKE when keepAwake is not set", () => {
+		it("does not include CONDUIT_KEEP_AWAKE when keepAwake is not set", () => {
 			const config = Daemon.buildSpawnConfig({
 				port: 3000,
 				configDir: "/tmp/test",
 			});
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_KEEP_AWAKE"]).toBeUndefined();
+			expect(env["CONDUIT_KEEP_AWAKE"]).toBeUndefined();
 		});
 
-		it("always includes OPENCODE_RELAY_TLS=1 (auto-enable)", () => {
+		it("always includes CONDUIT_TLS=1 (auto-enable)", () => {
 			const config = Daemon.buildSpawnConfig({
 				port: 3000,
 				configDir: "/tmp/test",
 			});
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_TLS"]).toBe("1");
+			expect(env["CONDUIT_TLS"]).toBe("1");
 		});
 
 		it("threads all env vars when all options are set", () => {
@@ -1845,12 +1845,12 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			});
 			const env = config.options.env as Record<string, string>;
 
-			expect(env["OPENCODE_RELAY_PORT"]).toBe("5000");
-			expect(env["OPENCODE_RELAY_CONFIG_DIR"]).toBe("/tmp/all-opts");
-			expect(env["OPENCODE_RELAY_PIN_HASH"]).toBe("hash123");
-			expect(env["OPENCODE_RELAY_KEEP_AWAKE"]).toBe("1");
-			expect(env["OPENCODE_RELAY_TLS"]).toBe("1");
-			expect(env["OPENCODE_RELAY_OC_URL"]).toBe("http://localhost:4096");
+			expect(env["CONDUIT_PORT"]).toBe("5000");
+			expect(env["CONDUIT_CONFIG_DIR"]).toBe("/tmp/all-opts");
+			expect(env["CONDUIT_PIN_HASH"]).toBe("hash123");
+			expect(env["CONDUIT_KEEP_AWAKE"]).toBe("1");
+			expect(env["CONDUIT_TLS"]).toBe("1");
+			expect(env["CONDUIT_OC_URL"]).toBe("http://localhost:4096");
 		});
 	});
 });
@@ -2286,7 +2286,8 @@ describe("Daemon WS upgrade — waitForRelay integration", () => {
 
 		// Prepare a mock relay with handleUpgrade that completes the WS handshake
 		const relay = createMockProjectRelay();
-		(relay.wsHandler as any).handleUpgrade = vi.fn();
+		(relay.wsHandler as unknown as Record<string, unknown>)["handleUpgrade"] =
+			vi.fn();
 
 		// Send a raw HTTP upgrade request — it will block on waitForRelay
 		// while the project is still registering

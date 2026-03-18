@@ -2,7 +2,7 @@
 
 ## Summary
 
-Replicate claude-relay's full theme selection system in opencode-relay: 22 bundled Base16 themes, theme picker UI in sidebar footer, custom user themes from `~/.opencode-relay/themes/`, flash prevention, and integration with xterm.js, highlight.js, and Mermaid.
+Replicate claude-relay's full theme selection system in conduit: 22 bundled Base16 themes, theme picker UI in sidebar footer, custom user themes from `~/.conduit/themes/`, flash prevention, and integration with xterm.js, highlight.js, and Mermaid.
 
 ## Architecture
 
@@ -29,7 +29,7 @@ Each theme is a JSON file with 16 hex color keys + metadata:
 ### File Locations
 
 - Bundled: `src/lib/themes/*.json` (22 files, copied from claude-relay)
-- Custom: `~/.opencode-relay/themes/*.json` (user-created, discovered at runtime)
+- Custom: `~/.conduit/themes/*.json` (user-created, discovered at runtime)
 
 ### Server Endpoint
 
@@ -90,9 +90,9 @@ export const themeState = $state({
 - `computeMermaidVars(theme)` — Base16 → mermaid theme variables
 
 **localStorage keys:**
-- `opencode-relay-theme` — theme ID
-- `opencode-relay-theme-vars` — JSON of all CSS vars (flash prevention)
-- `opencode-relay-theme-variant` — "dark" or "light"
+- `conduit-theme` — theme ID
+- `conduit-theme-vars` — JSON of all CSS vars (flash prevention)
+- `conduit-theme-variant` — "dark" or "light"
 
 **Color utility functions** (ported from claude-relay):
 - `hexToRgb`, `rgbToHex`, `darken`, `lighten`, `hexToRgba`, `mixColors`, `luminance`
@@ -104,13 +104,13 @@ Inline blocking `<script>` in `index.html`, before CSS loads:
 ```html
 <script>
 (function(){
-  var v = localStorage.getItem("opencode-relay-theme-vars");
+  var v = localStorage.getItem("conduit-theme-vars");
   if (!v) return;
   try {
     var o = JSON.parse(v);
     var root = document.documentElement;
     for (var p in o) root.style.setProperty(p, o[p]);
-    var vt = localStorage.getItem("opencode-relay-theme-variant");
+    var vt = localStorage.getItem("conduit-theme-variant");
     if (vt === "light") root.classList.add("light-theme");
     else if (vt === "dark") root.classList.add("dark-theme");
     var meta = document.querySelector('meta[name="theme-color"]');
@@ -156,7 +156,7 @@ Inline blocking `<script>` in `index.html`, before CSS loads:
 
 - New users see the current warm-neutral light theme (no localStorage = `@theme` block values apply)
 - Theme selection persists across sessions via localStorage
-- Custom themes in `~/.opencode-relay/themes/` appear in a "Custom" section
+- Custom themes in `~/.conduit/themes/` appear in a "Custom" section
 - Custom themes with same filename as bundled themes override them
 
 ## Decisions

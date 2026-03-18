@@ -1,5 +1,5 @@
 // ─── Settings Menu (Ticket 8.12) ──────────────────────────────────────────────
-// Interactive CLI settings menu for opencode-relay. Displays detection status
+// Interactive CLI settings menu for conduit. Displays detection status
 // (Tailscale, mkcert, HTTPS, PIN, keep-awake) and provides actions for PIN
 // management, keep-awake toggle, log viewing, and notification setup.
 // Ported from claude-relay/bin/cli.js lines 1856-1982.

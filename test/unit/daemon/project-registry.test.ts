@@ -1,6 +1,7 @@
 import * as fc from "fast-check";
 import { describe, expect, it, vi } from "vitest";
 import { ProjectRegistry } from "../../../src/lib/daemon/project-registry.js";
+import type { ProjectRelay } from "../../../src/lib/relay/relay-stack.js";
 import type { StoredProject } from "../../../src/lib/types.js";
 import {
 	createMockProjectRelay,
@@ -652,7 +653,9 @@ describe("ProjectRegistry — Cross-relay operations (D4)", () => {
 			expect(reg.isReady("beta")).toBe(true);
 		});
 
-		const message = { type: "test", payload: "hello" } as any;
+		const message = { type: "test", payload: "hello" } as unknown as Parameters<
+			ProjectRegistry["broadcastToAll"]
+		>[0];
 		reg.broadcastToAll(message);
 
 		expect(relay1.wsHandler.broadcast).toHaveBeenCalledWith(message);
@@ -678,7 +681,9 @@ describe("ProjectRegistry — Cross-relay operations (D4)", () => {
 			expect(reg.get("gamma")?.status).toBe("error");
 		});
 
-		const message = { type: "test" } as any;
+		const message = { type: "test" } as unknown as Parameters<
+			ProjectRegistry["broadcastToAll"]
+		>[0];
 		reg.broadcastToAll(message);
 
 		expect(readyRelay.wsHandler.broadcast).toHaveBeenCalledWith(message);
@@ -694,7 +699,7 @@ describe("ProjectRegistry — Cross-relay operations (D4)", () => {
 					.mockReturnValueOnce("s1")
 					.mockReturnValueOnce("s2")
 					.mockReturnValueOnce(null),
-			} as any,
+			} as unknown as ProjectRelay["messageCache"],
 		});
 		const relay2 = createMockProjectRelay({
 			messageCache: {
@@ -702,7 +707,7 @@ describe("ProjectRegistry — Cross-relay operations (D4)", () => {
 					.fn()
 					.mockReturnValueOnce("s3")
 					.mockReturnValueOnce(null),
-			} as any,
+			} as unknown as ProjectRelay["messageCache"],
 		});
 
 		reg.add(makeProject("alpha"), immediateRelayFactory(relay1));
@@ -727,7 +732,7 @@ describe("ProjectRegistry — Cross-relay operations (D4)", () => {
 		const relay = createMockProjectRelay({
 			messageCache: {
 				evictOldestSession: evictMock,
-			} as any,
+			} as unknown as ProjectRelay["messageCache"],
 		});
 
 		reg.add(makeProject("alpha"), immediateRelayFactory(relay));
@@ -933,7 +938,8 @@ describe("ProjectRegistry — Stateful model tests", () => {
 			await flush();
 
 			// Now it should be ready
-			m.get(this.slug)!.status = "ready";
+			const entry = m.get(this.slug);
+			if (entry) entry.status = "ready";
 
 			// Assert consistency
 			expect(reg.has(this.slug)).toBe(true);
@@ -966,7 +972,8 @@ describe("ProjectRegistry — Stateful model tests", () => {
 			await flush();
 
 			// Now it should be in error state
-			m.get(this.slug)!.status = "error";
+			const entry = m.get(this.slug);
+			if (entry) entry.status = "error";
 
 			expect(reg.has(this.slug)).toBe(true);
 			expect(reg.get(this.slug)?.status).toBe("error");
@@ -994,7 +1001,8 @@ describe("ProjectRegistry — Stateful model tests", () => {
 			await flush();
 
 			// Model transitions to ready
-			m.get(this.slug)!.status = "ready";
+			const entry = m.get(this.slug);
+			if (entry) entry.status = "ready";
 
 			expect(reg.has(this.slug)).toBe(true);
 			expect(reg.get(this.slug)?.status).toBe("ready");
@@ -1022,7 +1030,8 @@ describe("ProjectRegistry — Stateful model tests", () => {
 			await flush();
 
 			// Model stays ready (with new relay)
-			m.get(this.slug)!.status = "ready";
+			const entry = m.get(this.slug);
+			if (entry) entry.status = "ready";
 
 			expect(reg.has(this.slug)).toBe(true);
 			expect(reg.get(this.slug)?.status).toBe("ready");
@@ -1068,7 +1077,8 @@ describe("ProjectRegistry — Stateful model tests", () => {
 
 		async run(m: Model, reg: ProjectRegistry): Promise<void> {
 			reg.updateProject(this.slug, { title: this.title });
-			m.get(this.slug)!.title = this.title;
+			const entry = m.get(this.slug);
+			if (entry) entry.title = this.title;
 
 			expect(reg.getProject(this.slug)?.title).toBe(this.title);
 		}

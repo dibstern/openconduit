@@ -344,8 +344,8 @@ Verify:
 - Daemon starts in foreground (check output for "foreground" / port info)
 - Vite dev server starts on :5173
 - CWD is auto-registered as a project
-- IPC socket is created (`ls ~/.opencode-relay/relay.sock`)
-- PID file is created (`cat ~/.opencode-relay/daemon.pid`)
+- IPC socket is created (`ls ~/.conduit/relay.sock`)
+- PID file is created (`cat ~/.conduit/daemon.pid`)
 - Ctrl+C cleanly shuts down both processes
 
 **Step 2: Test hot reload**

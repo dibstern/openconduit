@@ -153,7 +153,7 @@
 <div
 	class="bg-bg min-h-screen flex flex-col items-center p-[40px_20px] text-text font-sans"
 >
-	<h1 class="text-2xl font-semibold mb-2">OpenCode Relay</h1>
+	<h1 class="text-2xl font-semibold mb-2">Conduit</h1>
 	<div class="text-[13px] text-text-muted mb-8">Select a project</div>
 
 	<div class="flex flex-col gap-3 w-full max-w-[480px]">
@@ -164,7 +164,7 @@
 				No projects registered. Run
 				<code
 					class="bg-bg-alt px-1.5 py-0.5 rounded text-[13px] text-text"
-					>opencode-relay</code
+					>conduit</code
 				> in a project directory to add one.
 			</div>
 		{:else}

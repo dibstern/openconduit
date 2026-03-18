@@ -2444,7 +2444,7 @@ describe("buildSpawnConfig with instances", () => {
 
 **Step 2: Implementation**
 
-The key insight: instances should be persisted in `daemon.json` and loaded on daemon startup, NOT passed via env vars. The existing `OPENCODE_RELAY_OC_URL` env var is kept for backward compatibility (single-instance case). The daemon reads `daemon.json` on startup and restores saved instances.
+The key insight: instances should be persisted in `daemon.json` and loaded on daemon startup, NOT passed via env vars. The existing `CONDUIT_OC_URL` env var is kept for backward compatibility (single-instance case). The daemon reads `daemon.json` on startup and restores saved instances.
 
 This means `daemon-spawn.ts` needs minimal changes. The daemon child process reads instances from the config file.
 

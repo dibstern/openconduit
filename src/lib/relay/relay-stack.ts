@@ -97,7 +97,7 @@ export interface RelayStackConfig {
 	log?: Logger;
 	/** Optional pre-initialized push notification manager */
 	pushManager?: PushNotificationManager;
-	/** Config directory for cache storage (default: projectDir/.opencode-relay) */
+	/** Config directory for cache storage (default: projectDir/.conduit) */
 	configDir?: string;
 }
 
@@ -173,7 +173,7 @@ export async function createProjectRelay(
 	// ── Per-session event cache ──
 	const cacheDir = config.configDir
 		? join(config.configDir, "cache", config.slug, "sessions")
-		: join(config.projectDir ?? process.cwd(), ".opencode-relay", "sessions");
+		: join(config.projectDir ?? process.cwd(), ".conduit", "sessions");
 	const messageCache = new MessageCache(cacheDir);
 	messageCache.loadFromDisk();
 

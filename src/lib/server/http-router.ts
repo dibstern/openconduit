@@ -630,7 +630,7 @@ export class RequestRouter {
 			const pem = await readFile(this.caRootPath);
 			res.writeHead(200, {
 				"Content-Type": "application/x-pem-file",
-				"Content-Disposition": 'attachment; filename="opencode-relay-ca.pem"',
+				"Content-Disposition": 'attachment; filename="conduit-ca.pem"',
 				"Content-Length": pem.length,
 			});
 			res.end(pem);

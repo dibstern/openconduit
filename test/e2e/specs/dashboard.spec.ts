@@ -21,7 +21,7 @@ test.describe("Dashboard", () => {
 		const app = new AppPage(page);
 		await app.goto(relayUrl);
 
-		await expect(page).toHaveTitle("OpenCode Relay");
+		await expect(page).toHaveTitle("Conduit");
 	});
 
 	test("project name is displayed in header", async ({ page, relayUrl }) => {

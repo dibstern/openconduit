@@ -1,7 +1,7 @@
 // ─── Config Persistence Module (Ticket 8.3) ─────────────────────────────────
-// Handles persistent daemon config at ~/.opencode-relay/daemon.json,
-// recent projects at ~/.opencode-relay/recent.json, and crash info at
-// ~/.opencode-relay/crash.json. Uses atomic writes (tmp + rename) for
+// Handles persistent daemon config at ~/.conduit/daemon.json,
+// recent projects at ~/.conduit/recent.json, and crash info at
+// ~/.conduit/crash.json. Uses atomic writes (tmp + rename) for
 // daemon.json to prevent corruption.
 
 import {
@@ -75,7 +75,7 @@ function safeUnlink(filePath: string): void {
 
 // ─── Config Dir ─────────────────────────────────────────────────────────────
 
-/** Return the default config directory (~/.opencode-relay) */
+/** Return the default config directory (~/.conduit) */
 export function getConfigDir(): string {
 	return DEFAULT_CONFIG_DIR;
 }

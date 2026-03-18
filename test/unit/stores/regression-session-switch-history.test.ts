@@ -543,9 +543,7 @@ describe("Queued flag timing with REST history", () => {
 		handleMessage({ type: "status", status: "processing" });
 		// Queued flag should be set
 		let users = chatState.messages.filter((m) => m.type === "user");
-		expect((users[users.length - 1] as { queued?: boolean }).queued).toBe(
-			true,
-		);
+		expect((users[users.length - 1] as { queued?: boolean }).queued).toBe(true);
 
 		// LLM starts responding — queued flag should be cleared
 		handleMessage({ type: "delta", text: "Hello" });

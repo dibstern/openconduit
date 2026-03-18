@@ -23,7 +23,10 @@ let observedElements: Element[] = [];
 const disconnectSpy = vi.fn();
 
 class MockIntersectionObserver {
-	constructor(callback: IntersectionCallback, _options?: IntersectionObserverInit) {
+	constructor(
+		callback: IntersectionCallback,
+		_options?: IntersectionObserverInit,
+	) {
 		observerCallback = callback;
 	}
 	observe(el: Element) {
@@ -45,11 +48,11 @@ vi.mock("../../../src/lib/frontend/stores/ws.svelte.ts", () => ({
 	wsSend: (...args: unknown[]) => wsSendSpy(...args),
 }));
 
+import HistoryLoader from "../../../src/lib/frontend/components/features/HistoryLoader.svelte";
 // We need real stores for historyState and sessionState so we can set values
 // and have the component read them.
 import { historyState } from "../../../src/lib/frontend/stores/chat.svelte.js";
 import { sessionState } from "../../../src/lib/frontend/stores/session.svelte.js";
-import HistoryLoader from "../../../src/lib/frontend/components/features/HistoryLoader.svelte";
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
@@ -79,7 +82,9 @@ describe("HistoryLoader component", () => {
 
 	it("disconnects observer on destroy", () => {
 		const sentinel = document.createElement("div");
-		const { unmount } = render(HistoryLoader, { props: { sentinelEl: sentinel } });
+		const { unmount } = render(HistoryLoader, {
+			props: { sentinelEl: sentinel },
+		});
 
 		unmount();
 
@@ -96,9 +101,7 @@ describe("HistoryLoader component", () => {
 		await tick();
 
 		// Simulate sentinel becoming visible
-		observerCallback!([
-			{ isIntersecting: true } as IntersectionObserverEntry,
-		]);
+		observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry]);
 
 		expect(wsSendSpy).toHaveBeenCalledTimes(1);
 		expect(wsSendSpy).toHaveBeenCalledWith({
@@ -117,9 +120,7 @@ describe("HistoryLoader component", () => {
 		flushSync();
 		await tick();
 
-		observerCallback!([
-			{ isIntersecting: true } as IntersectionObserverEntry,
-		]);
+		observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry]);
 
 		expect(wsSendSpy).not.toHaveBeenCalled();
 	});
@@ -133,9 +134,7 @@ describe("HistoryLoader component", () => {
 		flushSync();
 		await tick();
 
-		observerCallback!([
-			{ isIntersecting: true } as IntersectionObserverEntry,
-		]);
+		observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry]);
 
 		expect(wsSendSpy).not.toHaveBeenCalled();
 	});
@@ -149,9 +148,7 @@ describe("HistoryLoader component", () => {
 		flushSync();
 		await tick();
 
-		observerCallback!([
-			{ isIntersecting: true } as IntersectionObserverEntry,
-		]);
+		observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry]);
 
 		expect(wsSendSpy).not.toHaveBeenCalled();
 	});
@@ -164,7 +161,7 @@ describe("HistoryLoader component", () => {
 		flushSync();
 		await tick();
 
-		observerCallback!([
+		observerCallback?.([
 			{ isIntersecting: false } as IntersectionObserverEntry,
 		]);
 
@@ -186,9 +183,7 @@ describe("HistoryLoader component", () => {
 		flushSync();
 		await tick();
 
-		observerCallback!([
-			{ isIntersecting: true } as IntersectionObserverEntry,
-		]);
+		observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry]);
 
 		expect(wsSendSpy).toHaveBeenCalledWith(
 			expect.objectContaining({ offset: 150 }),

@@ -51,7 +51,7 @@ self.addEventListener("push", (event: PushEvent) => {
 
 	const options: NotificationOptions = {
 		body: data.body ?? "",
-		tag: data.tag ?? "opencode-relay",
+		tag: data.tag ?? "conduit",
 		data,
 	};
 
@@ -74,7 +74,7 @@ self.addEventListener("push", (event: PushEvent) => {
 	// browser nor push notifications fire when the tab is visible.
 	event.waitUntil(
 		self.registration
-			.showNotification(data.title ?? "OpenCode Relay", options)
+			.showNotification(data.title ?? "Conduit", options)
 			.catch((err: unknown) => {
 				console.warn("[sw] Failed to show notification:", err);
 			}),

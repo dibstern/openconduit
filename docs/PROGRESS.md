@@ -102,7 +102,7 @@
 
 ## Phase 7: UI Parity with Claude Relay
 
-> Bring opencode-relay's web UI to visual and functional parity with the claude-relay reference implementation.
+> Bring conduit's web UI to visual and functional parity with the claude-relay reference implementation.
 
 ### Wave 0 — Foundation (no deps)
 
@@ -322,7 +322,7 @@
 
 ## Phase 10: Feature Parity Enhancements
 
-> Features from claude-relay that opencode-relay doesn't have yet.
+> Features from claude-relay that conduit doesn't have yet.
 
 | # | Ticket | Status | Notes |
 |---|--------|--------|-------|
@@ -617,7 +617,7 @@
 
 ### 2026-02-23 — Session 14 (Ticket 8.3 — Config Persistence Module)
 - **Ticket 8.3**: Config Persistence Module
-- **New file**: `src/lib/config-persistence.ts` (~120 lines) — `DaemonConfig` and `CrashInfo` interfaces, `loadDaemonConfig()` / `saveDaemonConfig()` with atomic writes (tmp+rename), `clearDaemonConfig()` removes daemon.json/relay.sock/daemon.pid, `readCrashInfo()` / `writeCrashInfo()` / `clearCrashInfo()` for crash.json, `syncRecentProjects()` integrating with existing `recent-projects.ts` module (addRecent/deserializeRecent/serializeRecent), `getConfigDir()` returning `~/.opencode-relay`
+- **New file**: `src/lib/config-persistence.ts` (~120 lines) — `DaemonConfig` and `CrashInfo` interfaces, `loadDaemonConfig()` / `saveDaemonConfig()` with atomic writes (tmp+rename), `clearDaemonConfig()` removes daemon.json/relay.sock/daemon.pid, `readCrashInfo()` / `writeCrashInfo()` / `clearCrashInfo()` for crash.json, `syncRecentProjects()` integrating with existing `recent-projects.ts` module (addRecent/deserializeRecent/serializeRecent), `getConfigDir()` returning `~/.conduit`
 - **Tests**: `test/unit/config-persistence.test.ts` — 21 tests across 6 describe blocks: loadDaemonConfig (4), saveDaemonConfig (4), clearDaemonConfig (2), CrashInfo (4), syncRecentProjects (6), getConfigDir (1). All use temp directories via `mkdtempSync`, cleaned up in afterEach
 - All 21 tests passing, TypeScript clean, Biome clean
 

@@ -4,7 +4,7 @@
 
 **Goal:** Systematically fix 20 audit findings — dead code, orphaned modules, broken features, duplicate types, and stale wiring — restoring the codebase to a consistent state where every module is either properly wired or removed.
 
-**Architecture:** opencode-relay is a stateless translation layer: Browser <-WS-> Server <-HTTP/SSE-> OpenCode (port 4096). The server side (`src/lib/`) translates SSE events via `event-translator.ts`, routes WS messages via `ws-router.ts`, and wires everything in `relay-stack.ts`. The frontend (`src/lib/public/`) is a Svelte 5 app with rune-based stores. Two separate tsconfig contexts exist: server (NodeNext) and frontend (ESNext/bundler).
+**Architecture:** conduit is a stateless translation layer: Browser <-WS-> Server <-HTTP/SSE-> OpenCode (port 4096). The server side (`src/lib/`) translates SSE events via `event-translator.ts`, routes WS messages via `ws-router.ts`, and wires everything in `relay-stack.ts`. The frontend (`src/lib/public/`) is a Svelte 5 app with rune-based stores. Two separate tsconfig contexts exist: server (NodeNext) and frontend (ESNext/bundler).
 
 **Tech Stack:** TypeScript ESM, Svelte 5, Vitest, Biome, pnpm, Node.js >= 18
 
@@ -784,7 +784,7 @@ pnpm vitest run test/unit/ws-router-pty.test.ts
 
 **Run the full verification suite:**
 ```bash
-cd /Users/dstern/src/workspaces/opencode-relay/opencode-relay
+cd /Users/dstern/src/workspaces/conduit/conduit
 
 # Type checking (both contexts)
 pnpm check

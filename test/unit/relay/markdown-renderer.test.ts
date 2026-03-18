@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { OpenCodeClient } from "../../../src/lib/instance/opencode-client.js";
 import {
 	preRenderHistoryMessages,
 	renderMarkdownServer,
@@ -51,13 +52,13 @@ describe("preRenderHistoryMessages", () => {
 		preRenderHistoryMessages(messages);
 
 		// User message parts: no renderedHtml
-		expect(messages[0]!.parts![0]!.renderedHtml).toBeUndefined();
+		expect(messages[0]?.parts?.[0]?.renderedHtml).toBeUndefined();
 		// Assistant text part: has renderedHtml
-		expect(messages[1]!.parts![0]!.renderedHtml).toContain(
+		expect(messages[1]?.parts?.[0]?.renderedHtml).toContain(
 			"<strong>bold</strong>",
 		);
 		// Assistant tool part: no renderedHtml
-		expect(messages[1]!.parts![1]!.renderedHtml).toBeUndefined();
+		expect(messages[1]?.parts?.[1]?.renderedHtml).toBeUndefined();
 	});
 
 	it("should skip parts with no text", () => {
@@ -70,7 +71,7 @@ describe("preRenderHistoryMessages", () => {
 		];
 
 		preRenderHistoryMessages(messages);
-		expect(messages[0]!.parts![0]!.renderedHtml).toBeUndefined();
+		expect(messages[0]?.parts?.[0]?.renderedHtml).toBeUndefined();
 	});
 });
 
@@ -94,14 +95,14 @@ describe("SessionManager.loadPreRenderedHistory", () => {
 		};
 
 		const mgr = new SessionManager({
-			client: mockClient as any,
+			client: mockClient as unknown as OpenCodeClient,
 		});
 
 		const result = await mgr.loadPreRenderedHistory("test-session");
 
 		// Assistant text part should have renderedHtml with <strong>
-		expect(result.messages[0]!.parts![0]!.renderedHtml).toBeUndefined(); // user part
-		expect(result.messages[1]!.parts![0]!.renderedHtml).toContain(
+		expect(result.messages[0]?.parts?.[0]?.renderedHtml).toBeUndefined(); // user part
+		expect(result.messages[1]?.parts?.[0]?.renderedHtml).toContain(
 			"<strong>bold</strong>",
 		);
 	});
@@ -118,7 +119,7 @@ describe("SessionManager.loadPreRenderedHistory", () => {
 		};
 
 		const mgr = new SessionManager({
-			client: mockClient as any,
+			client: mockClient as unknown as OpenCodeClient,
 			historyPageSize: 50,
 		});
 
@@ -132,7 +133,7 @@ describe("SessionManager.loadPreRenderedHistory", () => {
 
 		// Both pages should have renderedHtml
 		for (const msg of [...page1.messages, ...page2.messages]) {
-			expect(msg.parts![0]!.renderedHtml).toBeDefined();
+			expect(msg.parts?.[0]?.renderedHtml).toBeDefined();
 		}
 	});
 });

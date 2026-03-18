@@ -1,5 +1,5 @@
 // ─── Projects Submenu (Ticket 8.11) ──────────────────────────────────────────
-// Interactive CLI projects submenu for opencode-relay. Displays project list
+// Interactive CLI projects submenu for conduit. Displays project list
 // with status, handles add/remove/title operations, and project detail view.
 // Ported from claude-relay/bin/cli.js lines 1487-1679.
 

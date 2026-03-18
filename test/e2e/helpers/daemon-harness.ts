@@ -25,9 +25,9 @@ export interface DaemonHarness {
 	baseUrl: string;
 	/** The slug of the added project */
 	projectSlug: string;
-	/** Full project URL (e.g. "http://127.0.0.1:54321/p/opencode-relay/") */
+	/** Full project URL (e.g. "http://127.0.0.1:54321/p/conduit/") */
 	projectUrl: string;
-	/** Project URL path (e.g. "/p/opencode-relay/") */
+	/** Project URL path (e.g. "/p/conduit/") */
 	projectPath: string;
 	/** Stop daemon and clean up temp directories */
 	stop(): Promise<void>;

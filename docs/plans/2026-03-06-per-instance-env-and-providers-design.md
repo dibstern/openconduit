@@ -27,7 +27,7 @@ Additionally, the Default instance is always unmanaged (connects to an existing 
 At daemon startup, probe `OPENCODE_URL` (default `http://localhost:4096`):
 
 - **Reachable** (any HTTP response, including 401): create Default as **unmanaged** (external). This is today's behavior.
-- **Not reachable** (connection refused / timeout): spawn `opencode serve` as a **managed** instance with auto-isolated `XDG_DATA_HOME` at `~/.local/share/opencode-relay/default/`. Find a free port starting from 4096.
+- **Not reachable** (connection refused / timeout): spawn `opencode serve` as a **managed** instance with auto-isolated `XDG_DATA_HOME` at `~/.local/share/conduit/default/`. Find a free port starting from 4096.
 
 On daemon restart, the persisted config remembers whether Default was managed or unmanaged. For managed instances, re-probe first to respect externally-started servers.
 
@@ -45,7 +45,7 @@ Extend the instance creation/editing form in `SettingsPanel.svelte`:
 - Managed (checkbox) — existing
 - **Environment Variables** (key-value editor) — **new**
 
-The env editor is a list of `{key, value}` rows with add/remove buttons. `XDG_DATA_HOME` shows its auto-generated value as a placeholder (e.g. `~/.local/share/opencode-relay/{id}`) so users see what they'd override.
+The env editor is a list of `{key, value}` rows with add/remove buttons. `XDG_DATA_HOME` shows its auto-generated value as a placeholder (e.g. `~/.local/share/conduit/{id}`) so users see what they'd override.
 
 #### Instance Editing
 
@@ -77,7 +77,7 @@ For **managed instances**, the global `OPENCODE_SERVER_PASSWORD` is automaticall
 
 ```
 1. User creates instance "Claude Team" (managed, port 4097)
-   -> Relay auto-sets XDG_DATA_HOME = ~/.local/share/opencode-relay/claude-team/
+   -> Relay auto-sets XDG_DATA_HOME = ~/.local/share/conduit/claude-team/
    -> User optionally overrides XDG_DATA_HOME in env editor
 
 2. Relay spawns: opencode serve --port 4097
@@ -85,7 +85,7 @@ For **managed instances**, the global `OPENCODE_SERVER_PASSWORD` is automaticall
    -> OpenCode reads auth.json from its own XDG_DATA_HOME
 
 3. User configures providers externally:
-   -> XDG_DATA_HOME=~/.local/share/opencode-relay/claude-team opencode auth
+   -> XDG_DATA_HOME=~/.local/share/conduit/claude-team opencode auth
    -> Sets API keys for this instance only
 
 4. Relay health-checks localhost:4097 with global password

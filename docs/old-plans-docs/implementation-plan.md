@@ -12,7 +12,7 @@ Claude-relay uses an **in-process SDK** (`@anthropic-ai/claude-agent-sdk`) with 
 
 ```
 claude-relay:    Browser ←WS→ Server ←SDK (in-process)→ Claude Code
-opencode-relay:  Browser ←WS→ Server ←HTTP/SSE (localhost)→ OpenCode Server
+conduit:  Browser ←WS→ Server ←HTTP/SSE (localhost)→ OpenCode Server
 ```
 
 ### Technology Decisions

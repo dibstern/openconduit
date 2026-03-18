@@ -43,7 +43,7 @@ export interface PushSubscriptionData {
 export interface PushManagerOptions {
 	/** VAPID subject, e.g. "mailto:admin@example.com" */
 	vapidSubject?: string;
-	/** Override config directory (default: ~/.opencode-relay) */
+	/** Override config directory (default: ~/.conduit) */
 	configDir?: string;
 	/** Override web-push module (for testing) */
 	_webpush?: WebPushModule;
@@ -68,8 +68,7 @@ export class PushNotificationManager {
 	private subscriptions = new Map<string, PushSubscriptionData>();
 
 	constructor(options?: PushManagerOptions) {
-		this.vapidSubject =
-			options?.vapidSubject ?? "mailto:admin@opencode-relay.dev";
+		this.vapidSubject = options?.vapidSubject ?? "mailto:admin@conduit.dev";
 		this.configDir = options?.configDir ?? DEFAULT_CONFIG_DIR;
 		this.webpush = options?._webpush ?? defaultWebpush;
 	}

@@ -136,7 +136,7 @@ describe("Ticket 3.4 — fetchLatestVersion()", () => {
 	it("returns version from registry response", async () => {
 		const fetcher = mockFetchOk("2.5.0");
 		const version = await fetchLatestVersion(
-			"opencode-relay",
+			"conduit",
 			"https://registry.npmjs.org",
 			fetcher,
 		);
@@ -171,40 +171,28 @@ describe("Ticket 3.4 — fetchLatestVersion()", () => {
 	it("throws on 500 response", async () => {
 		const fetcher = mockFetchError(500);
 		await expect(
-			fetchLatestVersion(
-				"opencode-relay",
-				"https://registry.npmjs.org",
-				fetcher,
-			),
+			fetchLatestVersion("conduit", "https://registry.npmjs.org", fetcher),
 		).rejects.toThrow(/500/);
 	});
 
 	it("throws on network error", async () => {
 		const fetcher = mockFetchNetworkError("DNS lookup failed");
 		await expect(
-			fetchLatestVersion(
-				"opencode-relay",
-				"https://registry.npmjs.org",
-				fetcher,
-			),
+			fetchLatestVersion("conduit", "https://registry.npmjs.org", fetcher),
 		).rejects.toThrow(/DNS lookup failed/);
 	});
 
 	it("throws if response has no version field", async () => {
 		const fetcher = vi.fn(
 			async () =>
-				new Response(JSON.stringify({ name: "opencode-relay" }), {
+				new Response(JSON.stringify({ name: "conduit" }), {
 					status: 200,
 					headers: { "Content-Type": "application/json" },
 				}),
 		) as unknown as typeof globalThis.fetch;
 
 		await expect(
-			fetchLatestVersion(
-				"opencode-relay",
-				"https://registry.npmjs.org",
-				fetcher,
-			),
+			fetchLatestVersion("conduit", "https://registry.npmjs.org", fetcher),
 		).rejects.toThrow(/no version field/);
 	});
 });

@@ -55,7 +55,7 @@ New methods added to `ChatPage`:
 **Prompt:** Same as above (reuses response from test 1 if sequential)
 
 **Assertions:**
-- Assistant text mentions the project name from `package.json` (e.g., "opencode-relay")
+- Assistant text mentions the project name from `package.json` (e.g., "conduit")
 - Validates the full pipeline: OpenCode reads file → SSE events → relay translates → browser renders
 
 ### 3. Result bar after response

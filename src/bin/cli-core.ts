@@ -132,7 +132,7 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 	if (args.command === "foreground") {
 		const opencodeUrl = ENV.opencodeUrl || `http://localhost:${args.ocPort}`;
 
-		stdout.write(`\nOpenCode Relay (foreground)\n`);
+		stdout.write(`\nConduit (foreground)\n`);
 		stdout.write(`  OpenCode: ${opencodeUrl}\n`);
 
 		const daemon = new Daemon({
@@ -168,7 +168,7 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 		const running = await checkDaemon();
 		if (!running) {
 			stderr.write("Daemon is not running.\n");
-			stderr.write("Start with: npx opencode-relay\n");
+			stderr.write("Start with: npx conduit\n");
 			exit(1);
 			return;
 		}
@@ -228,7 +228,7 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 		const running = await checkDaemon();
 		if (!running) {
 			stderr.write("Daemon is not running.\n");
-			stderr.write("Start with: npx opencode-relay\n");
+			stderr.write("Start with: npx conduit\n");
 			exit(1);
 			return;
 		}
@@ -250,7 +250,7 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 		const running = await checkDaemon();
 		if (!running) {
 			stderr.write("Daemon is not running.\n");
-			stderr.write("Start with: npx opencode-relay\n");
+			stderr.write("Start with: npx conduit\n");
 			exit(1);
 			return;
 		}
@@ -272,7 +272,7 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 		const running = await checkDaemon();
 		if (!running) {
 			stderr.write("Daemon is not running.\n");
-			stderr.write("Start with: npx opencode-relay\n");
+			stderr.write("Start with: npx conduit\n");
 			exit(1);
 			return;
 		}
@@ -314,7 +314,7 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 		const running = await checkDaemon();
 		if (!running) {
 			stderr.write("Daemon is not running.\n");
-			stderr.write("Start with: npx opencode-relay\n");
+			stderr.write("Start with: npx conduit\n");
 			exit(1);
 			return;
 		}
@@ -356,7 +356,7 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 		const running = await checkDaemon();
 		if (!running) {
 			stderr.write("Daemon is not running.\n");
-			stderr.write("Start with: npx opencode-relay\n");
+			stderr.write("Start with: npx conduit\n");
 			exit(1);
 			return;
 		}
@@ -403,7 +403,7 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 		const running = await checkDaemon();
 		if (!running) {
 			stderr.write("Daemon is not running.\n");
-			stderr.write("Start with: npx opencode-relay\n");
+			stderr.write("Start with: npx conduit\n");
 			exit(1);
 			return;
 		}
@@ -657,7 +657,7 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 
 	// 4. Display connection info
 	stdout.write("\n");
-	stdout.write("opencode-relay\n");
+	stdout.write("conduit\n");
 	stdout.write(`  URL: ${url}\n`);
 
 	if (slug) {
@@ -682,8 +682,6 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 	}
 
 	// 7. Show PIN info
-	stdout.write(
-		"Tip: Set a PIN for security: opencode-relay --pin <4-8 digits>\n",
-	);
+	stdout.write("Tip: Set a PIN for security: conduit --pin <4-8 digits>\n");
 	stdout.write("\n");
 }

@@ -240,7 +240,7 @@ describe("SW push handler", () => {
 
 		const spy = getShowNotificationSpy();
 		expect(spy).toHaveBeenCalledWith(
-			"OpenCode Relay",
+			"Conduit",
 			expect.objectContaining({ body: "Done!" }),
 		);
 	});

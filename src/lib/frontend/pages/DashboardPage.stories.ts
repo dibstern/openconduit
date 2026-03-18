@@ -18,9 +18,9 @@ type Story = StoryObj<typeof meta>;
 
 const mockProjects: DashboardProject[] = [
 	{
-		slug: "opencode-relay",
-		path: "/Users/dev/projects/opencode-relay",
-		title: "OpenCode Relay",
+		slug: "conduit",
+		path: "/Users/dev/projects/conduit",
+		title: "Conduit",
 		status: "ready",
 		sessions: 5,
 		clients: 2,

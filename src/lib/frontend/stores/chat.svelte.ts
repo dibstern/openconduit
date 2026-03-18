@@ -458,7 +458,8 @@ function applyQueuedFlagInPlace(): void {
 	if (msgs.length === 0) return;
 
 	for (let i = msgs.length - 1; i >= 0; i--) {
-		const m = msgs[i]!;
+		const m = msgs[i];
+		if (!m) continue;
 		if (m.type === "user") {
 			// Check if there's an assistant response after it
 			const hasResponse = msgs

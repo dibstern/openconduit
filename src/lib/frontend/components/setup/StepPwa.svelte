@@ -30,7 +30,7 @@
 		{totalSteps}
 		{currentIdx}
 		title="Add to Home Screen"
-		description="Install OpenCode Relay as an app for quick access and a full-screen experience."
+		description="Install Conduit as an app for quick access and a full-screen experience."
 	/>
 
 	{#if isIOS}
@@ -192,7 +192,7 @@
 				Click it and then click <b>Install</b> to confirm.
 				<div class="text-xs text-text-muted mt-1">
 					If there is no icon, go to <b
-						>Menu &gt; Install OpenCode Relay</b
+						>Menu &gt; Install Conduit</b
 					>
 					or
 					<b>Menu &gt; Save and Share &gt; Install</b>.
@@ -208,7 +208,7 @@
 		{#if isAndroid}
 			Optional: install for quick access and full-screen experience.
 		{:else}
-			After installing, open OpenCode Relay from your home screen to
+			After installing, open Conduit from your home screen to
 			continue setup.
 		{/if}
 	</div>

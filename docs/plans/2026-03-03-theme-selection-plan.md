@@ -2,7 +2,7 @@
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
-**Goal:** Add a full Base16 theme selection system to opencode-relay with 22 bundled themes, a picker UI, custom user themes, and integration with xterm.js, highlight.js, and Mermaid.
+**Goal:** Add a full Base16 theme selection system to conduit with 22 bundled themes, a picker UI, custom user themes, and integration with xterm.js, highlight.js, and Mermaid.
 
 **Architecture:** Svelte 5 store (`theme.svelte.ts`) computes CSS variables from Base16 palettes and applies them to `:root`. A `ThemePicker.svelte` component provides selection UI in the sidebar footer. Server-side endpoint serves bundled + custom theme JSON files.
 
@@ -22,7 +22,7 @@ Run: `mkdir -p src/lib/themes`
 
 **Step 2: Copy all 22 theme JSON files from claude-relay**
 
-Run: `cp ~/src/personal/opencode-relay/claude-relay/lib/themes/*.json src/lib/themes/`
+Run: `cp ~/src/personal/conduit/claude-relay/lib/themes/*.json src/lib/themes/`
 
 **Step 3: Verify files copied**
 
@@ -164,7 +164,7 @@ function getBundledThemesDir(): string {
     return join(thisFile, "..", "themes");
 }
 
-/** User custom themes directory: ~/.opencode-relay/themes/ */
+/** User custom themes directory: ~/.conduit/themes/ */
 function getCustomThemesDir(): string {
     return join(DEFAULT_CONFIG_DIR, "themes");
 }
@@ -588,9 +588,9 @@ import type { Base16Theme } from "./theme-compute.js";
 export { computeTerminalTheme, computeMermaidVars };
 export type { Base16Theme };
 
-const STORAGE_KEY_THEME = "opencode-relay-theme";
-const STORAGE_KEY_VARS = "opencode-relay-theme-vars";
-const STORAGE_KEY_VARIANT = "opencode-relay-theme-variant";
+const STORAGE_KEY_THEME = "conduit-theme";
+const STORAGE_KEY_VARS = "conduit-theme-vars";
+const STORAGE_KEY_VARIANT = "conduit-theme-variant";
 
 export const themeState = $state({
     currentThemeId: "default",
@@ -774,12 +774,12 @@ Add the following `<script>` tag inside `<head>`, before the `<link rel="stylesh
 ```html
 <script>
 (function(){
-  var v=localStorage.getItem("opencode-relay-theme-vars");
+  var v=localStorage.getItem("conduit-theme-vars");
   if(!v)return;
   try{
     var o=JSON.parse(v),root=document.documentElement,p;
     for(p in o)root.style.setProperty(p,o[p]);
-    var vt=localStorage.getItem("opencode-relay-theme-variant");
+    var vt=localStorage.getItem("conduit-theme-variant");
     if(vt==="light")root.classList.add("light-theme");
     else if(vt==="dark")root.classList.add("dark-theme");
     var meta=document.querySelector('meta[name="theme-color"]');

@@ -13,7 +13,7 @@ test.describe("E2E Smoke Test", () => {
 		await app.goto(relayUrl);
 
 		// Page title
-		await expect(page).toHaveTitle("OpenCode Relay");
+		await expect(page).toHaveTitle("Conduit");
 
 		// Connection overlay should be hidden (WS connected)
 		await expect(app.connectOverlay).toBeHidden();

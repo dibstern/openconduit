@@ -230,7 +230,7 @@ describe("Daemon TLS integration", () => {
 		mkdirSync(staticDir, { recursive: true });
 		writeFileSync(
 			join(staticDir, "index.html"),
-			"<!DOCTYPE html><html><body>OpenCode Relay</body></html>",
+			"<!DOCTYPE html><html><body>Conduit</body></html>",
 			"utf-8",
 		);
 	});

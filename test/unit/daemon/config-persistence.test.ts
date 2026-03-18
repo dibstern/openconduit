@@ -55,9 +55,9 @@ afterEach(() => {
 // ─── getConfigDir ───────────────────────────────────────────────────────────
 
 describe("getConfigDir", () => {
-	it("returns a path ending in opencode-relay", () => {
+	it("returns a path ending in conduit", () => {
 		const dir = getConfigDir();
-		expect(dir).toMatch(/opencode-relay$/);
+		expect(dir).toMatch(/conduit$/);
 	});
 });
 

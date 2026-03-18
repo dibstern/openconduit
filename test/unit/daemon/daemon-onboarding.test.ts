@@ -149,7 +149,7 @@ describe("startOnboardingServer", () => {
 		expect(status).toBe(200);
 		expect(body).toContain("BEGIN CERTIFICATE");
 		expect(headers["content-type"]).toBe("application/x-pem-file");
-		expect(headers["content-disposition"]).toContain("opencode-relay-ca.pem");
+		expect(headers["content-disposition"]).toContain("conduit-ca.pem");
 
 		await closeOnboardingServer(ctx);
 	});

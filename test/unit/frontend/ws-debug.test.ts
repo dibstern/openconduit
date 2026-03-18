@@ -34,10 +34,10 @@ describe("ws-debug", () => {
 			wsDebugLog("connect", "connecting", "slug=test");
 			const events = getDebugEvents();
 			expect(events).toHaveLength(1);
-			expect(events[0]!.event).toBe("connect");
-			expect(events[0]!.state).toBe("connecting");
-			expect(events[0]!.detail).toBe("slug=test");
-			expect(events[0]!.time).toBeGreaterThan(0);
+			expect(events[0]?.event).toBe("connect");
+			expect(events[0]?.state).toBe("connecting");
+			expect(events[0]?.detail).toBe("slug=test");
+			expect(events[0]?.time).toBeGreaterThan(0);
 		});
 
 		it("caps ring buffer at 50 events", () => {
@@ -46,8 +46,8 @@ describe("ws-debug", () => {
 			}
 			const events = getDebugEvents();
 			expect(events).toHaveLength(50);
-			expect(events[0]!.event).toBe("event-10");
-			expect(events[49]!.event).toBe("event-59");
+			expect(events[0]?.event).toBe("event-10");
+			expect(events[49]?.event).toBe("event-59");
 		});
 
 		it("updates wsDebugState.eventCount reactively", () => {
@@ -151,7 +151,7 @@ describe("ws-debug", () => {
 			wsDebugLogMessage("connected"); // #1 again
 			const events = getDebugEvents();
 			expect(events).toHaveLength(2);
-			expect(events[1]!.detail).toBe("#1");
+			expect(events[1]?.detail).toBe("#1");
 		});
 	});
 
@@ -176,7 +176,7 @@ describe("ws-debug", () => {
 			expect(wsDebugState.eventCount).toBe(0);
 			// After clear, message count resets
 			wsDebugLogMessage("connected");
-			expect(getDebugEvents()[0]!.detail).toBe("#1");
+			expect(getDebugEvents()[0]?.detail).toBe("#1");
 		});
 	});
 });
