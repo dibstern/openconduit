@@ -131,16 +131,19 @@ describe("printLogo", () => {
 		expect(all).toContain("\x1b[38;2;");
 	});
 
-	it('contains "OPENCODE" block letters', () => {
+	it("contains ASCII art block characters for conduit", () => {
 		const output: string[] = [];
 		const stdout = { write: (s: string) => output.push(s) };
 		printLogo(stdout);
 		const all = stripAnsi(output.join(""));
-		// The pixel-art logo uses full block characters for body and window cells
-		expect(all).toContain("\u2588"); // full block character
+		// ASCII art uses full block characters
+		expect(all).toContain("\u2588");
+		// Multiple rows of art (CONDUIT_ART has 5 rows with █)
+		const blockLines = all.split("\n").filter((l) => l.includes("\u2588"));
+		expect(blockLines.length).toBeGreaterThanOrEqual(5);
 	});
 
-	it("uses distinct RGB colors for open/code/window sections in non-basic terminal", () => {
+	it("uses cyan→pink gradient, version tag, and brand bars in non-basic terminal", () => {
 		const saved = process.env["TERM_PROGRAM"];
 		process.env["TERM_PROGRAM"] = "vscode";
 		try {
@@ -148,12 +151,16 @@ describe("printLogo", () => {
 			const stdout = { write: (s: string) => output.push(s) };
 			printLogo(stdout);
 			const all = output.join("");
-			// "open" section: medium gray (140,138,138)
-			expect(all).toContain("\x1b[38;2;140;138;138m");
-			// "code"/"relay" section: white (240,240,240)
-			expect(all).toContain("\x1b[38;2;240;240;240m");
-			// "window" fill: dark gray (70,68,68)
-			expect(all).toContain("\x1b[38;2;70;68;68m");
+			// Cyan start of gradient (0,229,255) on first row
+			expect(all).toContain("\x1b[1;38;2;0;229;255m");
+			// Pink end of gradient (255,45,123) on last row
+			expect(all).toContain("\x1b[1;38;2;255;45;123m");
+			// Version tag
+			expect(all).toContain("v0.1.0");
+			// Brand grid underline uses upper/lower block chars
+			const stripped = stripAnsi(all);
+			expect(stripped).toContain("\u2580"); // upper half block (pink row)
+			expect(stripped).toContain("\u2584"); // lower half block (cyan row)
 		} finally {
 			if (saved !== undefined) {
 				process.env["TERM_PROGRAM"] = saved;
@@ -163,7 +170,7 @@ describe("printLogo", () => {
 		}
 	});
 
-	it("uses dim/bold in basic terminal mode", () => {
+	it("uses bold cyan in basic terminal mode (no 24-bit RGB)", () => {
 		const saved = process.env["TERM_PROGRAM"];
 		process.env["TERM_PROGRAM"] = "Apple_Terminal";
 		try {
@@ -171,9 +178,8 @@ describe("printLogo", () => {
 			const stdout = { write: (s: string) => output.push(s) };
 			printLogo(stdout);
 			const all = output.join("");
-			// Should use dim and bold for sections
-			expect(all).toContain("\x1b[2m"); // dim
-			expect(all).toContain("\x1b[1m"); // bold
+			// Bold cyan for CONDUIT art (16-color)
+			expect(all).toContain("\x1b[1;36m");
 			// Should NOT use 24-bit RGB
 			expect(all).not.toContain("\x1b[38;2;");
 		} finally {
@@ -185,16 +191,14 @@ describe("printLogo", () => {
 		}
 	});
 
-	it("renders pixel-art logo with multiple rows", () => {
+	it("renders brand underline with half-block characters and version tag", () => {
 		const output: string[] = [];
 		const stdout = { write: (s: string) => output.push(s) };
 		printLogo(stdout);
 		const all = stripAnsi(output.join(""));
-		// Pixel-art logo uses full block characters at double width
-		expect(all).toContain("\u2588\u2588"); // double-width block cells
-		// Should have multiple rows (opencode 7 + relay 5 = 12+ content lines)
-		const contentLines = all.split("\n").filter((l) => l.includes("\u2588"));
-		expect(contentLines.length).toBeGreaterThan(5);
+		expect(all).toContain("\u2580"); // upper half block
+		expect(all).toContain("\u2584"); // lower half block
+		expect(all).toContain("v0.1.0");
 	});
 });
 

@@ -85,51 +85,44 @@ function defaultGetRecentProjects(): Array<{
 
 // ─── Logo ────────────────────────────────────────────────────────────────────
 
+/** Number of block-grid columns in the brand underline. */
+const GRID_COLS = 10;
+
+/** Width of the brand underline — matches CONDUIT_ART max line width. */
+const LOGO_WIDTH = 56;
+
+/** "CONDUIT" in ANSI Shadow figlet font — 6 rows, used as a subtitle. */
+const CONDUIT_ART = [
+	" ██████╗ ██████╗ ███╗   ██╗██████╗ ██╗   ██╗██╗████████╗",
+	"██╔════╝██╔═══██╗████╗  ██║██╔══██╗██║   ██║██║╚══██╔══╝",
+	"██║     ██║   ██║██╔██╗ ██║██║  ██║██║   ██║██║   ██║",
+	"██║     ██║   ██║██║╚██╗██║██║  ██║██║   ██║██║   ██║",
+	"╚██████╗╚██████╔╝██║ ╚████║██████╔╝╚██████╔╝██║   ██║",
+	" ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═════╝  ╚═════╝ ╚═╝   ╚═╝",
+];
+
 /**
- * Pixel-art letter definitions for the CONDUIT logo.
- * Derived from the official SVG (opencode-wordmark-dark.svg) on a 6px grid.
- *
- * Cell types: B = body, W = window (inner fill), . = empty.
- * Most letters are 4 cells wide × 5 rows. Exceptions:
- * - 'd', 't' have 6 rows: row 0 is ascender, rows 1–5 are main body
- * - 'p' has 6 rows: rows 0–4 are main body, row 5 is descender
- * - 'i' is 1 cell wide × 5 rows (variable width supported by renderer)
- *
- * Each cell is rendered at double character width (2 chars per cell)
- * to achieve the correct ~52:63 aspect ratio in terminal fonts.
+ * Interpolate between two RGB colors.
  */
-const OC: Record<string, string[]> = {
-	o: ["BBBB", "B..B", "BWWB", "BWWB", "BBBB"],
-	p: ["BBBB", "B..B", "BWWB", "BWWB", "BBBB", "B..."],
-	e: ["BBBB", "B..B", "BBBB", "BWWW", "BBBB"],
-	n: ["BBB.", "B..B", "BWWB", "BWWB", "BWWB"],
-	c: ["BBBB", "B...", "BWWW", "BWWW", "BBBB"],
-	d: ["...B", "BBBB", "B..B", "BWWB", "BWWB", "BBBB"],
-	u: ["B..B", "B..B", "BWWB", "BWWB", "BBBB"],
-	i: ["B", "B", "B", "B", "B"],
-	t: [".B..", "BBBB", ".B..", ".BWW", ".BWW", ".BBB"],
-};
-
-/** Chars per cell (doubled for correct terminal aspect ratio). */
-const CELL_W = 2;
-/** Gap chars between adjacent letters. */
-const LETTER_GAP = 2;
-/** Number of "open" letters (first 4); rest are "conduit" group. */
-const OPEN_LEN = 4;
-/** Total rows for opencode: 0=ascender, 1–5=main, 6=descender. */
-const TOTAL_ROWS = 7;
+function lerpColor(
+	c1: [number, number, number],
+	c2: [number, number, number],
+	t: number,
+): [number, number, number] {
+	return [
+		Math.round(c1[0] + (c2[0] - c1[0]) * t),
+		Math.round(c1[1] + (c2[1] - c1[1]) * t),
+		Math.round(c1[2] + (c2[2] - c1[2]) * t),
+	];
+}
 
 /**
- * Print the CONDUIT logo to stdout.
+ * Print the Conduit logo to stdout.
  *
- * Renders a pixel-art reproduction of the official OpenCode SVG logo style at
- * doubled character width for correct terminal aspect ratio (~52:63).
+ * Renders "CONDUIT" in ANSI Shadow figlet font with a per-row cyan→pink
+ * gradient, a version tag, and 2-row brand underline.
  *
- * Colors:
- * - "open" body: medium gray
- * - "conduit" body: white
- * - Window (inner fill): dark gray (darker than "open")
- *
+ * Falls back to bold cyan ANSI for basic terminals.
  * Clears the screen first.
  */
 export function printLogo(stdout: Writable): void {
@@ -137,72 +130,63 @@ export function printLogo(stdout: Writable): void {
 	stdout.write("\n");
 
 	const basic = isBasicTerm();
-	const openClr = basic ? a.dim : "\x1b[38;2;140;138;138m";
-	const codeClr = basic ? a.bold : "\x1b[38;2;240;240;240m";
-	const winClr = basic ? "" : "\x1b[38;2;70;68;68m";
+	const version = "v0.1.0";
 
-	const blk = "\u2588".repeat(CELL_W);
-	const spc = " ".repeat(CELL_W);
-	const gap = " ".repeat(LETTER_GAP);
+	const pad = "  "; // 2-char left indent
 
-	// ── Render "conduit" ──────────────────────────────────────────
-	const ocWord = "conduit";
-	const ocGlyphs = [...ocWord].map((ch) => OC[ch]);
-
-	for (let row = 0; row < TOTAL_ROWS; row++) {
-		let line = "  ";
-		let prev = "";
-
-		for (let li = 0; li < ocGlyphs.length; li++) {
-			if (li > 0) line += gap;
-
-			const glyph = ocGlyphs[li];
-			const key = ocWord[li];
-			const isCode = li >= OPEN_LEN;
-			if (!glyph || key === undefined) continue;
-
-			// Map logo row → glyph row
-			// Ascender letters (d, t): glyph starts at row 0
-			// Descender letter (p): glyph rows 0–4 at render rows 1–5, row 5 at render row 6
-			// Standard letters (including narrow 'i'): glyph rows 0–4 at render rows 1–5
-			let gr: string | undefined;
-			if (key === "d" || key === "t") {
-				gr = row < glyph.length ? glyph[row] : undefined;
-			} else if (key === "p") {
-				if (row >= 1 && row <= 5) gr = glyph[row - 1];
-				else if (row === 6) gr = glyph[5];
-			} else {
-				if (row >= 1 && row <= 5) gr = glyph[row - 1];
-			}
-
-			if (!gr) {
-				const glyphWidth = glyph[0]?.length ?? 4;
-				line += spc.repeat(glyphWidth);
-				continue;
-			}
-
-			for (const cell of gr) {
-				if (cell === "B") {
-					const clr = isCode ? codeClr : openClr;
-					if (clr !== prev) {
-						line += clr;
-						prev = clr;
-					}
-					line += blk;
-				} else if (cell === "W") {
-					if (winClr !== prev) {
-						line += winClr;
-						prev = winClr;
-					}
-					line += blk;
-				} else {
-					line += spc;
-				}
-			}
+	if (basic) {
+		// Basic terminal: bold cyan, no gradient
+		for (const row of CONDUIT_ART) {
+			stdout.write(`${pad}\x1b[1;36m${row}${a.reset}\n`);
+		}
+		stdout.write("\n");
+		stdout.write(`${pad}${"▀".repeat(LOGO_WIDTH)}\n`);
+		stdout.write(`${pad}${"▄".repeat(LOGO_WIDTH)}\n`);
+	} else {
+		// Truecolor: per-row cyan → pink gradient
+		const cyan: [number, number, number] = [0, 229, 255];
+		const pink: [number, number, number] = [255, 45, 123];
+		for (let i = 0; i < CONDUIT_ART.length; i++) {
+			const t = CONDUIT_ART.length > 1 ? i / (CONDUIT_ART.length - 1) : 0;
+			const rgb = lerpColor(cyan, pink, t);
+			const color = `\x1b[1;38;2;${rgb[0]};${rgb[1]};${rgb[2]}m`;
+			stdout.write(`${pad}${color}${CONDUIT_ART[i]}${a.reset}\n`);
 		}
 
-		line += a.reset;
-		stdout.write(`${line}\n`);
+		// Blank line + version tag (left-aligned with indent)
+		stdout.write("\n");
+		stdout.write(`${pad}\x1b[38;2;82;82;91m${version}${a.reset}\n`);
+		stdout.write("\n");
+
+		// Brand block grid underline — same width as logo art (78 chars)
+		const baseCellWidth = Math.floor(LOGO_WIDTH / GRID_COLS);
+		const remainder = LOGO_WIDTH - baseCellWidth * GRID_COLS;
+
+		// Pink row (L→R fade)
+		let pinkRow = pad;
+		for (let i = 0; i < GRID_COLS; i++) {
+			const t = i / (GRID_COLS - 1);
+			const r = Math.round(255 - t * 200);
+			const g = Math.round(45 - t * 35);
+			const b = Math.round(123 - t * 90);
+			const cw = baseCellWidth + (i < remainder ? 1 : 0);
+			pinkRow += `\x1b[38;2;${r};${g};${b}m` + "\u2580".repeat(cw);
+		}
+		pinkRow += a.reset;
+		stdout.write(`${pinkRow}\n`);
+
+		// Cyan row (R→L fade)
+		let cyanRow = pad;
+		for (let i = 0; i < GRID_COLS; i++) {
+			const t = i / (GRID_COLS - 1);
+			const r = 0;
+			const g = Math.round(60 + t * 169);
+			const b = Math.round(70 + t * 185);
+			const cw = baseCellWidth + (i < remainder ? 1 : 0);
+			cyanRow += `\x1b[38;2;${r};${g};${b}m` + "\u2584".repeat(cw);
+		}
+		cyanRow += a.reset;
+		stdout.write(`${cyanRow}\n`);
 	}
 
 	stdout.write("\n");
