@@ -86,8 +86,10 @@ export interface RequestRouterDeps {
 		res: ServerResponse,
 		subPath: string,
 	) => boolean;
-	/** Path to CA root certificate for /ca/download */
+	/** Path to CA root certificate for /ca/download (PEM fallback) */
 	caRootPath?: string;
+	/** Pre-converted DER-encoded CA cert for iOS-friendly download. */
+	caCertDer?: Buffer;
 }
 
 /** Serialize a RouterProject to the dashboard API shape. */
@@ -117,6 +119,7 @@ export class RequestRouter {
 	private readonly getHealthResponse?: () => object;
 	private readonly onProjectApiRequest?: RequestRouterDeps["onProjectApiRequest"];
 	private readonly caRootPath?: string;
+	private readonly caCertDer?: Buffer;
 
 	constructor(deps: RequestRouterDeps) {
 		this.auth = deps.auth;
@@ -130,6 +133,7 @@ export class RequestRouter {
 			this.getHealthResponse = deps.getHealthResponse;
 		this.onProjectApiRequest = deps.onProjectApiRequest;
 		if (deps.caRootPath != null) this.caRootPath = deps.caRootPath;
+		if (deps.caCertDer != null) this.caCertDer = deps.caCertDer;
 	}
 
 	// ─── Main entry point ────────────────────────────────────────────────
@@ -614,6 +618,18 @@ export class RequestRouter {
 	// ─── Private: CA certificate download ───────────────────────────────
 
 	private async handleCaDownload(res: ServerResponse): Promise<void> {
+		// Prefer DER-encoded .cer for reliable iOS profile installation.
+		if (this.caCertDer) {
+			res.writeHead(200, {
+				"Content-Type": "application/x-x509-ca-cert",
+				"Content-Disposition": 'attachment; filename="conduit-ca.cer"',
+				"Content-Length": this.caCertDer.length,
+			});
+			res.end(this.caCertDer);
+			return;
+		}
+
+		// Fallback to PEM from disk
 		if (!this.caRootPath) {
 			res.writeHead(404, { "Content-Type": "application/json" });
 			res.end(

@@ -44,6 +44,12 @@ export interface DaemonLifecycleContext {
 	httpServer: HttpServer | null;
 	/** HTTP-only onboarding server on port+1 (only when TLS is active). */
 	onboardingServer: HttpServer | null;
+	/**
+	 * When protocol detection is active (TLS mode), a net.Server listens on
+	 * the port and routes connections. The inner HTTPS server that handles
+	 * WebSocket upgrades is stored here. Falls back to httpServer when null.
+	 */
+	upgradeServer: HttpServer | null;
 	ipcServer: NetServer | null;
 	ipcClients: Set<Socket>;
 	clientCount: number;
@@ -71,9 +77,51 @@ export function startHttpServer(ctx: DaemonLifecycleContext): Promise<void> {
 			});
 		};
 
-		ctx.httpServer = ctx.tls
-			? createHttpsServer({ key: ctx.tls.key, cert: ctx.tls.cert }, handler)
-			: createServer(handler);
+		if (ctx.tls) {
+			// ─── TLS mode: protocol detection ─────────────────────────────
+			// A net.Server listens on the port. Each connection's first byte
+			// is peeked: 0x16 (TLS ClientHello) → HTTPS server, otherwise →
+			// plain HTTP redirect to https://.
+			const httpsServer = createHttpsServer(
+				{ key: ctx.tls.key, cert: ctx.tls.cert },
+				handler,
+			);
+			ctx.upgradeServer = httpsServer;
+
+			// Lightweight HTTP redirect handler for plain-HTTP connections
+			const httpRedirect = createServer((req, res) => {
+				const host = req.headers.host ?? `localhost:${ctx.port}`;
+				const hostBase = host.replace(/:\d+$/, "");
+				res.writeHead(301, {
+					Location: `https://${hostBase}:${ctx.port}${req.url ?? "/"}`,
+				});
+				res.end();
+			});
+
+			const netServer = createNetServer((socket) => {
+				socket.once("readable", () => {
+					const buf: Buffer | null = socket.read(1);
+					if (buf === null) return;
+					socket.unshift(buf);
+
+					if (buf[0] === 0x16) {
+						// TLS ClientHello → route to HTTPS
+						httpsServer.emit("connection", socket);
+					} else {
+						// Plain HTTP → route to redirect handler
+						httpRedirect.emit("connection", socket);
+					}
+				});
+			});
+
+			// Store the net.Server as httpServer for listen/close/address.
+			// The upgrade-capable HTTPS server is in ctx.upgradeServer.
+			ctx.httpServer = netServer as unknown as HttpServer;
+		} else {
+			// ─── Plain HTTP mode ──────────────────────────────────────────
+			ctx.httpServer = createServer(handler);
+			ctx.upgradeServer = null;
+		}
 
 		ctx.httpServer.on("error", (err) => {
 			reject(err);
@@ -115,6 +163,8 @@ export function closeHttpServer(ctx: DaemonLifecycleContext): Promise<void> {
 
 export interface OnboardingServerDeps {
 	caRootPath: string | null;
+	/** Pre-converted DER-encoded CA cert for iOS-friendly download. */
+	caCertDer: Buffer | null;
 	staticDir: string;
 }
 
@@ -141,12 +191,14 @@ export function startOnboardingServer(
 	// Resolved after listen — may differ from listenPort when 0 is used.
 	let actualPort = listenPort;
 
-	// Pre-read CA cert (if available) so we don't hit disk per request
-	let caCertBuf: Buffer | null = null;
+	// Pre-read CA cert (if available) so we don't hit disk per request.
+	// DER format preferred (passed in from ensureCerts), PEM as fallback.
+	const caCertDer = deps.caCertDer;
+	let caCertPem: Buffer | null = null;
 	const loadCaCert = deps.caRootPath
 		? readFile(deps.caRootPath)
 				.then((buf) => {
-					caCertBuf = buf;
+					caCertPem = buf;
 				})
 				.catch(() => {
 					log.warn("Onboarding server: CA cert file not readable");
@@ -165,27 +217,40 @@ export function startOnboardingServer(
 
 					try {
 						// ─── /ca/download ───────────────────────────────────
+						// Serve DER-encoded .cer with application/x-x509-ca-cert
+						// for reliable iOS profile installation. Falls back to PEM.
 						if (pathname === "/ca/download" && req.method === "GET") {
-							if (!caCertBuf) {
-								res.writeHead(404, {
-									"Content-Type": "application/json",
+							if (caCertDer) {
+								res.writeHead(200, {
+									"Content-Type": "application/x-x509-ca-cert",
+									"Content-Disposition":
+										'attachment; filename="conduit-ca.cer"',
+									"Content-Length": caCertDer.length,
 								});
-								res.end(
-									JSON.stringify({
-										error: {
-											code: "NOT_FOUND",
-											message: "No CA certificate available",
-										},
-									}),
-								);
+								res.end(caCertDer);
 								return;
 							}
-							res.writeHead(200, {
-								"Content-Type": "application/x-pem-file",
-								"Content-Disposition": 'attachment; filename="conduit-ca.pem"',
-								"Content-Length": caCertBuf.length,
+							if (caCertPem) {
+								res.writeHead(200, {
+									"Content-Type": "application/x-pem-file",
+									"Content-Disposition":
+										'attachment; filename="conduit-ca.pem"',
+									"Content-Length": caCertPem.length,
+								});
+								res.end(caCertPem);
+								return;
+							}
+							res.writeHead(404, {
+								"Content-Type": "application/json",
 							});
-							res.end(caCertBuf);
+							res.end(
+								JSON.stringify({
+									error: {
+										code: "NOT_FOUND",
+										message: "No CA certificate available",
+									},
+								}),
+							);
 							return;
 						}
 

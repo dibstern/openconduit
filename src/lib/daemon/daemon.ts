@@ -168,6 +168,8 @@ export class Daemon {
 	readonly pidPath: string;
 
 	private httpServer: HttpServer | null = null;
+	/** Inner HTTPS server for WebSocket upgrades when protocol detection is active. */
+	private upgradeServer: HttpServer | null = null;
 	private onboardingServer: HttpServer | null = null;
 	private ipcServer: NetServer | null = null;
 	private ipcClients: Set<Socket> = new Set();
@@ -570,6 +572,9 @@ export class Daemon {
 			...(this.tlsCerts?.caRoot != null && {
 				caRootPath: this.tlsCerts.caRoot,
 			}),
+			...(this.tlsCerts?.caCertDer != null && {
+				caCertDer: this.tlsCerts.caCertDer,
+			}),
 			authExemptPaths: ["/setup", "/health", "/api/status", "/api/setup-info"],
 			getHealthResponse: () => this.getStatus(),
 		});
@@ -584,8 +589,10 @@ export class Daemon {
 
 		// WebSocket upgrade router — routes /p/{slug}/ws to the correct relay's WSS.
 		// Must be registered after HTTP server starts but before any relays are added.
+		// When protocol detection is active, upgrades fire on the inner HTTPS server.
+		const wsServer = this.upgradeServer ?? this.httpServer;
 		// biome-ignore lint/style/noNonNullAssertion: safe — initialized by startHttpServer above
-		this.httpServer!.on("upgrade", async (req, socket, head) => {
+		wsServer!.on("upgrade", async (req, socket, head) => {
 			const match = req.url?.match(/^\/p\/([^/]+)\/ws(?:\?|$)/);
 			if (!match) {
 				this.log.debug(
@@ -1179,6 +1186,12 @@ export class Daemon {
 			set httpServer(v) {
 				self.httpServer = v;
 			},
+			get upgradeServer() {
+				return self.upgradeServer;
+			},
+			set upgradeServer(v) {
+				self.upgradeServer = v;
+			},
 			get onboardingServer() {
 				return self.onboardingServer;
 			},
@@ -1203,7 +1216,18 @@ export class Daemon {
 				return self.router;
 			},
 			...(this.tlsCerts != null && {
-				tls: { key: this.tlsCerts.key, cert: this.tlsCerts.cert },
+				tls: {
+					key: this.tlsCerts.key,
+					// Include CA root in cert chain so clients receive the full chain
+					// during TLS handshake (helps iOS and other strict TLS clients).
+					cert: this.tlsCerts.caCertPem
+						? Buffer.concat([
+								this.tlsCerts.cert,
+								Buffer.from("\n"),
+								this.tlsCerts.caCertPem,
+							])
+						: this.tlsCerts.cert,
+				},
 			}),
 		};
 	}
@@ -1321,6 +1345,7 @@ export class Daemon {
 	private startOnboardingServer(): Promise<void> {
 		return startOnboardingServerImpl(this.asLifecycleContext(), {
 			caRootPath: this.tlsCerts?.caRoot ?? null,
+			caCertDer: this.tlsCerts?.caCertDer ?? null,
 			staticDir: this.staticDir,
 		});
 	}

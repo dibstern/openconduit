@@ -15,6 +15,10 @@ export interface TlsCerts {
 	key: Buffer;
 	cert: Buffer;
 	caRoot: string | null;
+	/** CA root certificate content as PEM Buffer (for TLS chain / download). */
+	caCertPem: Buffer | null;
+	/** CA root certificate content as DER Buffer (for iOS .cer download). */
+	caCertDer: Buffer | null;
 }
 
 export interface TlsFs {
@@ -38,6 +42,21 @@ export interface TlsOptions {
 
 function defaultExec(cmd: string): string {
 	return defaultExecSync(cmd, { encoding: "utf8", stdio: "pipe" });
+}
+
+// ─── PEM → DER conversion ───────────────────────────────────────────────────
+
+/**
+ * Convert a PEM-encoded certificate to DER (binary) format.
+ * iOS handles DER-encoded .cer files more reliably for profile installation.
+ */
+export function pemToDer(pem: Buffer): Buffer {
+	const pemStr = pem
+		.toString("utf-8")
+		.replace(/-----BEGIN CERTIFICATE-----/, "")
+		.replace(/-----END CERTIFICATE-----/, "")
+		.replace(/\s/g, "");
+	return Buffer.from(pemStr, "base64");
 }
 
 // ─── isRoutableIP ────────────────────────────────────────────────────────────
@@ -205,6 +224,8 @@ export async function ensureCerts(opts?: TlsOptions): Promise<TlsCerts | null> {
 
 	// Resolve CA root path: prefer mkcert's CAROOT, fall back to local rootCA.pem
 	let caRoot: string | null = null;
+	let caCertPem: Buffer | null = null;
+	let caCertDer: Buffer | null = null;
 	if (mkcertInstalled) {
 		try {
 			const caRootDir = exec("mkcert -CAROOT").trim();
@@ -220,6 +241,16 @@ export async function ensureCerts(opts?: TlsOptions): Promise<TlsCerts | null> {
 		const localCaPath = path.join(certDir, "rootCA.pem");
 		if (fs.existsSync(localCaPath)) {
 			caRoot = localCaPath;
+		}
+	}
+
+	// Pre-read CA cert and convert to DER for iOS-friendly download
+	if (caRoot) {
+		try {
+			caCertPem = Buffer.from(fs.readFileSync(caRoot));
+			caCertDer = pemToDer(caCertPem);
+		} catch {
+			// CA cert read failed — download will be unavailable but TLS still works
 		}
 	}
 
@@ -250,6 +281,8 @@ export async function ensureCerts(opts?: TlsOptions): Promise<TlsCerts | null> {
 				key: Buffer.from(fs.readFileSync(keyPath)),
 				cert: Buffer.from(fs.readFileSync(certPath)),
 				caRoot,
+				caCertPem,
+				caCertDer,
 			};
 		}
 
@@ -260,6 +293,8 @@ export async function ensureCerts(opts?: TlsOptions): Promise<TlsCerts | null> {
 				key: Buffer.from(fs.readFileSync(keyPath)),
 				cert: Buffer.from(fs.readFileSync(certPath)),
 				caRoot,
+				caCertPem,
+				caCertDer,
 			};
 		}
 	}
@@ -294,6 +329,8 @@ export async function ensureCerts(opts?: TlsOptions): Promise<TlsCerts | null> {
 			key: Buffer.from(fs.readFileSync(keyPath)),
 			cert: Buffer.from(fs.readFileSync(certPath)),
 			caRoot,
+			caCertPem,
+			caCertDer,
 		};
 	} catch {
 		return null;

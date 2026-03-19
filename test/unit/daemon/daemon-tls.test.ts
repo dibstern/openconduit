@@ -149,6 +149,7 @@ describe("startHttpServer TLS support", () => {
 				port: 0,
 				host: "127.0.0.1",
 				httpServer: null,
+				upgradeServer: null,
 				onboardingServer: null,
 				ipcServer: null,
 				ipcClients: new Set(),
@@ -187,6 +188,7 @@ describe("startHttpServer TLS support", () => {
 				port: 0,
 				host: "127.0.0.1",
 				httpServer: null,
+				upgradeServer: null,
 				onboardingServer: null,
 				ipcServer: null,
 				ipcClients: new Set(),
@@ -299,10 +301,11 @@ describe("Daemon TLS integration", () => {
 			await d.start();
 			const port = d.port;
 
-			// /ca/download should return the CA certificate
+			// /ca/download should return the CA certificate (DER-encoded for iOS)
 			const { status, body } = await httpsGet(port, "/ca/download");
 			expect(status).toBe(200);
-			expect(body).toContain("BEGIN CERTIFICATE");
+			// DER is binary, so it won't contain PEM markers. Just verify it's non-empty.
+			expect(body.length).toBeGreaterThan(0);
 
 			await d.stop();
 		},
@@ -410,10 +413,10 @@ describe("Daemon TLS integration", () => {
 			const mainPort = d.port;
 			const onboardingPort = mainPort + 1;
 
-			// HTTP GET on port+1 /ca/download should return the CA cert
+			// HTTP GET on port+1 /ca/download should return the CA cert (DER-encoded)
 			const ca = await httpGet(onboardingPort, "/ca/download");
 			expect(ca.status).toBe(200);
-			expect(ca.body).toContain("BEGIN CERTIFICATE");
+			expect(ca.body.length).toBeGreaterThan(0);
 
 			// HTTP GET on port+1 /setup should return HTML
 			const setup = await httpGet(onboardingPort, "/setup");
