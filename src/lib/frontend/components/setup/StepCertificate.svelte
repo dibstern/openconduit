@@ -60,25 +60,13 @@
 				2
 			</div>
 			<div class="text-sm leading-relaxed">
-				Open <b>Settings</b> and tap the
-				<b>Profile Downloaded</b> banner to install.
+				Open <b>Settings &gt; Profile</b> (appears at the top).
+				Tap the downloaded profile and install it. Then enable
+				<b>full trust</b> for the certificate.
 				<div class="text-xs text-text-muted mt-1">
-					If the banner is gone: Settings &gt; General &gt; VPN &
-					Device Management
+					If the profile doesn't appear at the top: Settings &gt;
+					General &gt; <b>VPN &amp; Device Management</b>
 				</div>
-			</div>
-		</div>
-		<div class="flex gap-3 mb-4">
-			<div
-				class="w-6 h-6 rounded-full bg-bg-alt text-text flex items-center justify-center font-bold text-xs shrink-0 mt-0.5"
-			>
-				3
-			</div>
-			<div class="text-sm leading-relaxed">
-				Go to <b
-					>Settings &gt; General &gt; About &gt; Certificate Trust
-					Settings</b
-				> and enable full trust.
 			</div>
 		</div>
 	{:else if isAndroid}

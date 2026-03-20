@@ -22,33 +22,43 @@
 
 	/** Network info fetched from /health when the modal opens. */
 	let networkHost = $state<string | null>(null);
+	let fetchingHost = $state(false);
+
+	/** Hostnames that should be rewritten to a network-routable address. */
+	function isLocalHost(h: string): boolean {
+		return h === "localhost" || h === "127.0.0.1" || h === "0.0.0.0";
+	}
 
 	/**
 	 * Fetch daemon health to discover the best external address.
-	 * Prefers Tailscale IP > LAN IP. Only needed when user is on localhost.
+	 * Prefers LAN IP > Tailscale IP — LAN is more useful for same-network
+	 * device scanning. Only needed when user is on localhost.
 	 */
 	async function fetchNetworkHost(): Promise<void> {
+		fetchingHost = true;
 		try {
 			const res = await fetch("/health");
 			if (!res.ok) return;
 			const data = await res.json();
 			const tls = data.tlsEnabled === true;
 			const scheme = tls ? "https" : "http";
-			const ip = data.tailscaleIP ?? data.lanIP;
+			// Prefer LAN IP for same-network access, fall back to Tailscale
+			const ip = data.lanIP ?? data.tailscaleIP;
 			if (ip) {
 				networkHost = `${scheme}://${ip}:${data.port}`;
 			}
 		} catch {
 			// Silently fail — share URL will just use window.location
+		} finally {
+			fetchingHost = false;
 		}
 	}
 
 	function getShareUrl(): string {
 		if (typeof window === "undefined") return "";
 		const h = window.location.hostname;
-		// If we're on localhost and have a network host, rewrite the URL
-		if ((h === "localhost" || h === "127.0.0.1") && networkHost) {
-			// Replace origin (scheme + host + port) with the network host
+		// If we're on a local address and have a network host, rewrite the URL
+		if (isLocalHost(h) && networkHost) {
 			return window.location.href.replace(window.location.origin, networkHost);
 		}
 		return window.location.href;
@@ -59,6 +69,7 @@
 	// Fetch network host when modal becomes visible
 	$effect(() => {
 		if (visible) {
+			networkHost = null;
 			fetchNetworkHost();
 		}
 	});
@@ -148,15 +159,21 @@
 			<h2 class="text-text font-semibold text-base">Share Session</h2>
 
 			<!-- QR Code -->
-			<div class="bg-white rounded-lg p-3">
-				<QRCode
-					data={shareUrl}
-					size={200}
-					errorCorrectionLevel="M"
-					backgroundColor="#ffffff"
-					color="#111111"
-				/>
-			</div>
+			{#if fetchingHost}
+				<div class="bg-white rounded-lg p-3 flex items-center justify-center" style="width: 224px; height: 224px;">
+					<span class="text-text-dimmer text-xs">Detecting network...</span>
+				</div>
+			{:else}
+				<div class="bg-white rounded-lg p-3">
+					<QRCode
+						data={shareUrl}
+						size={200}
+						errorCorrectionLevel="M"
+						backgroundColor="#ffffff"
+						color="#111111"
+					/>
+				</div>
+			{/if}
 
 			<!-- URL / Copied feedback -->
 			<button

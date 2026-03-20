@@ -167,7 +167,7 @@
 		>
 			<button
 				id="new-session-btn"
-				class="session-action-btn flex items-center gap-2 w-full py-1.5 px-2.5 border-none rounded-md bg-transparent text-text-secondary text-xs cursor-pointer disabled:cursor-default transition-[background,color] duration-100 text-left hover:bg-sidebar-hover hover:text-text"
+				class="session-action-btn flex items-center gap-2 w-full py-1.5 px-2.5 border-none rounded-md bg-transparent text-text-secondary text-[13px] cursor-pointer disabled:cursor-default transition-[background,color] duration-100 text-left hover:bg-sidebar-hover hover:text-text"
 				style="font-family: var(--font-brand);"
 				onclick={handleNewSession}
 				disabled={sessionCreation.value.phase === "creating"}
@@ -183,7 +183,7 @@
 			</button>
 			<button
 				id="resume-session-btn"
-				class="session-action-btn flex items-center gap-2 w-full py-1.5 px-2.5 border-none rounded-md bg-transparent text-text-secondary text-xs cursor-pointer transition-[background,color] duration-100 text-left hover:bg-sidebar-hover hover:text-text"
+				class="session-action-btn flex items-center gap-2 w-full py-1.5 px-2.5 border-none rounded-md bg-transparent text-text-secondary text-[13px] cursor-pointer transition-[background,color] duration-100 text-left hover:bg-sidebar-hover hover:text-text"
 				style="font-family: var(--font-brand);"
 				onclick={handleResumeSession}
 			>
@@ -194,7 +194,7 @@
 			</button>
 			<button
 				id="file-browser-btn"
-				class="session-action-btn flex items-center gap-2 w-full py-1.5 px-2.5 border-none rounded-md bg-transparent text-text-secondary text-xs cursor-pointer transition-[background,color] duration-100 text-left hover:bg-sidebar-hover hover:text-text"
+				class="session-action-btn flex items-center gap-2 w-full py-1.5 px-2.5 border-none rounded-md bg-transparent text-text-secondary text-[13px] cursor-pointer transition-[background,color] duration-100 text-left hover:bg-sidebar-hover hover:text-text"
 				style="font-family: var(--font-brand);"
 				onclick={handleFileBrowser}
 			>
@@ -205,7 +205,7 @@
 			</button>
 			<button
 				id="terminal-sidebar-btn"
-				class="session-action-btn flex items-center gap-2 w-full py-1.5 px-2.5 border-none rounded-md bg-transparent text-text-secondary text-xs cursor-pointer transition-[background,color] duration-100 text-left hover:bg-sidebar-hover hover:text-text"
+				class="session-action-btn flex items-center gap-2 w-full py-1.5 px-2.5 border-none rounded-md bg-transparent text-text-secondary text-[13px] cursor-pointer transition-[background,color] duration-100 text-left hover:bg-sidebar-hover hover:text-text"
 				style="font-family: var(--font-brand);"
 				onclick={handleTerminalSidebar}
 			>

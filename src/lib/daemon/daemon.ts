@@ -1278,26 +1278,22 @@ export class Daemon {
 			const content = readFileSync(pidPath, "utf-8").trim();
 			pid = Number.parseInt(content, 10);
 		} catch {
-			// No PID file — not running
-			return false;
+			// No PID file — try socket directly (PID file may have been
+			// cleaned up while the daemon is still running)
 		}
 
-		if (pid === null || Number.isNaN(pid)) {
-			// Invalid PID file — stale
-			cleanupStalePidFiles(pidPath, resolvedSocketPath);
-			return false;
+		if (pid !== null && !Number.isNaN(pid)) {
+			// Check if PID is alive
+			try {
+				process.kill(pid, 0);
+			} catch {
+				// Process doesn't exist — stale
+				cleanupStalePidFiles(pidPath, resolvedSocketPath);
+				return false;
+			}
 		}
 
-		// Check if PID is alive
-		try {
-			process.kill(pid, 0);
-		} catch {
-			// Process doesn't exist — stale
-			cleanupStalePidFiles(pidPath, resolvedSocketPath);
-			return false;
-		}
-
-		// PID is alive, but verify via socket connection
+		// Verify via socket connection (works even without PID file)
 		const { connect } = await import("node:net");
 		return new Promise((resolve) => {
 			const client = connect(resolvedSocketPath);
@@ -1314,7 +1310,9 @@ export class Daemon {
 
 			client.on("error", () => {
 				clearTimeout(timeout);
-				cleanupStalePidFiles(pidPath, resolvedSocketPath);
+				if (pid !== null) {
+					cleanupStalePidFiles(pidPath, resolvedSocketPath);
+				}
 				resolve(false);
 			});
 		});
