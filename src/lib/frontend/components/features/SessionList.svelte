@@ -255,8 +255,9 @@
 				<button
 					type="button"
 					title={allSelected ? "Deselect all sessions" : "Select all sessions"}
-					class="flex items-center gap-1.5 border-none bg-transparent text-[11px] font-semibold text-text-dimmer cursor-pointer p-0 hover:text-text transition-colors duration-100"
-					onclick={handleToggleSelectAll}
+				class="flex items-center gap-1.5 border-none bg-transparent text-[11px] font-semibold text-text-dimmer cursor-pointer p-0 hover:text-text transition-colors duration-100"
+				style="font-family: var(--font-brand);"
+				onclick={handleToggleSelectAll}
 				>
 					<Icon name={allSelected ? "circle-check" : "circle"} size={14} />
 					<span>{allSelected ? "Deselect all" : "Select all"}</span>
@@ -264,8 +265,9 @@
 				<button
 					type="button"
 					title="Exit cleanup mode"
-					class="border-none bg-transparent text-[11px] font-semibold text-text-dimmer cursor-pointer p-0 hover:text-text transition-colors duration-100"
-					onclick={handleExitCleanup}
+				class="border-none bg-transparent text-[11px] font-semibold text-text-dimmer cursor-pointer p-0 hover:text-text transition-colors duration-100"
+				style="font-family: var(--font-brand);"
+				onclick={handleExitCleanup}
 				>
 					Cancel
 				</button>
@@ -274,8 +276,9 @@
 				<button
 					type="button"
 					disabled={selectionCount === 0}
-					class="w-full py-1.5 px-4 rounded-lg text-[13px] font-medium border cursor-pointer transition-colors duration-100 {selectionCount > 0 ? 'bg-error/10 text-error border-error/20 hover:bg-error/20' : 'bg-transparent text-text-dimmer border-border-subtle cursor-default'}"
-					onclick={handleBulkDelete}
+				class="w-full py-1.5 px-4 rounded-lg text-xs font-medium border cursor-pointer transition-colors duration-100 {selectionCount > 0 ? 'bg-error/10 text-error border-error/20 hover:bg-error/20' : 'bg-transparent text-text-dimmer border-border-subtle cursor-default'}"
+				style="font-family: var(--font-brand);"
+				onclick={handleBulkDelete}
 				>
 					{selectionCount > 0
 						? `Delete ${selectionCount === 1 ? "1 session" : `${selectionCount} sessions`}`
@@ -286,7 +289,7 @@
 	{:else}
 		<div class="shrink-0 px-2">
 			<div class="session-list-header flex items-center justify-between px-2 py-1">
-				<span class="text-[11px] font-semibold uppercase tracking-[0.5px] text-text-dimmer">Sessions</span>
+				<span class="text-[11px] font-semibold uppercase tracking-[0.5px] text-text-dimmer" style="font-family: var(--font-brand);">Sessions</span>
 				<div class="session-list-header-actions flex items-center gap-0.5">
 					<button
 						type="button"
@@ -340,7 +343,8 @@
 				placeholder="Search sessions..."
 				autocomplete="off"
 				spellcheck="false"
-				class="w-full bg-input-bg border border-border rounded-lg py-1.5 px-2.5 text-[13px] text-text font-sans outline-none focus:border-accent placeholder:text-text-dimmer"
+				class="w-full bg-input-bg border border-border rounded-lg py-1.5 px-2.5 text-xs text-text outline-none focus:border-accent placeholder:text-text-dimmer"
+				style="font-family: var(--font-brand);"
 				value={localSearchValue}
 				oninput={handleSearchInput}
 				onkeydown={handleSearchKeydown}
@@ -352,12 +356,12 @@
 	<!-- Scrollable session list content -->
 	<div class="flex-1 overflow-y-auto px-2 py-0.5">
 		{#if isEmpty}
-			<div class="session-empty py-6 px-3.5 text-center text-[13px] text-text-dimmer">
+			<div class="session-empty py-6 px-3.5 text-center text-xs text-text-dimmer" style="font-family: var(--font-brand);">
 				{emptyMessage}
 			</div>
 		{:else}
 			{#if hasToday}
-				<div class="session-group-label pt-2.5 pb-1 px-3 text-[11px] font-semibold text-text-dimmer tracking-[0.3px]">
+				<div class="session-group-label pt-1.5 pb-0.5 px-3 text-[9px] font-semibold text-text-dimmer tracking-[0.3px]" style="font-family: var(--font-brand);">
 					Today
 				</div>
 			{#each groups.today as s (s.id)}
@@ -378,7 +382,7 @@
 			{/if}
 
 			{#if hasYesterday}
-				<div class="session-group-label pt-2.5 pb-1 px-3 text-[11px] font-semibold text-text-dimmer tracking-[0.3px]">
+				<div class="session-group-label pt-1.5 pb-0.5 px-3 text-[9px] font-semibold text-text-dimmer tracking-[0.3px]" style="font-family: var(--font-brand);">
 					Yesterday
 				</div>
 			{#each groups.yesterday as s (s.id)}
@@ -399,7 +403,7 @@
 			{/if}
 
 			{#if hasOlder}
-				<div class="session-group-label pt-2.5 pb-1 px-3 text-[11px] font-semibold text-text-dimmer tracking-[0.3px]">
+				<div class="session-group-label pt-1.5 pb-0.5 px-3 text-[9px] font-semibold text-text-dimmer tracking-[0.3px]" style="font-family: var(--font-brand);">
 					Older
 				</div>
 			{#each groups.older as s (s.id)}

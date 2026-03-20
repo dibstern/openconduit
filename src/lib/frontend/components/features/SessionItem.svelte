@@ -77,7 +77,7 @@
 	);
 
 	const itemClass = $derived(
-		"session-item group flex items-center gap-1 py-[7px] px-3 rounded-[10px] cursor-pointer relative text-[13px] transition-colors duration-100" +
+		"session-item group flex items-center gap-1 py-1.5 px-2.5 rounded-md cursor-pointer relative text-[13px] transition-colors duration-100" +
 			(active
 				? " active bg-bg-surface text-text"
 				: " text-text-secondary hover:bg-sidebar-hover hover:text-text"),
@@ -188,13 +188,15 @@
 	<!-- Title -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<span
-		class="session-item-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap group-hover:underline"
+		class="session-item-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
+		style="font-family: var(--font-brand);"
 		ondblclick={handleDblClick}
 	>
 		{#if isRenaming}
 			<input
 				type="text"
-				class="session-rename-input w-full bg-input-bg border border-accent rounded py-px px-1 text-[13px] text-text font-sans outline-none"
+				class="session-rename-input w-full bg-input-bg border border-accent rounded py-px px-1 text-xs text-text outline-none"
+				style="font-family: var(--font-brand);"
 				bind:value={renameValue}
 				onkeydown={handleRenameKeydown}
 				onblur={handleRenameBlur}
@@ -202,7 +204,7 @@
 				use:focusOnMount
 			/>
 		{:else}
-			{displayTitle}
+			<span class="session-title-inner inline-block pr-[3em]">{displayTitle}</span>
 		{/if}
 	</span>
 
@@ -220,6 +222,7 @@
 	{#if metaText && !isRenaming}
 		<span
 			class="session-item-meta shrink-0 text-[11px] text-text-dimmer whitespace-nowrap"
+			style="font-family: var(--font-brand);"
 		>
 			{metaText}
 		</span>
@@ -229,14 +232,14 @@
 	{#if !isRenaming && !cleanupMode}
 		<button
 			bind:this={moreBtnEl}
-			class="session-more-btn shrink-0 w-[22px] h-[22px] border-none rounded p-0 bg-transparent cursor-pointer flex items-center justify-center transition-[opacity,color] duration-100
+			class="session-more-btn shrink-0 w-5 h-5 border-none rounded p-0 bg-transparent cursor-pointer flex items-center justify-center transition-[opacity,color] duration-100
 			{active
 				? 'text-text-muted group-hover:text-text-secondary hover:text-text hover:bg-bg-alt'
 				: 'text-text-dimmer/50 group-hover:text-text-dimmer hover:text-text hover:bg-bg-alt'}"
 			title="More options"
 			onclick={handleMoreClick}
 		>
-			<Icon name="ellipsis" size={14} />
+			<Icon name="ellipsis" size={13} />
 		</button>
 	{/if}
 </a>

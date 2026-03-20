@@ -433,6 +433,25 @@
 	}
 }
 
+@keyframes marquee-scroll {
+	0% {
+		transform: translateX(0);
+	}
+	100% {
+		transform: translateX(-100%);
+	}
+}
+
+/* ─── Session title marquee on hover ────────────────────────────────────────── */
+/* The .session-item-title clips overflow. On hover, the inner span scrolls left
+   in a continuous loop so long titles are fully readable. */
+.session-item:hover .session-item-title {
+	text-overflow: clip;
+}
+.session-item:hover .session-item-title .session-title-inner {
+	animation: marquee-scroll var(--marquee-dur, 6s) linear 0.4s infinite;
+}
+
 /* ─── Markdown content ──────────────────────────────────────────────────────── */
 
 @layer components {
