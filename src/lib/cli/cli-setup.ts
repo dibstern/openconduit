@@ -130,7 +130,6 @@ export function printLogo(stdout: Writable): void {
 	stdout.write("\n");
 
 	const basic = isBasicTerm();
-	const version = "v0.1.0";
 
 	const pad = "  "; // 2-char left indent
 
@@ -153,11 +152,6 @@ export function printLogo(stdout: Writable): void {
 			stdout.write(`${pad}${color}${CONDUIT_ART[i]}${a.reset}\n`);
 		}
 
-		// Blank line + version tag (left-aligned with indent)
-		stdout.write("\n");
-		stdout.write(`${pad}\x1b[38;2;82;82;91m${version}${a.reset}\n`);
-		stdout.write("\n");
-
 		// Brand block grid underline — same width as logo art (78 chars)
 		const baseCellWidth = Math.floor(LOGO_WIDTH / GRID_COLS);
 		const remainder = LOGO_WIDTH - baseCellWidth * GRID_COLS;
@@ -170,7 +164,7 @@ export function printLogo(stdout: Writable): void {
 			const g = Math.round(45 - t * 35);
 			const b = Math.round(123 - t * 90);
 			const cw = baseCellWidth + (i < remainder ? 1 : 0);
-			pinkRow += `\x1b[38;2;${r};${g};${b}m` + "\u2580".repeat(cw);
+			pinkRow += `\x1b[38;2;${r};${g};${b}m` + "\u2584".repeat(cw);
 		}
 		pinkRow += a.reset;
 		stdout.write(`${pinkRow}\n`);
@@ -183,7 +177,7 @@ export function printLogo(stdout: Writable): void {
 			const g = Math.round(60 + t * 169);
 			const b = Math.round(70 + t * 185);
 			const cw = baseCellWidth + (i < remainder ? 1 : 0);
-			cyanRow += `\x1b[38;2;${r};${g};${b}m` + "\u2584".repeat(cw);
+			cyanRow += `\x1b[38;2;${r};${g};${b}m` + "\u2580".repeat(cw);
 		}
 		cyanRow += a.reset;
 		stdout.write(`${cyanRow}\n`);

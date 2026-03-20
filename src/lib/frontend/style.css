@@ -352,13 +352,16 @@
 	display: flex;
 }
 
-/* ─── Header project-name scroll container — hide scrollbar on mobile ──── */
+/* ─── Header project-name — marquee scroll on hover for long names ──── */
 
 #header-project-scroll {
-	scrollbar-width: none;
+	text-overflow: ellipsis;
 }
-#header-project-scroll::-webkit-scrollbar {
-	display: none;
+#header-project-scroll:hover {
+	text-overflow: clip;
+}
+#header-project-scroll:hover .header-project-inner {
+	animation: marquee-scroll var(--marquee-dur, 6s) linear 0.4s infinite;
 }
 
 /* ─── Mobile responsive ────────────────────────────────────────────────────── */

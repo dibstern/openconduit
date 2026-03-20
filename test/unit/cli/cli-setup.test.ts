@@ -143,7 +143,7 @@ describe("printLogo", () => {
 		expect(blockLines.length).toBeGreaterThanOrEqual(5);
 	});
 
-	it("uses cyan→pink gradient, version tag, and brand bars in non-basic terminal", () => {
+	it("uses cyan→pink gradient and brand bars in non-basic terminal", () => {
 		const saved = process.env["TERM_PROGRAM"];
 		process.env["TERM_PROGRAM"] = "vscode";
 		try {
@@ -155,8 +155,6 @@ describe("printLogo", () => {
 			expect(all).toContain("\x1b[1;38;2;0;229;255m");
 			// Pink end of gradient (255,45,123) on last row
 			expect(all).toContain("\x1b[1;38;2;255;45;123m");
-			// Version tag
-			expect(all).toContain("v0.1.0");
 			// Brand grid underline uses upper/lower block chars
 			const stripped = stripAnsi(all);
 			expect(stripped).toContain("\u2580"); // upper half block (pink row)
@@ -191,14 +189,13 @@ describe("printLogo", () => {
 		}
 	});
 
-	it("renders brand underline with half-block characters and version tag", () => {
+	it("renders brand underline with half-block characters", () => {
 		const output: string[] = [];
 		const stdout = { write: (s: string) => output.push(s) };
 		printLogo(stdout);
 		const all = stripAnsi(output.join(""));
 		expect(all).toContain("\u2580"); // upper half block
 		expect(all).toContain("\u2584"); // lower half block
-		expect(all).toContain("v0.1.0");
 	});
 });
 

@@ -12,6 +12,7 @@
 		togglePanel,
 	} from "../../stores/ui.svelte.js";
 	import { wsState, wsSend } from "../../stores/ws.svelte.js";
+	import { togglePanel as toggleTerminalPanel } from "../../stores/terminal.svelte.js";
 	import { getCurrentSlug, navigate } from "../../stores/router.svelte.js";
 	import { projectState } from "../../stores/project.svelte.js";
 	import {
@@ -115,10 +116,10 @@
 		>
 			<Icon name="menu" size={15} />
 		</button>
-		<div id="header-project-scroll" class="min-w-0 flex-1 overflow-x-auto max-md:flex max-md:items-center">
+		<div id="header-project-scroll" class="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap max-md:flex max-md:items-center">
 			<div class="flex items-center gap-2 whitespace-nowrap">
 			<h1 id="project-name" class="text-[15px] font-semibold tracking-[0.08em]" style="font-family: var(--font-brand);">
-				{getCurrentSlug() ?? "conduit"}
+				<span class="header-project-inner inline-block pr-[3em]">{getCurrentSlug() ?? "conduit"}</span>
 			</h1>
 				{#if currentInstance}
 					<div class="relative">
@@ -194,6 +195,16 @@
 				</button>
 			</div>
 		{/if}
+
+		<!-- Terminal -->
+		<button
+			id="header-terminal-btn"
+			class="header-icon-btn"
+			title="Toggle terminal"
+			onclick={() => toggleTerminalPanel(wsSend)}
+		>
+			<Icon name="square-terminal" size={15} />
+		</button>
 
 		<!-- Settings -->
 		<button
