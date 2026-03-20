@@ -508,17 +508,19 @@
 					class="absolute bottom-[calc(100%+8px)] left-0 min-w-[170px] bg-bg-surface border border-border rounded-[10px] p-1 shadow-[0_-4px_24px_rgba(var(--shadow-rgb),0.4)] z-10 overflow-hidden"
 							class:hidden={!attachMenuOpen}
 						>
-							<button
-							class="attach-menu-item flex items-center gap-2.5 w-full py-3 px-4 border-none bg-none text-text-secondary font-mono text-sm cursor-pointer transition-[background,color] duration-150 not-last:border-b not-last:border-border-subtle hover:bg-[rgba(var(--overlay-rgb),0.04)] hover:text-text"
-							id="attach-camera"
-							type="button"
-							onclick={handleAttachCamera}
-						>
-							<Icon name="camera" size={18} class="shrink-0" />
-							<span>Take Photo</span>
-						</button>
 						<button
-							class="attach-menu-item flex items-center gap-2.5 w-full py-3 px-4 border-none bg-none text-text-secondary font-mono text-sm cursor-pointer transition-[background,color] duration-150 not-last:border-b not-last:border-border-subtle hover:bg-[rgba(var(--overlay-rgb),0.04)] hover:text-text"
+						class="attach-menu-item flex items-center gap-2.5 w-full py-3 px-4 border-none bg-none text-text-secondary text-sm cursor-pointer transition-[background,color] duration-150 not-last:border-b not-last:border-border-subtle hover:bg-[rgba(var(--overlay-rgb),0.04)] hover:text-text"
+						style="font-family: var(--font-brand);"
+						id="attach-camera"
+						type="button"
+						onclick={handleAttachCamera}
+					>
+						<Icon name="camera" size={18} class="shrink-0" />
+						<span>Take Photo</span>
+					</button>
+					<button
+						class="attach-menu-item flex items-center gap-2.5 w-full py-3 px-4 border-none bg-none text-text-secondary text-sm cursor-pointer transition-[background,color] duration-150 not-last:border-b not-last:border-border-subtle hover:bg-[rgba(var(--overlay-rgb),0.04)] hover:text-text"
+						style="font-family: var(--font-brand);"
 								id="attach-photos"
 								type="button"
 								onclick={handleAttachPhotos}

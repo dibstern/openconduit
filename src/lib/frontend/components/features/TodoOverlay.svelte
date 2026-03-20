@@ -104,10 +104,11 @@
 	{#if !isHidden}
 		<div
 			class="todo-overlay bg-bg-surface border-b border-border p-0 relative z-10 {fading ? 'todo-fade-out' : ''}"
+			style="font-family: var(--font-brand);"
 		>
 			<!-- Header -->
 			<div
-				class="todo-header flex items-center gap-2 py-2 px-4 cursor-pointer select-none text-[13px] font-medium text-text-secondary hover:text-text"
+				class="todo-header flex items-center gap-2 py-2 px-4 cursor-pointer select-none text-[12px] font-medium text-text-secondary hover:text-text"
 				role="button"
 				tabindex="0"
 				aria-expanded={!collapsed}

@@ -340,20 +340,21 @@
 						<span class="text-xs text-text-muted font-medium uppercase tracking-wide" style="font-family: var(--font-brand);">
 							{instances.length} instance{instances.length !== 1 ? "s" : ""}
 						</span>
-						<button
-							type="button"
-							class="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-border text-text-muted hover:text-text hover:border-text-muted transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-							data-testid="scan-now-btn"
-							disabled={scanInFlight}
-							onclick={handleScanNow}
-						>
+					<button
+						type="button"
+						class="flex items-center gap-1.5 px-2.5 py-1 text-xs rounded border border-border text-text-muted hover:text-text hover:border-text-muted transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+						style="font-family: var(--font-brand);"
+						data-testid="scan-now-btn"
+						disabled={scanInFlight}
+						onclick={handleScanNow}
+					>
 							<Icon name="refresh-cw" size={12} class={scanInFlight ? "animate-spin" : ""} />
 							{scanInFlight ? "Scanning..." : "Scan Now"}
 						</button>
 					</div>
 
 					{#if scanResult && !scanInFlight}
-						<div class="mb-3 text-xs text-text-muted bg-white/[0.04] rounded px-2.5 py-1.5">
+					<div class="mb-3 text-xs text-text-muted bg-white/[0.04] rounded px-2.5 py-1.5" style="font-family: var(--font-brand);">
 							{#if scanResult.discovered.length > 0}
 								Found {scanResult.discovered.length} new instance{scanResult.discovered.length !== 1 ? "s" : ""} on port{scanResult.discovered.length !== 1 ? "s" : ""} {scanResult.discovered.join(", ")}.
 							{:else if scanResult.lost.length > 0}
@@ -367,7 +368,7 @@
 					{/if}
 
 					{#if instances.length > 0}
-						<div id="instance-settings-list" class="space-y-1">
+					<div id="instance-settings-list" class="space-y-1" style="font-family: var(--font-brand);">
 							{#each instances as inst}
 								<div class="border border-border rounded-lg">
 									<button class="flex items-center justify-between w-full px-3 py-2 text-left text-sm hover:bg-white/[0.03] cursor-pointer bg-transparent border-none" onclick={() => handleToggleInstance(inst.id)}>
@@ -401,7 +402,7 @@
 					{/if}
 
 					{#if instances.length === 0}
-						<div class="mt-2 space-y-2">
+					<div class="mt-2 space-y-2" style="font-family: var(--font-brand);">
 							<p class="text-sm text-text-muted mb-3">No OpenCode instances detected. Start one from your terminal and it will appear here automatically.</p>
 							<div class="border border-border rounded-lg overflow-hidden">
 								<button type="button" class="flex items-center gap-2 w-full px-3 py-2.5 text-left text-sm font-medium text-text hover:bg-white/[0.03] cursor-pointer bg-transparent border-none" onclick={() => toggleScenario("direct")}>
