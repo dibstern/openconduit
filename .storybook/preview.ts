@@ -5,9 +5,9 @@ const preview: Preview = {
 	parameters: {
 		backgrounds: {
 			options: {
-				app: { name: "app", value: "hsl(0, 20%, 99%)" },
-				dark: { name: "dark", value: "#2F2E2B" },
-				surface: { name: "surface", value: "#262522" },
+				app: { name: "app", value: "#18181B" },
+				light: { name: "light", value: "#FDFCFC" },
+				surface: { name: "surface", value: "#27272A" },
 			},
 		},
 		layout: "fullscreen",

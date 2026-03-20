@@ -50,15 +50,6 @@ const meta = {
 	parameters: {
 		layout: "padded",
 	},
-	decorators: [
-		() => ({
-			Component: CommandMenu,
-			props: {
-				style:
-					"position: relative; height: 350px; display: flex; align-items: flex-end;",
-			},
-		}),
-	],
 } satisfies Meta<typeof CommandMenu>;
 
 export default meta;

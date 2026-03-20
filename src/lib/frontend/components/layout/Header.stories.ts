@@ -14,7 +14,7 @@ const meta = {
 		// Reset state for each story
 		wsState.status = "";
 		wsState.statusText = "";
-		uiState.sidebarCollapsed = false;
+		uiState.sidebarCollapsed = true;
 		uiState.clientCount = 0;
 		terminalState.tabs = new Map();
 		routerState.path = "/p/my-project/";
@@ -72,10 +72,10 @@ export const WithTerminalBadge: Story = {
 	},
 };
 
-export const SidebarCollapsed: Story = {
+export const SidebarExpanded: Story = {
 	play: () => {
 		wsState.status = "connected";
 		wsState.statusText = "Connected";
-		uiState.sidebarCollapsed = true;
+		uiState.sidebarCollapsed = false;
 	},
 };

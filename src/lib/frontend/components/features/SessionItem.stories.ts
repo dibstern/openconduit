@@ -10,14 +10,6 @@ const meta = {
 	title: "Features/SessionItem",
 	component: SessionItem,
 	tags: ["autodocs"],
-	decorators: [
-		() => ({
-			Component: SessionItem,
-			props: {
-				style: "width: 240px;",
-			},
-		}),
-	],
 } satisfies Meta<typeof SessionItem>;
 
 export default meta;

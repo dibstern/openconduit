@@ -4,14 +4,7 @@ import NotifSettings from "./NotifSettings.svelte";
 const meta = {
 	title: "Overlays/NotifSettings",
 	component: NotifSettings,
-	decorators: [
-		() => ({
-			Component: NotifSettings,
-			props: {},
-			template:
-				'<div style="position: relative; min-height: 300px; display: flex; justify-content: flex-end;"><story /></div>',
-		}),
-	],
+	tags: ["autodocs"],
 } satisfies Meta<typeof NotifSettings>;
 
 export default meta;
