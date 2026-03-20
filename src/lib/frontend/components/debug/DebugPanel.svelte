@@ -5,11 +5,17 @@
 <script lang="ts">
 	import { wsState } from "../../stores/ws.svelte.js";
 	import { wsDebugState, getDebugEvents, clearDebugLog } from "../../stores/ws-debug.svelte.js";
+	import { confirm } from "../../stores/ui.svelte.js";
 
 	let copyFlash = $state(false);
 
 	function toggleVerbose() {
 		wsDebugState.verboseMessages = !wsDebugState.verboseMessages;
+	}
+
+	async function handleClear() {
+		const confirmed = await confirm("Clear debug log?", "Clear");
+		if (confirmed) clearDebugLog();
 	}
 
 	async function copyLog() {
@@ -263,36 +269,36 @@
 			ontouchstart={handleDragStart}
 		>
 			<span class="text-green-500 font-semibold text-xs">WS Debug</span>
-			<div class="flex items-center gap-2">
-				<button
-					class="cursor-pointer text-[10px] {wsDebugState.verboseMessages ? 'text-yellow-400' : 'text-gray-500 hover:text-gray-300'}"
-					onclick={toggleVerbose}
-					title={wsDebugState.verboseMessages ? "Showing all messages — click to throttle" : "Showing 1 per 100 messages — click for all"}
-				>
-					{wsDebugState.verboseMessages ? "msgs:all" : "msgs:100"}
-				</button>
-				<button
-					class="cursor-pointer text-[10px] {copyFlash ? 'text-green-400' : 'text-gray-500 hover:text-gray-300'}"
-					onclick={copyLog}
-					title="Copy log to clipboard"
-				>
-					{copyFlash ? "copied!" : "copy"}
-				</button>
-				<button
-					class="text-gray-500 hover:text-gray-300 cursor-pointer text-[10px]"
-					onclick={() => clearDebugLog()}
-					title="Clear log"
-				>
-					clear
-				</button>
-				<button
-					class="text-gray-500 hover:text-gray-300 cursor-pointer text-xs leading-none"
-					onclick={() => onClose?.()}
-					title="Close panel"
-				>
-					&times;
-				</button>
-			</div>
+		<div class="flex items-center gap-3">
+			<button
+				class="cursor-pointer text-[10px] px-2 py-1.5 {wsDebugState.verboseMessages ? 'text-yellow-400' : 'text-gray-500 hover:text-gray-300'}"
+				onclick={toggleVerbose}
+				title={wsDebugState.verboseMessages ? "Showing all messages — click to throttle" : "Showing 1 per 100 messages — click for all"}
+			>
+				{wsDebugState.verboseMessages ? "msgs:all" : "msgs:100"}
+			</button>
+			<button
+				class="cursor-pointer text-[10px] px-2 py-1.5 {copyFlash ? 'text-green-400' : 'text-gray-500 hover:text-gray-300'}"
+				onclick={copyLog}
+				title="Copy log to clipboard"
+			>
+				{copyFlash ? "copied!" : "copy"}
+			</button>
+			<button
+				class="text-gray-500 hover:text-gray-300 cursor-pointer text-[10px] px-2 py-1.5"
+				onclick={handleClear}
+				title="Clear log"
+			>
+				clear
+			</button>
+			<button
+				class="text-gray-500 hover:text-gray-300 cursor-pointer text-xs leading-none px-2 py-1.5"
+				onclick={() => onClose?.()}
+				title="Close panel"
+			>
+				&times;
+			</button>
+		</div>
 		</div>
 
 		<!-- Status summary -->
