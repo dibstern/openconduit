@@ -40,14 +40,14 @@ describe("ws-debug", () => {
 			expect(events[0]?.time).toBeGreaterThan(0);
 		});
 
-		it("caps ring buffer at 50 events", () => {
-			for (let i = 0; i < 60; i++) {
+		it("caps ring buffer at 200 events", () => {
+			for (let i = 0; i < 210; i++) {
 				wsDebugLog(`event-${i}`, "connected");
 			}
 			const events = getDebugEvents();
-			expect(events).toHaveLength(50);
+			expect(events).toHaveLength(200);
 			expect(events[0]?.event).toBe("event-10");
-			expect(events[49]?.event).toBe("event-59");
+			expect(events[199]?.event).toBe("event-209");
 		});
 
 		it("updates wsDebugState.eventCount reactively", () => {
@@ -133,14 +133,40 @@ describe("ws-debug", () => {
 			expect(getDebugEvents()).toHaveLength(5);
 		});
 
-		it("disabling verbose mode restores throttle", () => {
-			wsDebugState.verboseMessages = true;
-			wsDebugLogMessage("connected", "event"); // #1
-			wsDebugLogMessage("connected", "event"); // #2 — logged in verbose
+		it("toggling verbose changes displayed events (display-time filter)", () => {
+			// Record 5 messages — all go into the buffer regardless of verbose
+			for (let i = 0; i < 5; i++) {
+				wsDebugLogMessage("connected", "event");
+			}
+
+			// With verbose off, only sampled messages (#1) are displayed
 			wsDebugState.verboseMessages = false;
-			wsDebugLogMessage("connected", "event"); // #3 — throttled, not logged
-			// #1 (first) + #2 (verbose) logged; #3 skipped
-			expect(getDebugEvents()).toHaveLength(2);
+			expect(getDebugEvents()).toHaveLength(1);
+
+			// With verbose on, all 5 messages are displayed
+			wsDebugState.verboseMessages = true;
+			expect(getDebugEvents()).toHaveLength(5);
+
+			// Toggling back hides non-sampled messages again
+			wsDebugState.verboseMessages = false;
+			expect(getDebugEvents()).toHaveLength(1);
+		});
+
+		it("lifecycle events are always visible regardless of verbose setting", () => {
+			wsDebugLog("connect", "connecting");
+			wsDebugLog("ws:open", "connected");
+			wsDebugLogMessage("connected", "event"); // #1 sampled
+			wsDebugLogMessage("connected", "event"); // #2 verbose-only
+
+			wsDebugState.verboseMessages = false;
+			const filtered = getDebugEvents();
+			// 2 lifecycle + 1 sampled ws:message = 3
+			expect(filtered).toHaveLength(3);
+
+			wsDebugState.verboseMessages = true;
+			const all = getDebugEvents();
+			// 2 lifecycle + 2 ws:messages = 4
+			expect(all).toHaveLength(4);
 		});
 	});
 

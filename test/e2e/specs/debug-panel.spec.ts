@@ -19,6 +19,7 @@ const DEBUG_TAB = 'button:has-text("Debug")';
 const DEBUG_TOGGLE = 'button[role="switch"][aria-label="Toggle debug panel"]';
 const CLEAR_BTN = 'button[title="Clear log"]';
 const CLOSE_BTN = 'button[title="Close panel"]';
+const VERBOSE_BTN = 'button[title*="messages"]';
 
 // ─── URL param activation ────────────────────────────────────────────────────
 
@@ -200,6 +201,55 @@ test.describe("Debug Panel — Panel Content", () => {
 
 		// "No events yet" should appear
 		await expect(panel.getByText("No events yet")).toBeVisible();
+	});
+
+	test("msgs:all toggle reveals additional messages", async ({
+		page,
+		relayUrl,
+	}) => {
+		const app = new AppPage(page);
+		await app.goto(`${relayUrl}?feats=debug`);
+
+		const panel = page.locator(DEBUG_PANEL);
+		await expect(panel).toBeVisible({ timeout: 5_000 });
+		await app.waitForConnected();
+
+		// Wait for messages to flow through the WebSocket
+		await page.waitForTimeout(1_000);
+
+		// Verbose toggle should show "msgs:100" (throttled mode)
+		const verboseBtn = page.locator(VERBOSE_BTN);
+		await expect(verboseBtn).toHaveText("msgs:100");
+
+		// Count events in throttled mode
+		const logContainer = panel.locator(".overflow-y-auto");
+		const throttledCount = await logContainer.locator("> div.flex").count();
+		expect(throttledCount).toBeGreaterThan(0);
+
+		// Get total events from snapshot (includes throttled messages)
+		const totalEvents = await page.evaluate(() => {
+			// biome-ignore lint/suspicious/noExplicitAny: e2e test
+			return (window as any).__wsDebug?.().eventCount;
+		});
+
+		// Click to switch to verbose mode
+		await verboseBtn.click();
+		await expect(verboseBtn).toHaveText("msgs:all");
+
+		// Verbose count should be >= throttled count
+		const verboseCount = await logContainer.locator("> div.flex").count();
+		expect(verboseCount).toBeGreaterThanOrEqual(throttledCount);
+
+		// If there were non-sampled messages in the buffer, verbose shows more
+		if (totalEvents > throttledCount) {
+			expect(verboseCount).toBeGreaterThan(throttledCount);
+		}
+
+		// Toggle back should restore original count
+		await verboseBtn.click();
+		await expect(verboseBtn).toHaveText("msgs:100");
+		const restoredCount = await logContainer.locator("> div.flex").count();
+		expect(restoredCount).toBe(throttledCount);
 	});
 });
 
