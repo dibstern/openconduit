@@ -9,7 +9,7 @@
 > device on your network. Push notifications when approval is needed.
 
 ```bash
-npx conduit
+npx conduit-code
 ```
 
 Conduit connects to `opencode serve` and streams your session to a browser.
@@ -55,8 +55,8 @@ as diagrams. Code blocks have syntax highlighting and copy buttons.
 ## One daemon, every project
 
 ```bash
-cd ~/backend  && npx conduit   # registers project
-cd ~/frontend && npx conduit   # adds to same daemon
+cd ~/backend  && npx conduit-code    # registers project
+cd ~/frontend && npx conduit-code    # adds to same daemon
 ```
 
 <p align="center">
@@ -73,7 +73,7 @@ The daemon stays running after the terminal closes — sessions survive.
 
 ```bash
 # Requires: opencode serve (running on port 4096)
-npx conduit
+npx conduit-code
 ```
 
 <p align="center">

@@ -6,14 +6,14 @@ import { getVersion } from "../version.js";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const DEFAULT_PACKAGE_NAME = "conduit";
+const DEFAULT_PACKAGE_NAME = "conduit-code";
 const DEFAULT_CHECK_INTERVAL = 14_400_000; // 4 hours
 const DEFAULT_REGISTRY_URL = "https://registry.npmjs.org";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 export interface VersionCheckOptions {
-	/** npm package name (default: "conduit") */
+	/** npm package name (default: "conduit-code") */
 	packageName?: string;
 	/** Current version string (default: from package.json) */
 	currentVersion?: string;
