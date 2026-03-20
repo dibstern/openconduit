@@ -26,21 +26,6 @@
 	});
 
 	// ─── Status ─────────────────────────────────────────────────────────
-	const bulletClass = $derived.by(() => {
-		switch (message.status) {
-			case "pending":
-				return "bg-text-muted";
-			case "running":
-				return "bg-accent animate-[pulse-dot_1.2s_ease-in-out_infinite]";
-			case "completed":
-				return "bg-success";
-			case "error":
-				return "bg-error";
-			default:
-				return "bg-text-muted";
-		}
-	});
-
 	const statusIconName = $derived.by(() => {
 		switch (message.status) {
 			case "running":
@@ -86,14 +71,11 @@
 	class="skill-item max-w-[760px] mx-auto px-5 my-1.5"
 	data-tool-id={message.id}
 >
-	<div class="bg-bg-surface rounded-r-lg {message.status === 'error' ? 'glow-tool-error' : message.status === 'completed' ? 'glow-tool-completed' : message.status === 'running' ? 'glow-tool-running' : ''}">
+	<div class="{message.status === 'completed' ? '' : 'bg-bg-surface'} rounded-[10px] {message.status === 'error' ? 'glow-tool-error' : message.status === 'completed' ? 'glow-brand-b' : message.status === 'running' ? 'glow-tool-running' : ''}">
 		<button
-			class="skill-header flex items-center gap-2.5 w-full py-2 px-3 cursor-pointer select-none text-[13px] text-text-secondary hover:bg-black/[0.03] transition-colors duration-150 border-none text-left rounded-tr-lg"
+			class="skill-header flex items-center gap-2.5 w-full py-2 px-3 cursor-pointer select-none text-xs text-text-dimmer hover:bg-bg-surface transition-colors duration-150 border-none text-left rounded-t-[10px]"
 			onclick={handleToggle}
 		>
-			<!-- Status bullet -->
-			<span class="tool-bullet w-2 h-2 rounded-full shrink-0 {bulletClass}"></span>
-
 			<!-- Status icon -->
 			{#if message.status === 'running'}
 				<BlockGrid cols={5} mode="fast" blockSize={1.5} gap={0.5} class="shrink-0 self-center" />
@@ -104,13 +86,13 @@
 			{/if}
 
 			<!-- Skill icon -->
-			<span class="text-accent [&_.lucide]:w-4 [&_.lucide]:h-4">
+			<span class="text-text-dimmer [&_.lucide]:w-4 [&_.lucide]:h-4">
 				<Icon name="sparkles" size={16} />
 			</span>
 
 			<!-- Skill label -->
 			<div class="flex-1 min-w-0">
-				<span class="skill-title text-accent font-semibold text-xs">
+				<span class="skill-title text-text-dimmer font-medium">
 					{skillDisplayName}
 				</span>
 				{#if skillName}
@@ -121,13 +103,15 @@
 			</div>
 		</button>
 
-		<!-- Subtitle row -->
+		<!-- Subtitle row (hidden when completed, like ThinkingBlock) -->
+		{#if message.status !== 'completed'}
 		<div
 			class="tool-subtitle flex items-center gap-1.5 py-0.5 px-3 pl-4 text-xs italic text-text-dimmer"
 		>
 			<span class="tool-connector font-mono not-italic text-border">└</span>
 			<span class="tool-subtitle-text">{subtitleText}</span>
 		</div>
+		{/if}
 
 		{#if expanded && message.result}
 			<div

@@ -234,21 +234,6 @@
 
 	// ─── Generic tool display ───────────────────────────────────────────────
 
-	const bulletClass = $derived.by(() => {
-		switch (message.status) {
-			case "pending":
-				return "bg-text-muted";
-			case "running":
-				return "bg-accent animate-[pulse-dot_1.2s_ease-in-out_infinite]";
-			case "completed":
-				return "bg-success";
-			case "error":
-				return "bg-error";
-			default:
-				return "bg-text-muted";
-		}
-	});
-
 	const statusIconName = $derived.by(() => {
 		switch (message.status) {
 			case "running":
@@ -350,17 +335,14 @@
 		<QuestionCard request={questionRequest} inline synthetic />
 	{:else}
 		<!-- Completed/historical question: show read-only summary -->
-		<div class="bg-bg-surface {groupRadius} relative overflow-hidden {message.status === 'error' ? 'glow-tool-error' : message.status === 'completed' ? 'glow-tool-completed' : message.status === 'running' ? 'glow-tool-running' : ''}">
+		<div class="{message.status === 'completed' ? '' : 'bg-bg-surface'} {groupRadius} relative overflow-hidden {message.status === 'error' ? 'glow-tool-error' : message.status === 'completed' ? 'glow-brand-b' : message.status === 'running' ? 'glow-tool-running' : ''}">
 			{#if message.status === 'running'}
 				<div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(90deg, transparent 0%, rgba(234,179,8,0.04) 50%, transparent 100%); animation: tool-shimmer-slide 2s ease-in-out infinite;"></div>
 			{/if}
 			<!-- Header row -->
 			<div
-				class="question-tool-header flex items-center gap-2.5 w-full py-2 px-3 text-[13px] text-text-secondary"
+				class="question-tool-header flex items-center gap-2.5 w-full py-2 px-3 text-xs text-text-dimmer"
 			>
-			<!-- Status bullet -->
-			<span class="tool-bullet w-2 h-2 rounded-full shrink-0 {bulletClass}"></span>
-
 				<!-- Status icon -->
 				{#if message.status === 'running'}
 					<BlockGrid cols={5} mode="fast" blockSize={1.5} gap={0.5} class="shrink-0 self-center" />
@@ -376,7 +358,7 @@
 				</span>
 
 				<!-- Title -->
-				<span class="font-medium text-accent text-xs">Input Required</span>
+				<span class="font-medium text-text-dimmer">Input Required</span>
 
 				<span class="flex-1"></span>
 			</div>
@@ -440,19 +422,16 @@
 	{/if}
 {:else if isSubagent}
 	<!-- ─── Subagent / Task Tool Card ──────────────────────────────────────── -->
-	<div class="bg-bg-surface {groupRadius} relative overflow-hidden {message.status === 'error' ? 'glow-tool-error' : message.status === 'completed' ? 'glow-tool-completed' : message.status === 'running' ? 'glow-tool-running' : ''}">
+	<div class="{message.status === 'completed' ? '' : 'bg-bg-surface'} {groupRadius} relative overflow-hidden {message.status === 'error' ? 'glow-tool-error' : message.status === 'completed' ? 'glow-brand-b' : message.status === 'running' ? 'glow-tool-running' : ''}">
 		{#if message.status === 'running'}
 			<div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(90deg, transparent 0%, rgba(234,179,8,0.04) 50%, transparent 100%); animation: tool-shimmer-slide 2s ease-in-out infinite;"></div>
 		{/if}
 		<button
-			class="subagent-header flex items-center gap-2.5 w-full py-2.5 px-3 text-[13px] text-text-secondary transition-colors duration-150 border-none text-left select-none bg-transparent disabled:opacity-100 disabled:cursor-default {subagentSessionId ? 'cursor-pointer hover:bg-black/[0.03]' : ''}"
+			class="subagent-header flex items-center gap-2.5 w-full py-2.5 px-3 text-xs text-text-dimmer transition-colors duration-150 border-none text-left select-none bg-transparent disabled:opacity-100 disabled:cursor-default {subagentSessionId ? 'cursor-pointer hover:bg-bg-surface' : ''}"
 			onclick={navigateToSubagent}
 			disabled={!subagentSessionId}
 			title={subagentSessionId ? "Open subagent session" : undefined}
 		>
-			<!-- Status bullet -->
-			<span class="tool-bullet w-2 h-2 rounded-full shrink-0 {bulletClass}"></span>
-
 			<!-- Status icon -->
 			{#if message.status === 'running'}
 				<BlockGrid cols={5} mode="fast" blockSize={1.5} gap={0.5} class="shrink-0 self-center" />
@@ -469,7 +448,7 @@
 
 			<!-- Agent label + description -->
 			<div class="flex-1 min-w-0">
-				<span class="agent-title text-accent font-semibold text-xs capitalize">
+				<span class="agent-title text-text-dimmer font-medium capitalize">
 					{agentLabel}
 				</span>
 				{#if agentDescription}
@@ -501,12 +480,12 @@
 	</div>
 {:else}
 	<!-- ─── Generic Tool Card ──────────────────────────────────────────────── -->
-	<div class="{isStandalone && message.status === 'completed' ? '' : 'bg-bg-surface'} {groupRadius} relative overflow-hidden {message.status === 'error' ? 'glow-tool-error' : message.status === 'completed' && !isStandalone ? 'glow-tool-completed' : message.status === 'running' ? 'glow-tool-running' : ''}">
+	<div class="{message.status === 'completed' ? '' : 'bg-bg-surface'} {groupRadius} relative overflow-hidden {message.status === 'error' ? 'glow-tool-error' : message.status === 'completed' ? 'glow-brand-b' : message.status === 'running' ? 'glow-tool-running' : ''}">
 		{#if message.status === 'running'}
 			<div class="absolute inset-0 pointer-events-none" style="background: linear-gradient(90deg, transparent 0%, rgba(234,179,8,0.04) 50%, transparent 100%); animation: tool-shimmer-slide 2s ease-in-out infinite;"></div>
 		{/if}
 		<button
-			class="tool-header flex items-center gap-2.5 w-full py-2 px-3 cursor-pointer select-none text-[13px] text-text-secondary hover:bg-[rgba(var(--overlay-rgb),0.03)] transition-colors duration-150 border-none text-left"
+			class="tool-header flex items-center gap-2.5 w-full py-2 px-3 cursor-pointer select-none text-xs text-text-dimmer hover:bg-bg-surface transition-colors duration-150 border-none text-left"
 			onclick={handleToggle}
 		>
 		<span
@@ -516,9 +495,6 @@
 			<Icon name="chevron-right" size={14} />
 		</span>
 
-		<span class="tool-bullet w-2 h-2 rounded-full shrink-0 {bulletClass}"
-		></span>
-
 		{#if message.status === 'running'}
 			<BlockGrid cols={5} mode="fast" blockSize={1.5} gap={0.5} class="shrink-0 self-center" />
 		{:else}
@@ -527,12 +503,12 @@
 			</span>
 		{/if}
 
-		<span class="tool-name font-medium font-mono text-text">
+		<span class="tool-name font-medium text-text-dimmer">
 			{message.name}
 		</span>
 
 		<span
-			class="tool-desc flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-text-dimmer"
+			class="tool-desc flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-text-dimmer"
 		>
 			{descText}
 		</span>
@@ -546,7 +522,7 @@
 		{/if}
 		</button>
 
-		{#if !(isStandalone && message.status === 'completed')}
+		{#if message.status !== 'completed'}
 		<div
 			class="tool-subtitle flex items-center gap-1.5 py-0.5 px-3 pl-4 text-xs italic text-text-dimmer"
 		>

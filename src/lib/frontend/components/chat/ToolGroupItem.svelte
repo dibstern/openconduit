@@ -27,21 +27,6 @@
 		return `${(length / 1024).toFixed(1)} KB`;
 	}
 
-	const bulletClass = $derived.by(() => {
-		switch (message.status) {
-			case "pending":
-				return "bg-text-muted";
-			case "running":
-				return "bg-accent animate-[pulse-dot_1.2s_ease-in-out_infinite]";
-			case "completed":
-				return "bg-success";
-			case "error":
-				return "bg-error";
-			default:
-				return "bg-text-muted";
-		}
-	});
-
 	function handleToggle() {
 		expanded = !expanded;
 	}
@@ -73,7 +58,7 @@
 <div class="tool-group-item" data-tool-id={message.id}>
 	<!-- Compact row -->
 	<button
-		class="flex items-center gap-2 w-full py-1 px-3 cursor-pointer select-none text-[13px] text-text-secondary hover:bg-[rgba(var(--overlay-rgb),0.03)] transition-colors duration-150 border-none text-left"
+		class="flex items-center gap-2 w-full py-1 px-3 cursor-pointer select-none text-xs text-text-dimmer hover:bg-bg-surface transition-colors duration-150 border-none text-left"
 		onclick={handleToggle}
 	>
 		<!-- Tree connector -->
@@ -82,13 +67,13 @@
 		</span>
 
 		<!-- Tool name -->
-		<span class="text-accent font-medium font-mono text-xs shrink-0">
+		<span class="text-text-dimmer font-medium shrink-0">
 			{message.name}
 		</span>
 
 		<!-- Subtitle -->
 		{#if summary.subtitle}
-			<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-mono text-xs text-text-dimmer">
+			<span class="flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs text-text-dimmer">
 				{summary.subtitle}
 			</span>
 		{:else}
@@ -104,8 +89,7 @@
 			{/each}
 		{/if}
 
-		<!-- Status dot -->
-		<span class="w-1.5 h-1.5 rounded-full shrink-0 {bulletClass}"></span>
+
 	</button>
 
 	<!-- Expanded result -->

@@ -11,22 +11,6 @@
 	let { group }: { group: ToolGroup } = $props();
 	let expanded = $state(false);
 
-	// Status dot color (same as ToolItem)
-	const bulletClass = $derived.by(() => {
-		switch (group.status) {
-			case "pending":
-				return "bg-text-muted";
-			case "running":
-				return "bg-accent animate-[pulse-dot_1.2s_ease-in-out_infinite]";
-			case "completed":
-				return "bg-success";
-			case "error":
-				return "bg-error";
-			default:
-				return "bg-text-muted";
-		}
-	});
-
 	// Status icon (same as ToolItem)
 	const statusIconName = $derived.by(() => {
 		switch (group.status) {
@@ -55,13 +39,13 @@
 </script>
 
 <div class="max-w-[760px] mx-auto px-5 my-1.5">
-	<div class="bg-bg-surface rounded-[10px] relative overflow-hidden {group.status === 'error' ? 'glow-tool-error' : group.status === 'completed' ? 'glow-tool-completed' : group.status === 'running' ? 'glow-tool-running' : ''}">
+	<div class="{group.status === 'completed' ? '' : 'bg-bg-surface'} rounded-[10px] relative overflow-hidden {group.status === 'error' ? 'glow-tool-error' : group.status === 'completed' ? 'glow-brand-b' : group.status === 'running' ? 'glow-tool-running' : ''}">
 		{#if group.status === 'running'}
 			<div class="absolute inset-0 pointer-events-none rounded-[10px]" style="background: linear-gradient(90deg, transparent 0%, rgba(234,179,8,0.04) 50%, transparent 100%); animation: tool-shimmer-slide 2s ease-in-out infinite;"></div>
 		{/if}
 		<!-- Header button -->
 		<button
-			class="flex items-center gap-2.5 w-full py-2 px-3 cursor-pointer select-none text-[13px] text-text-secondary hover:bg-[rgba(var(--overlay-rgb),0.03)] transition-colors duration-150 border-none text-left"
+			class="flex items-center gap-2.5 w-full py-2 px-3 cursor-pointer select-none text-xs text-text-dimmer hover:bg-bg-surface transition-colors duration-150 border-none text-left"
 			onclick={handleToggle}
 		>
 			<span
@@ -71,8 +55,6 @@
 				<Icon name="chevron-right" size={14} />
 			</span>
 
-			<span class="w-2 h-2 rounded-full shrink-0 {bulletClass}"></span>
-
 		{#if group.status === 'running'}
 			<BlockGrid cols={5} mode="fast" blockSize={1.5} gap={0.5} class="shrink-0 self-center" />
 		{:else}
@@ -81,11 +63,11 @@
 			</span>
 		{/if}
 
-			<span class="font-medium font-mono text-text-secondary">
+			<span class="font-medium text-text-dimmer">
 				{group.label}
 			</span>
 
-			<span class="text-text-dimmer font-mono text-xs">
+			<span class="text-text-dimmer text-xs">
 				· {group.summary}
 			</span>
 
