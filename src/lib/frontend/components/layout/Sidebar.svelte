@@ -20,7 +20,7 @@
 	} from "../../stores/ui.svelte.js";
 	import { wsSend } from "../../stores/ws.svelte.js";
 	import { navigate, getCurrentSlug } from "../../stores/router.svelte.js";
-	import { togglePanel as toggleTerminalPanel } from "../../stores/terminal.svelte.js";
+	import { terminalState, togglePanel as toggleTerminalPanel } from "../../stores/terminal.svelte.js";
 	import { projectState } from "../../stores/project.svelte.js";
 	import { sendNewSession, sessionCreation } from "../../stores/session.svelte.js";
 
@@ -57,7 +57,13 @@
 	}
 
 	function handleTerminalSidebar() {
+		const wasOpen = terminalState.panelOpen;
 		toggleTerminalPanel(wsSend);
+		// On mobile: close sidebar overlay and maximize terminal so user can type
+		if (!wasOpen && window.innerWidth <= 768) {
+			closeMobileSidebar();
+			window.dispatchEvent(new CustomEvent("terminal:mobile-maximize"));
+		}
 	}
 
 	function handleLogoClick(e: MouseEvent) {

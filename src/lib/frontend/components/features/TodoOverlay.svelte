@@ -82,6 +82,16 @@
 		}
 	}
 
+	// ─── External collapse event (e.g. mobile terminal maximize) ───────────────
+
+	$effect(() => {
+		function onTodoCollapse() {
+			collapsed = true;
+		}
+		window.addEventListener("todo:collapse", onTodoCollapse);
+		return () => window.removeEventListener("todo:collapse", onTodoCollapse);
+	});
+
 	// ─── Status icon helpers ────────────────────────────────────────────────────
 
 	function getStatusIconClass(status: TodoStatus): string {

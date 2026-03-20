@@ -91,6 +91,7 @@
 		) || TERMINAL_DEFAULT_HEIGHT,
 	);
 	let isResizing = $state(false);
+	let mobileMaximized = $state(false);
 	let appEl: HTMLDivElement | undefined = $state(undefined);
 
 	// ─── Sidebar resize state ─────────────────────────────────────────────
@@ -219,6 +220,71 @@
 		document.addEventListener("touchend", onEnd);
 	}
 
+	/**
+	 * Touch-drag handler for the terminal tab bar (bottom-sheet pattern).
+	 * Uses a movement threshold so taps on tabs/buttons still fire normally.
+	 * In mobileMaximized mode, dragging down exits maximized and snaps to default height.
+	 * In normal mode, drags resize the terminal pixel-by-pixel.
+	 */
+	function handleTabBarTouchStart(e: TouchEvent) {
+		const startY = e.touches[0]?.clientY ?? 0;
+		const startH = terminalHeight;
+		const threshold = 8; // px before treating as a drag
+		let isDragging = false;
+		const maxH = appEl
+			? appEl.clientHeight * TERMINAL_MAX_RATIO
+			: window.innerHeight * TERMINAL_MAX_RATIO;
+
+		function onMove(ev: TouchEvent) {
+			const clientY = ev.touches[0]?.clientY ?? 0;
+			const delta = startY - clientY;
+
+			if (!isDragging && Math.abs(delta) < threshold) return;
+
+			if (!isDragging) {
+				isDragging = true;
+				isResizing = true;
+			}
+
+			ev.preventDefault(); // prevent scroll once dragging
+
+			if (mobileMaximized) {
+				// In maximized mode: dragging down exits maximized, snap to default
+				if (delta < -threshold) {
+					mobileMaximized = false;
+					terminalHeight = TERMINAL_DEFAULT_HEIGHT;
+				}
+			} else {
+				const newH = Math.max(
+					TERMINAL_MIN_HEIGHT,
+					Math.min(maxH, startH + delta),
+				);
+				terminalHeight = newH;
+			}
+		}
+
+		function onEnd() {
+			document.removeEventListener("touchmove", onMove);
+			document.removeEventListener("touchend", onEnd);
+			if (isDragging) {
+				isResizing = false;
+				if (!mobileMaximized) {
+					try {
+						localStorage.setItem(
+							TERMINAL_STORAGE_KEY,
+							String(Math.round(terminalHeight)),
+						);
+					} catch {
+						/* ignore */
+					}
+				}
+			}
+		}
+
+		document.addEventListener("touchmove", onMove, { passive: false });
+		document.addEventListener("touchend", onEnd);
+	}
+
 	// ─── Todo items (from reactive todo store, updated by SSE + tool results) ──
 
 	const todoItems = $derived(todoState.items);
@@ -322,6 +388,25 @@
 			}
 		});
 		return unsub;
+	});
+
+	// ─── Terminal mobile-maximize event bridge (Sidebar dispatches "terminal:mobile-maximize") ──
+
+	$effect(() => {
+		function onTerminalMobileMaximize() {
+			mobileMaximized = true;
+			// Auto-collapse the todo overlay to free vertical space
+			window.dispatchEvent(new CustomEvent("todo:collapse"));
+		}
+		window.addEventListener("terminal:mobile-maximize", onTerminalMobileMaximize);
+		return () => window.removeEventListener("terminal:mobile-maximize", onTerminalMobileMaximize);
+	});
+
+	// Clear mobileMaximized when terminal panel closes
+	$effect(() => {
+		if (!terminalState.panelOpen) {
+			mobileMaximized = false;
+		}
 	});
 
 	// ─── QR modal event bridge (Header dispatches "qr:show") ─────────────────
@@ -433,25 +518,29 @@
 			<RewindBanner />
 		{/if}
 
-		<!-- Messages + Input area (flex-1 takes remaining space above terminal) -->
-		<div class="flex flex-col flex-1 min-h-0">
-			<MessageList />
-			<InputArea />
-		</div>
+		<!-- Messages + Input area (hidden when terminal is mobile-maximized) -->
+		{#if !mobileMaximized}
+			<div class="flex flex-col flex-1 min-h-0">
+				<MessageList />
+				<InputArea />
+			</div>
+		{/if}
 
 		<!-- Terminal Panel (resizable bottom panel) -->
 		{#if terminalState.panelOpen}
-			<!-- Resize handle -->
-			<!-- svelte-ignore a11y_no_static_element_interactions -->
-			<div
-				class="terminal-resize-handle h-1.5 shrink-0 cursor-ns-resize flex items-center justify-center group hover:bg-accent/10 transition-colors"
-				onmousedown={handleResizeStart}
-				ontouchstart={handleResizeStart}
-			>
-				<div class="w-8 h-0.5 rounded-full bg-border group-hover:bg-accent/50 transition-colors"></div>
-			</div>
-			<div style="height: {terminalHeight}px;" class="shrink-0 min-h-0">
-				<TerminalPanel />
+			<!-- Resize handle (hidden when mobile-maximized — tab bar is the drag target) -->
+			{#if !mobileMaximized}
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
+				<div
+					class="terminal-resize-handle h-1.5 shrink-0 cursor-ns-resize flex items-center justify-center group hover:bg-accent/10 transition-colors"
+					onmousedown={handleResizeStart}
+					ontouchstart={handleResizeStart}
+				>
+					<div class="w-8 h-0.5 rounded-full bg-border group-hover:bg-accent/50 transition-colors"></div>
+				</div>
+			{/if}
+			<div class={mobileMaximized ? "flex-1 min-h-0 bg-bg-surface" : "shrink-0 min-h-0"} style={mobileMaximized ? "" : `height: ${terminalHeight}px;`}>
+				<TerminalPanel onTabBarTouchStart={handleTabBarTouchStart} />
 			</div>
 		{/if}
 

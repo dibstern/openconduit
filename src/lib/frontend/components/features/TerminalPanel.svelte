@@ -19,6 +19,10 @@
 	import { wsSend } from "../../stores/ws.svelte.js";
 	import TerminalTab from "./TerminalTab.svelte";
 
+	// ─── Props ────────────────────────────────────────────────────────────────
+
+	let { onTabBarTouchStart }: { onTabBarTouchStart?: (e: TouchEvent) => void } = $props();
+
 	// ─── Reactive derived state ────────────────────────────────────────────────
 
 	const tabs = $derived(getTabList());
@@ -142,8 +146,10 @@
 		class="term-panel flex flex-col h-full bg-bg-surface border border-border rounded-lg overflow-hidden"
 	>
 		<!-- Tab bar -->
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div
 			class="term-tab-bar flex items-center gap-0 px-1 bg-bg border-b border-border shrink-0 overflow-x-auto min-h-9"
+			ontouchstart={onTabBarTouchStart}
 		>
 			<!-- Tab buttons -->
 			{#each tabs as tab (tab.ptyId)}
