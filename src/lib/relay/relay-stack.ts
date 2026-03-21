@@ -31,6 +31,7 @@ import { SessionStatusPoller } from "../session/session-status-poller.js";
 import type { PermissionId } from "../shared-types.js";
 import type { OpenCodeEvent, ProjectRelayConfig } from "../types.js";
 import { generateSlug } from "../utils.js";
+import { type EffectDeps, executeEffects } from "./effect-executor.js";
 import {
 	applyPipelineResult,
 	isNotificationWorthy,
@@ -43,6 +44,17 @@ import {
 } from "./event-translator.js";
 import { MessageCache } from "./message-cache.js";
 import { MessagePollerManager } from "./message-poller-manager.js";
+import {
+	assembleContext,
+	evaluateAll,
+	initialMonitoringState,
+} from "./monitoring-reducer.js";
+import type {
+	MonitoringState,
+	SessionEvalContext,
+} from "./monitoring-types.js";
+import { DEFAULT_POLLER_GATING_CONFIG } from "./monitoring-types.js";
+import { resolveNotifications } from "./notification-policy.js";
 import { PendingUserMessages } from "./pending-user-messages.js";
 import { PtyManager } from "./pty-manager.js";
 import {
@@ -50,13 +62,13 @@ import {
 	type PtyUpstreamDeps,
 } from "./pty-upstream.js";
 import { loadRelaySettings, parseDefaultModel } from "./relay-settings.js";
+import { createSessionSSETracker } from "./session-sse-tracker.js";
 import { SSEConsumer } from "./sse-consumer.js";
 import {
 	extractSessionId,
 	sendPushForEvent,
 	wireSSEConsumer,
 } from "./sse-wiring.js";
-import { computePollerDecisions } from "./status-transitions.js";
 import { ToolContentStore } from "./tool-content-store.js";
 
 // ─── WebSocket library for upstream PTY connections ─────────────────────────
@@ -233,6 +245,10 @@ export async function createProjectRelay(
 
 	const ptyManager = new PtyManager({ log: ptyLog });
 	const pendingUserMessages = new PendingUserMessages();
+
+	// ── Monitoring reducer state ──────────────────────────────────────────────
+	const sseTracker = createSessionSSETracker();
+	let monitoringState: MonitoringState = initialMonitoringState();
 
 	// ── Health check ────────────────────────────────────────────────────────
 
@@ -498,41 +514,9 @@ export async function createProjectRelay(
 		log: pipelineLog,
 	};
 
-	// ── Session status poller wiring ────────────────────────────────────────
-
-	// Session list broadcast (existing behavior)
-	statusPoller.on("changed", async (statuses) => {
-		try {
-			await sessionMgr.sendDualSessionLists((msg) => wsHandler.broadcast(msg), {
-				statuses,
-			});
-		} catch (err) {
-			statusLog.warn(
-				`Failed to broadcast session list: ${err instanceof Error ? err.message : err}`,
-			);
-		}
-
-		// ── Message poller manager: manage pollers per-session ──────────────
-		// This stays in the "changed" handler — it depends on statuses and pollerManager
-		const pollerDecisions = computePollerDecisions(
-			statuses,
-			pollerManager.getPollingSessionIds(),
-			(sid) => pollerManager.hasViewers(sid),
-			(sid) => pollerManager.isPolling(sid),
-		);
-
-		for (const polledId of pollerDecisions.toClearActivity) {
-			statusPoller.clearMessageActivity(polledId);
-		}
-
-		for (const polledId of pollerDecisions.toStop) {
-			pollerManager.emitDone(polledId);
-			pollerManager.stopPolling(polledId);
-			statusPoller.clearMessageActivity(polledId);
-			overrides.clearProcessingTimeout(polledId);
-		}
-
-		for (const sessionId of pollerDecisions.toStart) {
+	// ── Effect executor deps (used by monitoring reducer effects) ─────────
+	const effectDeps: EffectDeps = {
+		startPoller: (sessionId) => {
 			client
 				.getMessages(sessionId)
 				.then((msgs) => pollerManager.startPolling(sessionId, msgs))
@@ -541,22 +525,12 @@ export async function createProjectRelay(
 						`Failed to seed poller for ${sessionId.slice(0, 12)}, will retry: ${err instanceof Error ? err.message : err}`,
 					),
 				);
-		}
-	});
-
-	// Sessions became busy → send processing status
-	statusPoller.on("became_busy", (sessionIds) => {
-		for (const sessionId of sessionIds) {
-			wsHandler.sendToSession(sessionId, {
-				type: "status",
-				status: "processing",
-			});
-		}
-	});
-
-	// Sessions became idle → send done through pipeline + push notification
-	statusPoller.on("became_idle", (sessionIds) => {
-		for (const sessionId of sessionIds) {
+		},
+		stopPoller: (sessionId) => pollerManager.stopPolling(sessionId),
+		emitDone: (sessionId) => pollerManager.emitDone(sessionId),
+		sendStatusToSession: (sessionId, msg) =>
+			wsHandler.sendToSession(sessionId, msg),
+		processAndApplyDone: (sessionId, isSubagent) => {
 			const doneMsg = { type: "done" as const, code: 0 };
 			const doneViewers = wsHandler.getClientsForSession(sessionId);
 			const doneResult = processEvent(
@@ -567,26 +541,79 @@ export async function createProjectRelay(
 			);
 			applyPipelineResult(doneResult, sessionId, pipelineDeps);
 
-			// Skip notifications for subagent sessions — only root agent
-			// completions should fire push/browser alerts. The parent session
-			// emits its own done when all subagent work finishes.
-			const isSubagent = sessionMgr.getSessionParentMap().has(sessionId);
-			if (isSubagent) continue;
-
-			// Push notification — fire regardless of WS viewers
-			if (config.pushManager) {
+			const notification = resolveNotifications(
+				doneMsg,
+				doneResult.route,
+				isSubagent,
+			);
+			if (notification.sendPush && config.pushManager) {
 				sendPushForEvent(config.pushManager, doneMsg, sseLog);
 			}
-
-			// Cross-session browser notification — if no viewers, broadcast
-			// a notification_event so clients on other sessions still get
-			// sound/browser alerts.
-			if (doneResult.route.action === "drop") {
-				wsHandler.broadcast({
-					type: "notification_event",
-					eventType: doneMsg.type,
-				});
+			if (
+				notification.broadcastCrossSession &&
+				notification.crossSessionPayload
+			) {
+				wsHandler.broadcast(
+					notification.crossSessionPayload as import("../shared-types.js").RelayMessage,
+				);
 			}
+		},
+		sendPush: (msg) => {
+			if (config.pushManager) {
+				sendPushForEvent(config.pushManager, msg, sseLog);
+			}
+		},
+		broadcastNotification: (payload) => wsHandler.broadcast(payload),
+		clearProcessingTimeout: (sessionId) =>
+			overrides.clearProcessingTimeout(sessionId),
+		clearMessageActivity: (sessionId) =>
+			statusPoller.clearMessageActivity(sessionId),
+		log: statusLog,
+	};
+
+	// ── Session status poller wiring ────────────────────────────────────────
+
+	statusPoller.on("changed", async (statuses) => {
+		// ── Session list broadcast (unchanged) ──────────────────────────────
+		try {
+			await sessionMgr.sendDualSessionLists((msg) => wsHandler.broadcast(msg), {
+				statuses,
+			});
+		} catch (err) {
+			statusLog.warn(
+				`Failed to broadcast session list: ${err instanceof Error ? err.message : err}`,
+			);
+		}
+
+		// ── Monitoring reducer: evaluate all sessions ──────────────────────
+		const parentMap = sessionMgr.getSessionParentMap();
+		const now = Date.now();
+		const contexts = new Map<string, SessionEvalContext>();
+		for (const [sessionId, status] of Object.entries(statuses)) {
+			if (status == null) continue;
+			contexts.set(
+				sessionId,
+				assembleContext(
+					sessionId,
+					status,
+					{ connected: sseConsumer.isConnected() },
+					sseTracker,
+					parentMap,
+					(sid) => registry.hasViewers(sid),
+					now,
+				),
+			);
+		}
+
+		const result = evaluateAll(
+			monitoringState,
+			contexts,
+			DEFAULT_POLLER_GATING_CONFIG,
+		);
+		monitoringState = result.state;
+
+		if (result.effects.length > 0) {
+			executeEffects(result.effects, effectDeps);
 		}
 	});
 
@@ -685,6 +712,7 @@ export async function createProjectRelay(
 	sseConsumer.on("event", (event: OpenCodeEvent) => {
 		const sid = extractSessionId(event);
 		if (sid) {
+			sseTracker.recordEvent(sid, Date.now());
 			pollerManager.notifySSEEvent(sid);
 		}
 	});
