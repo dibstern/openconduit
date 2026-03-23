@@ -7,6 +7,7 @@ import type { RelayMessage } from "../types.js";
 import { NOTIFICATION_DISMISS_MS } from "../ui-constants.js";
 import { getNotifSettings } from "../utils/notif-settings.js";
 import { playDoneSound } from "../utils/sound.js";
+import { getCurrentSlug, navigate } from "./router.svelte.js";
 
 // ─── Push-active tracking ────────────────────────────────────────────────────
 // When push notifications are active, browser alerts are suppressed (the SW
@@ -74,7 +75,22 @@ export function initSWNavigationListener(): void {
 	_swListenerRegistered = true;
 	navigator.serviceWorker.addEventListener("message", (event) => {
 		if (event.data?.type === "navigate_to_session" && event.data.sessionId) {
-			_navigateToSession?.(event.data.sessionId);
+			const { sessionId, slug, url } = event.data as {
+				sessionId: string;
+				slug?: string;
+				url?: string;
+			};
+
+			// If the notification is for a different project than the one
+			// currently viewed, navigate via URL instead of switchToSession
+			// (which would send view_session on the wrong WS connection).
+			const currentSlug = getCurrentSlug();
+			if (slug && currentSlug && slug !== currentSlug) {
+				if (url) navigate(url);
+				return;
+			}
+
+			_navigateToSession?.(sessionId);
 		}
 	});
 }

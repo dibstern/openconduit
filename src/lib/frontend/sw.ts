@@ -84,6 +84,25 @@ self.addEventListener("push", (event: PushEvent) => {
 
 // ─── Notification click: focus or open relay ─────────────────────────────
 
+/** Post a navigate_to_session message to a client. Swallows errors
+ *  (client may have closed between matchAll and postMessage). */
+function postNavigate(
+	client: { postMessage(message: unknown): void },
+	data: PushPayload,
+	targetUrl: string,
+): void {
+	try {
+		client.postMessage({
+			type: "navigate_to_session",
+			sessionId: data.sessionId,
+			slug: data.slug,
+			url: targetUrl,
+		});
+	} catch {
+		// Client may have closed — non-fatal
+	}
+}
+
 self.addEventListener("notificationclick", (event: NotificationEvent) => {
 	const data: PushPayload = event.notification.data ?? {};
 	event.notification.close();
@@ -118,10 +137,7 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
 				if (projectPrefix && data.sessionId) {
 					for (const client of clientList) {
 						if (client.url.includes(projectPrefix)) {
-							client.postMessage({
-								type: "navigate_to_session",
-								sessionId: data.sessionId,
-							});
+							postNavigate(client, data, targetUrl);
 							return client.focus();
 						}
 					}
@@ -130,11 +146,7 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
 				for (const client of clientList) {
 					if (client.visibilityState !== "hidden") {
 						if (data.sessionId) {
-							client.postMessage({
-								type: "navigate_to_session",
-								sessionId: data.sessionId,
-								url: targetUrl,
-							});
+							postNavigate(client, data, targetUrl);
 						}
 						return client.focus();
 					}
@@ -142,11 +154,7 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
 				// Fall back to any client
 				if (clientList.length > 0) {
 					if (data.sessionId) {
-						clientList[0].postMessage({
-							type: "navigate_to_session",
-							sessionId: data.sessionId,
-							url: targetUrl,
-						});
+						postNavigate(clientList[0], data, targetUrl);
 					}
 					return clientList[0].focus();
 				}
