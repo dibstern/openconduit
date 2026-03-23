@@ -32,6 +32,53 @@ export function isPushActive(): boolean {
 	return _pushActive;
 }
 
+// ─── Session navigation callback ─────────────────────────────────────────────
+// Registered by ChatLayout so notification clicks can switch to the correct
+// session without a circular dependency on session/router modules.
+
+let _navigateToSession: ((sessionId: string) => void) | null = null;
+
+/**
+ * Register a callback to navigate to a session when a notification is clicked.
+ * Called by ChatLayout during initialization.
+ */
+export function onNavigateToSession(fn: (sessionId: string) => void): void {
+	_navigateToSession = fn;
+}
+
+/**
+ * Clear the navigation callback (for cleanup on unmount).
+ */
+export function clearNavigateToSession(): void {
+	_navigateToSession = null;
+}
+
+// ─── Service worker message listener ─────────────────────────────────────────
+// The SW posts a `navigate_to_session` message when a push notification is
+// clicked. This listener routes it to the registered callback.
+
+let _swListenerRegistered = false;
+
+/**
+ * Register the service worker message listener for push notification clicks.
+ * Safe to call multiple times — only registers once.
+ */
+export function initSWNavigationListener(): void {
+	if (
+		_swListenerRegistered ||
+		typeof navigator === "undefined" ||
+		!("serviceWorker" in navigator)
+	)
+		return;
+
+	_swListenerRegistered = true;
+	navigator.serviceWorker.addEventListener("message", (event) => {
+		if (event.data?.type === "navigate_to_session" && event.data.sessionId) {
+			_navigateToSession?.(event.data.sessionId);
+		}
+	});
+}
+
 // ─── Notification triggers ───────────────────────────────────────────────────
 // Fire sound and/or browser alert when a notable event arrives.
 // Both fire regardless of tab visibility — the user wants to know when a
@@ -64,12 +111,21 @@ export function triggerNotifications(msg: RelayMessage): void {
 			Notification.permission === "granted"
 		) {
 			try {
+				// Extract sessionId from the message for click-to-session navigation
+				const sessionId =
+					"sessionId" in msg
+						? (msg as { sessionId?: string }).sessionId
+						: undefined;
+
 				const n = new Notification(content.title, {
 					body: content.body,
 					tag: content.tag,
 				});
 				n.onclick = () => {
 					window.focus();
+					if (sessionId) {
+						_navigateToSession?.(sessionId);
+					}
 					n.close();
 				};
 				setTimeout(() => n.close(), NOTIFICATION_DISMISS_MS);

@@ -40,6 +40,9 @@
 		connect,
 		disconnect,
 		onConnect,
+		onNavigateToSession,
+		clearNavigateToSession,
+		initSWNavigationListener,
 		onPlanMode,
 		onRewind,
 		wsSend,
@@ -47,7 +50,7 @@
 	import { slugState } from "../../stores/router.svelte.js";
 	import { chatState, clearMessages } from "../../stores/chat.svelte.js";
 	import { terminalState, destroyAll } from "../../stores/terminal.svelte.js";
-	import { clearSessionState } from "../../stores/session.svelte.js";
+	import { clearSessionState, switchToSession } from "../../stores/session.svelte.js";
 	import { clearAllPermissions } from "../../stores/permissions.svelte.js";
 	import { clearDiscoveryState } from "../../stores/discovery.svelte.js";
 	import { todoState, clearTodoState } from "../../stores/todo.svelte.js";
@@ -324,6 +327,15 @@
 			resetProjectUI();
 			planModeData = { mode: null, content: "" };
 
+			// Register notification-click → session navigation callback.
+			// Uses wsSend so switchToSession can notify the server.
+			onNavigateToSession((sessionId) => {
+				switchToSession(sessionId, wsSend);
+			});
+
+			// Listen for SW postMessage (push notification clicks)
+			initSWNavigationListener();
+
 			onConnect(() => {
 				// Fetch current version for sidebar footer
 				fetchCurrentVersion();
@@ -343,6 +355,7 @@
 		});
 
 		return () => {
+			clearNavigateToSession();
 			disconnect();
 		};
 	});

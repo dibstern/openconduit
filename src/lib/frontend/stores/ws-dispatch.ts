@@ -399,6 +399,7 @@ export function handleMessage(msg: RelayMessage): void {
 			triggerNotifications({
 				type: msg.eventType,
 				...(msg.message != null ? { message: msg.message } : {}),
+				...(msg.sessionId != null ? { sessionId: msg.sessionId } : {}),
 			} as RelayMessage);
 			break;
 

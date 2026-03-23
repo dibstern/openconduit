@@ -36,6 +36,7 @@ interface PushPayload {
 	url?: string;
 	requestId?: PermissionId;
 	slug?: string;
+	sessionId?: string;
 }
 
 self.addEventListener("push", (event: PushEvent) => {
@@ -88,27 +89,67 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
 	event.notification.close();
 
 	const baseUrl = self.registration.scope || "/";
-	const targetUrl =
-		data.url ?? (data.slug ? `${baseUrl}p/${data.slug}/` : baseUrl);
+
+	// Build target URL with session specificity when available
+	let targetUrl: string;
+	if (data.url) {
+		targetUrl = data.url;
+	} else if (data.slug && data.sessionId) {
+		targetUrl = `${baseUrl}p/${data.slug}/s/${data.sessionId}`;
+	} else if (data.slug) {
+		targetUrl = `${baseUrl}p/${data.slug}/`;
+	} else {
+		targetUrl = baseUrl;
+	}
+
+	const projectPrefix = data.slug ? `${baseUrl}p/${data.slug}/` : null;
 
 	event.waitUntil(
 		self.clients
 			.matchAll({ type: "window", includeUncontrolled: true })
 			.then((clientList) => {
-				// Prefer a client already on the correct URL
+				// Prefer a client already on the exact URL
 				for (const client of clientList) {
 					if (client.url.includes(targetUrl)) {
 						return client.focus();
 					}
 				}
-				// Fall back to any visible client
+				// Client on the same project — tell it to navigate to the session
+				if (projectPrefix && data.sessionId) {
+					for (const client of clientList) {
+						if (client.url.includes(projectPrefix)) {
+							client.postMessage({
+								type: "navigate_to_session",
+								sessionId: data.sessionId,
+							});
+							return client.focus();
+						}
+					}
+				}
+				// Fall back to any visible client — navigate it
 				for (const client of clientList) {
 					if (client.visibilityState !== "hidden") {
+						if (data.sessionId) {
+							client.postMessage({
+								type: "navigate_to_session",
+								sessionId: data.sessionId,
+								url: targetUrl,
+							});
+						}
 						return client.focus();
 					}
 				}
 				// Fall back to any client
-				if (clientList.length > 0) return clientList[0].focus();
+				if (clientList.length > 0) {
+					if (data.sessionId) {
+						clientList[0].postMessage({
+							type: "navigate_to_session",
+							sessionId: data.sessionId,
+							url: targetUrl,
+						});
+					}
+					return clientList[0].focus();
+				}
 				// Open a new window
 				return self.clients.openWindow(targetUrl);
 			}),
