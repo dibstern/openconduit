@@ -114,16 +114,16 @@ const registry = createToolRegistry(
 
 /** Append a new tool message to chatState.messages. */
 function applyToolCreate(tool: ToolMessage): void {
-	chatState.messages = [...chatState.messages, tool];
+	setMessages([...getMessages(), tool]);
 }
 
 /** Replace a tool message in chatState.messages by UUID. */
 function applyToolUpdate(uuid: string, tool: ToolMessage): void {
-	const messages = [...chatState.messages];
+	const messages = [...getMessages()];
 	const found = findMessage(messages, "tool", (m) => m.uuid === uuid);
 	if (found) {
 		messages[found.index] = tool;
-		chatState.messages = messages;
+		setMessages(messages);
 	}
 }
 
@@ -133,6 +133,36 @@ function applyToolUpdate(uuid: string, tool: ToolMessage): void {
  * re-synthesize content that SSE already delivered when its snapshot is stale.
  */
 const doneMessageIds = new Set<string>();
+
+// ─── Replay Batch ───────────────────────────────────────────────────────────
+let replayBatch: ChatMessage[] | null = null;
+
+export function beginReplayBatch(): void {
+	replayBatch = [...chatState.messages];
+}
+
+export function commitReplayBatch(): void {
+	if (replayBatch !== null) {
+		chatState.messages = replayBatch;
+		replayBatch = null;
+	}
+}
+
+export function discardReplayBatch(): void {
+	replayBatch = null;
+}
+
+export function getMessages(): ChatMessage[] {
+	return replayBatch ?? chatState.messages;
+}
+
+function setMessages(msgs: ChatMessage[]): void {
+	if (replayBatch !== null) {
+		replayBatch = msgs;
+	} else {
+		chatState.messages = msgs;
+	}
+}
 
 // ─── Message handlers ───────────────────────────────────────────────────────
 
@@ -160,7 +190,7 @@ export function handleDelta(
 			finalized: false,
 			...(messageId != null && { messageId }),
 		};
-		chatState.messages = [...chatState.messages, assistantMsg];
+		setMessages([...getMessages(), assistantMsg]);
 		chatState.streaming = true;
 		chatState.currentAssistantText = "";
 	}
@@ -186,7 +216,7 @@ export function handleThinkingStart(
 		text: "",
 		done: false,
 	};
-	chatState.messages = [...chatState.messages, thinkingMsg];
+	setMessages([...getMessages(), thinkingMsg]);
 }
 
 export function handleThinkingDelta(
@@ -195,7 +225,7 @@ export function handleThinkingDelta(
 	const { text } = msg;
 
 	// Find the last thinking message and append
-	const messages = [...chatState.messages];
+	const messages = [...getMessages()];
 	for (let i = messages.length - 1; i >= 0; i--) {
 		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
 		const m = messages[i]!;
@@ -204,7 +234,7 @@ export function handleThinkingDelta(
 				...m,
 				text: m.text + text,
 			};
-			chatState.messages = messages;
+			setMessages(messages);
 			return;
 		}
 	}
@@ -216,7 +246,7 @@ export function handleThinkingStop(
 	const duration = thinkingStartTime > 0 ? Date.now() - thinkingStartTime : 0;
 	thinkingStartTime = 0;
 
-	const messages = [...chatState.messages];
+	const messages = [...getMessages()];
 	for (let i = messages.length - 1; i >= 0; i--) {
 		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
 		const m = messages[i]!;
@@ -226,7 +256,7 @@ export function handleThinkingStop(
 				done: true,
 				duration,
 			};
-			chatState.messages = messages;
+			setMessages(messages);
 			return;
 		}
 	}
@@ -255,7 +285,7 @@ export function handleToolStart(
 		}
 		flushAssistantRender();
 
-		const messages = [...chatState.messages];
+		const messages = [...getMessages()];
 		for (let i = messages.length - 1; i >= 0; i--) {
 			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
 			const m = messages[i]!;
@@ -264,7 +294,7 @@ export function handleToolStart(
 					...m,
 					finalized: true,
 				};
-				chatState.messages = messages;
+				setMessages(messages);
 				break;
 			}
 		}
@@ -310,9 +340,10 @@ export function handleResult(
 	// of appending a new ResultMessage each time, update the existing one
 	// in-place. The last ResultMessage in the array (not separated by a
 	// "done" message) is considered the same turn's result bar.
-	const lastMsg = chatState.messages[chatState.messages.length - 1];
+	const currentMessages = getMessages();
+	const lastMsg = currentMessages[currentMessages.length - 1];
 	if (lastMsg?.type === "result") {
-		const messages = [...chatState.messages];
+		const messages = [...currentMessages];
 		const dur = duration ?? lastMsg.duration;
 		messages[messages.length - 1] = {
 			...lastMsg,
@@ -323,7 +354,7 @@ export function handleResult(
 			cacheRead: usage?.cache_read ?? lastMsg.cacheRead,
 			cacheWrite: usage?.cache_creation ?? lastMsg.cacheWrite,
 		};
-		chatState.messages = messages;
+		setMessages(messages);
 		// Update context usage bar
 		updateContextFromTokens(usage);
 		return;
@@ -340,7 +371,7 @@ export function handleResult(
 		cacheRead: usage?.cache_read,
 		cacheWrite: usage?.cache_creation,
 	};
-	chatState.messages = [...chatState.messages, resultMsg];
+	setMessages([...getMessages(), resultMsg]);
 	// Update context usage bar
 	updateContextFromTokens(usage);
 }
@@ -389,7 +420,7 @@ export function handleDone(
 	// Finalize the assistant message
 	if (chatState.streaming) {
 		flushAssistantRender();
-		const messages = [...chatState.messages];
+		const messages = [...getMessages()];
 		for (let i = messages.length - 1; i >= 0; i--) {
 			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
 			const m = messages[i]!;
@@ -398,7 +429,7 @@ export function handleDone(
 					...m,
 					finalized: true,
 				};
-				chatState.messages = messages;
+				setMessages(messages);
 				// Record messageId so duplicate deltas from the message poller
 				// are suppressed (see handleDelta dedup guard).
 				if (m.messageId) {
@@ -410,9 +441,9 @@ export function handleDone(
 	}
 
 	// Finalize any tools still in non-terminal states (pending/running).
-	const finResult = registry.finalizeAll(chatState.messages);
+	const finResult = registry.finalizeAll(getMessages());
 	if (finResult.action === "finalized") {
-		const messages = [...chatState.messages];
+		const messages = [...getMessages()];
 		for (const idx of finResult.indices) {
 			// biome-ignore lint/style/noNonNullAssertion: safe — index from finalizeAll
 			const m = messages[idx]!;
@@ -420,7 +451,7 @@ export function handleDone(
 				messages[idx] = { ...m, status: "completed" };
 			}
 		}
-		chatState.messages = messages;
+		setMessages(messages);
 	}
 
 	chatState.streaming = false;
@@ -446,7 +477,7 @@ export function handleStatus(
  *  Called when processing starts — handles the timing gap between
  *  REST history prepend and status:processing arrival. */
 function applyQueuedFlagInPlace(): void {
-	const msgs = chatState.messages;
+	const msgs = getMessages();
 	if (msgs.length === 0) return;
 
 	for (let i = msgs.length - 1; i >= 0; i--) {
@@ -459,8 +490,8 @@ function applyQueuedFlagInPlace(): void {
 				.some((msg) => msg.type === "assistant");
 			if (hasResponse) return; // Already responded — no queued flag needed
 			// No response — mark as queued (immutable update)
-			chatState.messages = msgs.map((msg, idx) =>
-				idx === i ? { ...msg, queued: true } : msg,
+			setMessages(
+				msgs.map((msg, idx) => (idx === i ? { ...msg, queued: true } : msg)),
 			);
 			return;
 		}
@@ -507,13 +538,13 @@ export function addUserMessage(
 		}
 		flushAssistantRender();
 
-		const messages = [...chatState.messages];
+		const messages = [...getMessages()];
 		for (let i = messages.length - 1; i >= 0; i--) {
 			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
 			const m = messages[i]!;
 			if (m.type === "assistant" && !m.finalized) {
 				messages[i] = { ...m, finalized: true };
-				chatState.messages = messages;
+				setMessages(messages);
 				break;
 			}
 		}
@@ -529,14 +560,14 @@ export function addUserMessage(
 		...(images != null && { images }),
 		...(queued != null && { queued }),
 	};
-	chatState.messages = [...chatState.messages, msg];
+	setMessages([...getMessages(), msg]);
 }
 
 /** Prepend older messages (from history) before existing messages.
  *  Used when paginating older messages or loading REST history. */
 export function prependMessages(msgs: ChatMessage[]): void {
 	if (msgs.length === 0) return;
-	chatState.messages = [...msgs, ...chatState.messages];
+	setMessages([...msgs, ...getMessages()]);
 }
 
 /** Clear the `queued` flag on all user messages.
@@ -547,14 +578,14 @@ export function prependMessages(msgs: ChatMessage[]): void {
 export function clearQueuedFlags(): void {
 	chatState.queuedFlagsCleared = true;
 	let changed = false;
-	const messages = chatState.messages.map((m) => {
+	const messages = getMessages().map((m) => {
 		if (m.type === "user" && m.queued) {
 			changed = true;
 			return { ...m, queued: false };
 		}
 		return m;
 	});
-	if (changed) chatState.messages = messages;
+	if (changed) setMessages(messages);
 }
 
 /** Add a system message to the chat. */
@@ -564,7 +595,7 @@ export function addSystemMessage(
 ): void {
 	const uuid = generateUuid();
 	const msg: SystemMessage = { type: "system", uuid, text, variant };
-	chatState.messages = [...chatState.messages, msg];
+	setMessages([...getMessages(), msg]);
 }
 
 /** Reset all chat state (for stories/tests). Alias for clearMessages. */
@@ -588,6 +619,8 @@ export function flushPendingRender(): void {
  *  inside this function — it is called from $effect contexts and reading
  *  reactive state here creates infinite effect loops. */
 export function clearMessages(): void {
+	replayBatch = null;
+	chatState.replaying = false; // safety: clear stale flag on session switch
 	chatState.messages = [];
 	chatState.currentAssistantText = "";
 	chatState.streaming = false;
@@ -669,8 +702,8 @@ export function handlePartRemoved(
 ): void {
 	const { partId } = msg;
 	if (!partId) return;
-	chatState.messages = chatState.messages.filter(
-		(m) => m.type !== "tool" || m.id !== partId,
+	setMessages(
+		getMessages().filter((m) => m.type !== "tool" || m.id !== partId),
 	);
 	registry.remove(partId);
 }
@@ -680,8 +713,10 @@ export function handleMessageRemoved(
 ): void {
 	const { messageId } = msg;
 	if (!messageId) return;
-	chatState.messages = chatState.messages.filter(
-		(m) => !("messageId" in m) || m.messageId !== messageId,
+	setMessages(
+		getMessages().filter(
+			(m) => !("messageId" in m) || m.messageId !== messageId,
+		),
 	);
 }
 
@@ -692,7 +727,7 @@ function flushAssistantRender(): void {
 	if (!chatState.currentAssistantText) return;
 
 	const html = renderMarkdown(chatState.currentAssistantText);
-	const messages = [...chatState.messages];
+	const messages = [...getMessages()];
 
 	for (let i = messages.length - 1; i >= 0; i--) {
 		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
@@ -703,7 +738,7 @@ function flushAssistantRender(): void {
 				rawText: chatState.currentAssistantText,
 				html,
 			};
-			chatState.messages = messages;
+			setMessages(messages);
 			return;
 		}
 	}
