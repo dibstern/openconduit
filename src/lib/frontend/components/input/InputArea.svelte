@@ -6,8 +6,10 @@
 	import { untrack } from "svelte";
 	import Icon from "../shared/Icon.svelte";
 	import AgentSelector from "../model/AgentSelector.svelte";
+	import AttachMenu from "./AttachMenu.svelte";
 	// biome-ignore lint/style/useImportType: CommandMenu is used as a value for bind:this
 	import CommandMenu from "./CommandMenu.svelte";
+	import ContextBar from "./ContextBar.svelte";
 	// biome-ignore lint/style/useImportType: FileMenu is used as a value for bind:this
 	import FileMenu from "./FileMenu.svelte";
 	import ModelSelector from "../model/ModelSelector.svelte";
@@ -16,13 +18,12 @@
 	import { chatState, addUserMessage, inputSyncState } from "../../stores/chat.svelte.js";
 	import { discoveryState } from "../../stores/discovery.svelte.js";
 	import { extractAtQuery, fileTreeState, filterFiles } from "../../stores/file-tree.svelte.js";
+	import { fetchFileContent, fetchDirectoryListing } from "./input-utils.js";
 	import { sessionState } from "../../stores/session.svelte.js";
 	import { uiState } from "../../stores/ui.svelte.js";
 	import { wsSend } from "../../stores/ws.svelte.js";
-	import { onFileBrowser } from "../../stores/ws-listeners.js";
 	import { buildAttachedMessage, parseAtReferences } from "../../utils/file-attach.js";
 	import type { FileAttachment } from "../../utils/file-attach.js";
-	import { formatFileSize } from "../../utils/format.js";
 
 	// ─── State ─────────────────────────────────────────────────────────────────
 
@@ -104,12 +105,6 @@
 	const isProcessing = $derived(chatState.processing);
 	const canSend = $derived(inputText.trim().length > 0);
 	const showContextMini = $derived(uiState.contextPercent > 0);
-
-	const contextFillColor = $derived.by(() => {
-		if (uiState.contextPercent >= 80) return "bg-brand-a";
-		if (uiState.contextPercent >= 50) return "bg-warning";
-		return "bg-brand-b";
-	});
 
 	// ─── Auto-resize textarea ──────────────────────────────────────────────────
 
@@ -315,56 +310,6 @@
 		}
 	}
 
-	function fetchFileContent(
-		path: string,
-	): Promise<{ content: string; binary?: boolean }> {
-		return new Promise((resolve, reject) => {
-			const timeout = setTimeout(() => reject(new Error("timeout")), 5000);
-
-			const unsub = onFileBrowser((msg) => {
-				if (msg.type === "file_content" && (msg as { path: string }).path === path) {
-					clearTimeout(timeout);
-					unsub();
-				const result: { content: string; binary?: boolean } = {
-						content: (msg as { content: string }).content,
-					};
-					const binaryVal = (msg as { binary?: boolean }).binary;
-					if (binaryVal !== undefined) {
-						result.binary = binaryVal;
-					}
-					resolve(result);
-				}
-			});
-
-			wsSend({ type: "get_file_content", path });
-		});
-	}
-
-	function fetchDirectoryListing(path: string): Promise<string> {
-		const requestPath = path.replace(/\/$/, "");
-		return new Promise((resolve, reject) => {
-			const timeout = setTimeout(() => reject(new Error("timeout")), 5000);
-
-			const unsub = onFileBrowser((msg) => {
-				if (msg.type === "file_list" && (msg as { path: string }).path === requestPath) {
-					clearTimeout(timeout);
-					unsub();
-					const entries = (msg as { entries: Array<{ name: string; type: string; size?: number }> }).entries;
-					const listing = entries
-						.map((e) =>
-							e.type === "directory"
-								? `${e.name}/ (directory)`
-								: `${e.name} (${formatFileSize(e.size ?? 0)}, file)`,
-						)
-						.join("\n");
-					resolve(listing);
-				}
-			});
-
-			wsSend({ type: "get_file_list", path: requestPath });
-		});
-	}
-
 	// Close attach menu on outside click
 	function handleDocumentClick(e: MouseEvent) {
 		if (attachMenuOpen) {
@@ -442,26 +387,7 @@
 
 		<!-- Context usage bar (above input) -->
 		{#if showContextMini}
-			<div
-				id="context-mini"
-				class="flex items-center gap-2 pb-1.5 px-2"
-			>
-				<span
-					class="context-mini-label font-mono text-[10px] font-semibold whitespace-nowrap min-w-6 {contextFillColor === 'bg-brand-a' ? 'text-brand-a' : contextFillColor === 'bg-warning' ? 'text-warning' : 'text-brand-b'}"
-					id="context-mini-label"
-				>
-					{uiState.contextPercent}%
-				</span>
-				<div
-					class="context-mini-bar flex-1 h-1 rounded-[2px] bg-border overflow-hidden"
-				>
-					<div
-						class="context-mini-fill h-full rounded-[2px] transition-[width,background-color] duration-300 ease-out {contextFillColor}"
-						id="context-mini-fill"
-						style="width: {uiState.contextPercent}%"
-					></div>
-				</div>
-			</div>
+			<ContextBar percent={uiState.contextPercent} />
 		{/if}
 		<div
 			id="input-row"
@@ -493,43 +419,7 @@
 					class="flex items-center gap-1 min-w-0"
 				>
 					<!-- Attach button + menu -->
-					<div id="attach-wrap" class="relative shrink-0">
-						<button
-							id="attach-btn"
-							type="button"
-							aria-label="Attach"
-							class="w-7 h-7 rounded-md border border-border bg-bg-alt text-text-muted cursor-pointer flex items-center justify-center transition-[background,color] duration-150 hover:bg-bg-surface hover:text-text"
-							onclick={toggleAttachMenu}
-						>
-							<Icon name="plus" size={18} />
-						</button>
-						<div
-					id="attach-menu"
-					class="absolute bottom-[calc(100%+8px)] left-0 min-w-[170px] bg-bg-surface border border-border rounded-[10px] p-1 shadow-[0_-4px_24px_rgba(var(--shadow-rgb),0.4)] z-10 overflow-hidden"
-							class:hidden={!attachMenuOpen}
-						>
-						<button
-						class="attach-menu-item flex items-center gap-2.5 w-full py-3 px-4 border-none bg-none text-text-secondary text-sm cursor-pointer transition-[background,color] duration-150 not-last:border-b not-last:border-border-subtle hover:bg-[rgba(var(--overlay-rgb),0.04)] hover:text-text"
-						style="font-family: var(--font-brand);"
-						id="attach-camera"
-						type="button"
-						onclick={handleAttachCamera}
-					>
-						<Icon name="camera" size={18} class="shrink-0" />
-						<span>Take Photo</span>
-					</button>
-					<button
-						class="attach-menu-item flex items-center gap-2.5 w-full py-3 px-4 border-none bg-none text-text-secondary text-sm cursor-pointer transition-[background,color] duration-150 not-last:border-b not-last:border-border-subtle hover:bg-[rgba(var(--overlay-rgb),0.04)] hover:text-text"
-						style="font-family: var(--font-brand);"
-								id="attach-photos"
-								type="button"
-								onclick={handleAttachPhotos}
-							>
-								<Icon name="image" size={18} class="shrink-0" />
-								<span>Add Photos</span>
-							</button>
-						</div>
-					</div>
+					<AttachMenu open={attachMenuOpen} onToggle={toggleAttachMenu} onCamera={handleAttachCamera} onPhotos={handleAttachPhotos} />
 
 					<!-- Agent selector -->
 					<div id="agent-selector-wrap">
