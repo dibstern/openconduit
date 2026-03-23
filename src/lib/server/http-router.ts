@@ -352,10 +352,7 @@ export class RequestRouter {
 							JSON.stringify({
 								error: {
 									code: "NOT_FOUND",
-									message:
-										err instanceof Error
-											? err.message
-											: "Unknown error",
+									message: err instanceof Error ? err.message : "Unknown error",
 								},
 							} satisfies ApiError),
 						);
