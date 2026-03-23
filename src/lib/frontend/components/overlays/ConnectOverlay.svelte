@@ -127,7 +127,6 @@
 	});
 
 	// ─── Hide animation when connected ──────────────────────────────────────────
-
 	$effect(() => {
 		if (!connected) return;
 
@@ -140,11 +139,9 @@
 	});
 
 	// ─── Computed visibility ────────────────────────────────────────────────────
-
 	const isHidden = $derived(connected && displayNone);
 
 	// ─── Instance action handlers ──────────────────────────────────────────────
-
 	function handleStartInstance() {
 		if (cachedInstanceId) {
 			wsSend({ type: "instance_start", instanceId: cachedInstanceId });
@@ -217,23 +214,6 @@
 					Switch Instance
 				</button>
 			</div>
-		{/if}
-
-		<!-- Escape hatch: appears after prolonged connection failure -->
-		{#if showEscapeLink}
-			{#if relayStatus !== "registering" && relayStatus !== "error"}
-				<div class="text-[11px] text-text-dimmer mt-2" transition:fade={{ duration: 200 }}>
-					Attempt {wsState.attempts}
-				</div>
-			{/if}
-			<a
-				href="/"
-				class="mt-2 text-xs text-text-dimmer hover:text-text-muted transition-colors"
-				onclick={handleEscape}
-				transition:fade={{ duration: 200 }}
-			>
-				Back to dashboard
-			</a>
 		{/if}
 		</div>
 	</div>
