@@ -5,6 +5,7 @@
 
 <script lang="ts">
 	import Icon from "../shared/Icon.svelte";
+	// biome-ignore lint/style/useImportType: ModelVariant is used as a value for bind:this
 	import ModelVariant from "./ModelVariant.svelte";
 	import { clickOutside } from "../shared/use-click-outside.svelte.js";
 	import {
@@ -20,6 +21,7 @@
 	// ─── State ──────────────────────────────────────────────────────────────────
 
 	let dropdownOpen = $state(false);
+	let variantRef: ModelVariant | undefined = $state();
 
 	// ─── Derived ────────────────────────────────────────────────────────────────
 
@@ -96,6 +98,7 @@
 
 	function toggleDropdown(e: MouseEvent) {
 		e.stopPropagation();
+		variantRef?.close();
 		dropdownOpen = !dropdownOpen;
 	}
 
@@ -153,7 +156,7 @@
 	</button>
 
 	<!-- Variant badge (extracted component) -->
-	<ModelVariant onOpen={() => { dropdownOpen = false }} />
+	<ModelVariant bind:this={variantRef} onOpen={() => { dropdownOpen = false }} />
 
 	<!-- Model dropdown -->
 	{#if dropdownOpen}

@@ -4,6 +4,7 @@
 
 <script lang="ts">
 	import Icon from "../shared/Icon.svelte";
+	import { clickOutside } from "../shared/use-click-outside.svelte.js";
 	import {
 		discoveryState,
 		getActiveModelVariants,
@@ -66,22 +67,11 @@
 		}
 	}
 
-	function handleOutsideClick(e: MouseEvent) {
-		if (!variantDropdownOpen) return;
-		const target = e.target as HTMLElement;
-		const el = document.querySelector("[data-testid='variant-badge']");
-		if (el && !el.closest(".relative")?.contains(target)) {
-			variantDropdownOpen = false;
-		}
-	}
-
 	// ─── Lifecycle ──────────────────────────────────────────────────────────────
 
 	$effect(() => {
-		document.addEventListener("click", handleOutsideClick);
 		document.addEventListener("keydown", handleKeydown);
 		return () => {
-			document.removeEventListener("click", handleOutsideClick);
 			document.removeEventListener("keydown", handleKeydown);
 		};
 	});
@@ -95,7 +85,7 @@
 </script>
 
 {#if variants.length > 0}
-	<div class="relative">
+	<div class="relative" use:clickOutside={() => { variantDropdownOpen = false; }}>
 		<button
 			data-testid="variant-badge"
 			class="inline-flex items-center gap-1 h-6 px-2 ml-0.5 border border-border bg-bg-alt text-text-muted text-[10px] font-medium cursor-pointer whitespace-nowrap rounded-full transition-colors duration-100 hover:bg-bg hover:text-text-secondary"

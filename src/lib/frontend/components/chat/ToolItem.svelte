@@ -4,8 +4,8 @@
 
 <script lang="ts">
 	import type { ToolMessage } from "../../types.js";
+	import { permissionsState } from "../../stores/permissions.svelte.js";
 
-	// biome-ignore lint/style/useImportType: ToolQuestionCard is used as a value for bind:this
 	import ToolQuestionCard from "./ToolQuestionCard.svelte";
 	import ToolSubagentCard from "./ToolSubagentCard.svelte";
 	import ToolGenericCard from "./ToolGenericCard.svelte";
@@ -26,11 +26,19 @@
 		return "";
 	});
 
-	// Bind to the question card to read its isDeferredQuestion value
-	let questionCard: ToolQuestionCard | undefined = $state();
-	const isDeferredQuestion = $derived(
-		isQuestion && questionCard?.isDeferredQuestion === true
-	);
+	// Compute isDeferredQuestion directly to avoid a circular dependency:
+	// ToolQuestionCard can only mount inside the {:else} branch, so we can't
+	// rely on bind:this to read its isDeferredQuestion value.
+	// Simplified: deferred = question tool is active AND has a real (non-synthetic)
+	// pending question in the permissions store.
+	const isDeferredQuestion = $derived.by(() => {
+		if (!isQuestion) return false;
+		if (message.status !== "pending" && message.status !== "running") return false;
+		// Check if there's a matching pending question (non-synthetic = has a real que_ ID)
+		return permissionsState.pendingQuestions.some(
+			(q) => q.toolUseId === message.id || q.toolId === message.id
+		);
+	});
 </script>
 
 <!-- Active non-synthetic questions are deferred to the bottom of MessageList.
@@ -47,7 +55,7 @@
 	data-tool-id={message.id}
 >
 {#if isQuestion}
-	<ToolQuestionCard bind:this={questionCard} {message} {groupRadius} />
+	<ToolQuestionCard {message} {groupRadius} />
 {:else if isSubagent}
 	<ToolSubagentCard {message} {groupRadius} />
 {:else}
