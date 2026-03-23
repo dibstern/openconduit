@@ -58,6 +58,7 @@ export interface ParsedArgs {
 	skipPerms: boolean;
 	logLevel: LogLevel;
 	logFormat?: LogFormat;
+	restartDaemon: boolean;
 }
 
 // ─── Arg Parsing ────────────────────────────────────────────────────────────
@@ -75,6 +76,7 @@ export function parseArgs(argv: string[]): ParsedArgs {
 		noHttps: false,
 		skipPerms: false,
 		logLevel: ENV.logLevel,
+		restartDaemon: false,
 	};
 
 	for (let i = 0; i < argv.length; i++) {
@@ -87,6 +89,10 @@ export function parseArgs(argv: string[]): ParsedArgs {
 
 			case "--foreground":
 				result.command = "foreground";
+				break;
+
+			case "--restart-daemon":
+				result.restartDaemon = true;
 				break;
 
 			case "--status":
@@ -399,6 +405,7 @@ Options:
   --dangerously-skip-permissions
                         Skip permission prompts (requires --pin)
   --foreground           Run daemon in foreground (for dev with tsx watch)
+  --restart-daemon       Stop any running daemon before starting
   -h, --help            Show this help
 `;
 

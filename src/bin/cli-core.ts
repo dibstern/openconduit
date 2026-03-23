@@ -131,6 +131,19 @@ export async function run(argv: string[], options?: CLIOptions): Promise<void> {
 
 	// ─── --foreground (dev mode: run daemon in current process) ──────
 	if (args.command === "foreground") {
+		// Stop any running daemon first if requested (avoids port conflicts)
+		if (args.restartDaemon) {
+			try {
+				const running = await checkDaemon();
+				if (running) {
+					await ipcSend({ cmd: "shutdown" });
+					stdout.write("Stopped existing daemon.\n");
+				}
+			} catch {
+				// Daemon not running or already stopped — continue
+			}
+		}
+
 		const opencodeUrl = ENV.opencodeUrl || `http://localhost:${args.ocPort}`;
 
 		stdout.write(`\nConduit (foreground)\n`);

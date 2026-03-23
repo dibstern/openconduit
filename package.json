@@ -17,7 +17,7 @@
 	"scripts": {
 		"dev": "tsx watch src/bin/cli.ts -- --foreground",
 		"dev:frontend": "vite",
-		"dev:all": "trap 'kill 0' EXIT; tsx watch src/bin/cli.ts -- --foreground & vite & wait",
+		"dev:all": "trap 'kill 0' EXIT; tsx watch src/bin/cli.ts -- --foreground --restart-daemon & vite & wait",
 		"build": "tsgo && pnpm copy:assets && vite build",
 		"build:server": "tsgo && pnpm copy:assets",
 		"build:frontend": "vite build",
