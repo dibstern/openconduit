@@ -44,7 +44,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		client.send({ type: "pty_create" });
 
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const pty = created["pty"] as { id: string };
 		expect(typeof pty.id).toBe("string");
 		expect(pty.id.length).toBeGreaterThan(0);
@@ -64,7 +64,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Create PTY
 		client.send({ type: "pty_create" });
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		// Wait for shell prompt to settle
@@ -80,7 +80,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Wait for output containing our marker
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId &&
 				String(msg["data"]).includes("INTEGRATION_TEST_MARKER"),
@@ -102,7 +102,7 @@ describe("Integration: Terminal (PTY)", () => {
 		client.clearReceived();
 
 		client.send({ type: "pty_create" });
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		await delay(500);
@@ -111,14 +111,14 @@ describe("Integration: Terminal (PTY)", () => {
 		// Send two commands
 		client.send({ type: "pty_input", ptyId, data: "echo AAA_FIRST\n" });
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId && String(msg["data"]).includes("AAA_FIRST"),
 		});
 
 		client.send({ type: "pty_input", ptyId, data: "echo BBB_SECOND\n" });
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId && String(msg["data"]).includes("BBB_SECOND"),
 		});
@@ -138,7 +138,7 @@ describe("Integration: Terminal (PTY)", () => {
 		client.clearReceived();
 
 		client.send({ type: "pty_create" });
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		await delay(500);
@@ -155,7 +155,7 @@ describe("Integration: Terminal (PTY)", () => {
 		// Wait for the sentinel's output — by the time the shell echoes/runs
 		// the echo command, printf has already finished writing its output
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId &&
 				String(msg["data"]).includes("__ANSI_SENTINEL__"),
@@ -187,7 +187,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Client 1 creates PTY
 		client1.send({ type: "pty_create" });
-		const created1 = await client1.waitFor("pty_created", { timeout: 10_000 });
+		const created1 = await client1.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created1["pty"] as { id: string }).id;
 
 		// Client 2 should also get pty_created (broadcast)
@@ -206,13 +206,13 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Both clients should receive the output
 		await client1.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId &&
 				String(msg["data"]).includes("MULTI_CLIENT_TEST"),
 		});
 		await client2.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId &&
 				String(msg["data"]).includes("MULTI_CLIENT_TEST"),
@@ -234,7 +234,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Client A creates PTY
 		clientA.send({ type: "pty_create" });
-		const created = await clientA.waitFor("pty_created", { timeout: 10_000 });
+		const created = await clientA.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		await delay(500);
@@ -250,7 +250,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Client A should receive the output
 		await clientA.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId &&
 				String(msg["data"]).includes("CROSS_CLIENT_INPUT"),
@@ -269,7 +269,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Create PTY
 		client1.send({ type: "pty_create" });
-		const created = await client1.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client1.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		// Disconnect client 1
@@ -285,7 +285,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Should get output back
 		await client2.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId && String(msg["data"]).includes("STILL_ALIVE"),
 		});
@@ -304,12 +304,12 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Create two PTYs
 		client.send({ type: "pty_create" });
-		const created1 = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created1 = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId1 = (created1["pty"] as { id: string }).id;
 
 		client.send({ type: "pty_create" });
 		const created2 = await client.waitFor("pty_created", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) => (msg["pty"] as { id: string }).id !== ptyId1,
 		});
 		const ptyId2 = (created2["pty"] as { id: string }).id;
@@ -324,7 +324,7 @@ describe("Integration: Terminal (PTY)", () => {
 			data: "echo PTY_ONE_ONLY\n",
 		});
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId1 && String(msg["data"]).includes("PTY_ONE_ONLY"),
 		});
@@ -335,7 +335,7 @@ describe("Integration: Terminal (PTY)", () => {
 			data: "echo PTY_TWO_ONLY\n",
 		});
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId2 && String(msg["data"]).includes("PTY_TWO_ONLY"),
 		});
@@ -367,12 +367,12 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Create two PTYs
 		client.send({ type: "pty_create" });
-		const created1 = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created1 = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId1 = (created1["pty"] as { id: string }).id;
 
 		client.send({ type: "pty_create" });
 		const created2 = await client.waitFor("pty_created", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) => (msg["pty"] as { id: string }).id !== ptyId1,
 		});
 		const ptyId2 = (created2["pty"] as { id: string }).id;
@@ -391,7 +391,7 @@ describe("Integration: Terminal (PTY)", () => {
 		// PTY 2 should still work
 		client.send({ type: "pty_input", ptyId: ptyId2, data: "echo SURVIVOR\n" });
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId2 && String(msg["data"]).includes("SURVIVOR"),
 		});
@@ -409,7 +409,7 @@ describe("Integration: Terminal (PTY)", () => {
 		client.clearReceived();
 
 		client.send({ type: "pty_create" });
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		await delay(500);
@@ -424,7 +424,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Wait for output — should contain "120"
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId && String(msg["data"]).includes("120"),
 		});
@@ -446,7 +446,7 @@ describe("Integration: Terminal (PTY)", () => {
 		client.clearReceived();
 
 		client.send({ type: "pty_create" });
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		client.send({ type: "pty_close", ptyId });
@@ -463,7 +463,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Create
 		client.send({ type: "pty_create" });
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		await delay(500);
@@ -472,7 +472,7 @@ describe("Integration: Terminal (PTY)", () => {
 		// Input → verify output
 		client.send({ type: "pty_input", ptyId, data: "echo LIFECYCLE_TEST\n" });
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === ptyId &&
 				String(msg["data"]).includes("LIFECYCLE_TEST"),
@@ -523,7 +523,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Create and close a PTY
 		client.send({ type: "pty_create" });
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		client.send({ type: "pty_close", ptyId });
@@ -538,7 +538,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// The relay should still be responsive
 		client.send({ type: "pty_create" });
-		const created2 = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created2 = await client.waitFor("pty_created", { timeout: 5_000 });
 		expect(created2["pty"]).toBeDefined();
 
 		const ptyId2 = (created2["pty"] as { id: string }).id;
@@ -559,7 +559,7 @@ describe("Integration: Terminal (PTY)", () => {
 		client.send({ type: "pty_create" });
 
 		// Should receive pty_created with a valid PTY
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const pty = created["pty"] as { id: string; status?: string };
 		expect(pty).toBeDefined();
 		expect(typeof pty.id).toBe("string");
@@ -577,7 +577,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Should receive output containing our marker
 		await client.waitFor("pty_output", {
-			timeout: 10_000,
+			timeout: 5_000,
 			predicate: (msg) =>
 				msg["ptyId"] === pty.id &&
 				String(msg["data"]).includes("PANEL_OPEN_TEST"),
@@ -602,7 +602,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Create a PTY
 		client.send({ type: "pty_create" });
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		await delay(300);
@@ -635,7 +635,7 @@ describe("Integration: Terminal (PTY)", () => {
 
 		// Create a PTY
 		client.send({ type: "pty_create" });
-		const created = await client.waitFor("pty_created", { timeout: 10_000 });
+		const created = await client.waitFor("pty_created", { timeout: 5_000 });
 		const ptyId = (created["pty"] as { id: string }).id;
 
 		// Wait for initial shell output

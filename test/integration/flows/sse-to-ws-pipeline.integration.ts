@@ -49,17 +49,17 @@ describe("Integration: SSE to WS Pipeline", () => {
 		// Should get processing status (sent immediately by the relay on message send)
 		const processing = await client.waitFor("status", {
 			predicate: (m) => m["status"] === "processing",
-			timeout: 10_000,
+			timeout: 5_000,
 		});
 		expect(processing["status"]).toBe("processing");
 
 		// The event translator maps session.updated(idle) → { type: "done", code: 0 }
 		// So we wait for "done" not "status: idle"
-		const done = await client.waitFor("done", { timeout: 80_000 });
+		const done = await client.waitFor("done", { timeout: 5_000 });
 		expect(done["code"]).toBe(0);
 
 		await client.close();
-	}, 90_000);
+	}, 10_000);
 
 	it("delta events contain incremental text", async () => {
 		const client = await harness.connectWsClient();
@@ -72,7 +72,7 @@ describe("Integration: SSE to WS Pipeline", () => {
 		});
 
 		// Collect delta events until done
-		await client.waitFor("done", { timeout: 80_000 });
+		await client.waitFor("done", { timeout: 5_000 });
 
 		const deltas = client.getReceivedOfType("delta");
 		expect(deltas.length).toBeGreaterThan(0);
@@ -84,7 +84,7 @@ describe("Integration: SSE to WS Pipeline", () => {
 		}
 
 		await client.close();
-	}, 90_000);
+	}, 10_000);
 
 	it("done event arrives after deltas", async () => {
 		const client = await harness.connectWsClient();
@@ -97,7 +97,7 @@ describe("Integration: SSE to WS Pipeline", () => {
 		});
 
 		// Wait for done
-		await client.waitFor("done", { timeout: 80_000 });
+		await client.waitFor("done", { timeout: 5_000 });
 
 		const all = client.getReceived();
 		const deltaIndex = all.findIndex((m) => m.type === "delta");
@@ -108,7 +108,7 @@ describe("Integration: SSE to WS Pipeline", () => {
 		expect(doneIndex).toBeGreaterThan(deltaIndex);
 
 		await client.close();
-	}, 90_000);
+	}, 10_000);
 
 	it("multiple clients all receive same SSE-sourced events", async () => {
 		const client1 = await harness.connectWsClient();
@@ -126,16 +126,16 @@ describe("Integration: SSE to WS Pipeline", () => {
 
 		// Both clients should receive delta events
 		const [delta1, delta2] = await Promise.all([
-			client1.waitFor("delta", { timeout: 30_000 }),
-			client2.waitFor("delta", { timeout: 30_000 }),
+			client1.waitFor("delta", { timeout: 5_000 }),
+			client2.waitFor("delta", { timeout: 5_000 }),
 		]);
 		expect(delta1["text"]).toBeTruthy();
 		expect(delta2["text"]).toBeTruthy();
 
 		// Both should receive done
 		await Promise.all([
-			client1.waitFor("done", { timeout: 80_000 }),
-			client2.waitFor("done", { timeout: 80_000 }),
+			client1.waitFor("done", { timeout: 5_000 }),
+			client2.waitFor("done", { timeout: 5_000 }),
 		]);
 
 		// Both clients should have received delta events
@@ -146,7 +146,7 @@ describe("Integration: SSE to WS Pipeline", () => {
 
 		await client1.close();
 		await client2.close();
-	}, 90_000);
+	}, 10_000);
 
 	it("done signal arrives after completion with no errors", async () => {
 		const client = await harness.connectWsClient();
@@ -159,7 +159,7 @@ describe("Integration: SSE to WS Pipeline", () => {
 		});
 
 		// Wait for the full cycle: processing → deltas → done
-		const done = await client.waitFor("done", { timeout: 80_000 });
+		const done = await client.waitFor("done", { timeout: 5_000 });
 		expect(done["code"]).toBe(0);
 
 		// Verify no relay-level errors occurred during the pipeline
@@ -174,5 +174,5 @@ describe("Integration: SSE to WS Pipeline", () => {
 		expect(pipelineErrors).toHaveLength(0);
 
 		await client.close();
-	}, 90_000);
+	}, 10_000);
 });

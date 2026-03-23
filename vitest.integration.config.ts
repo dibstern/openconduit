@@ -3,10 +3,9 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
 	test: {
 		include: ["test/integration/**/*.integration.ts"],
-		testTimeout: 30_000,
-		hookTimeout: 30_000,
-		// Sequential — tests share the OpenCode server and can interfere
+		testTimeout: 10_000,
+		hookTimeout: 10_000,
+		// Each file gets its own MockOpenCodeServer + relay — safe to parallelize
 		pool: "forks",
-		poolOptions: { forks: { singleFork: true } },
 	},
 });

@@ -49,7 +49,7 @@ describe("Integration: Switch to Streaming Session", () => {
 		// Some models start with thinking/reasoning before text output,
 		// so we accept either delta or thinking_delta as the first event.
 		const firstDelta = await client.waitForAny(["delta", "thinking_delta"], {
-			timeout: 60_000,
+			timeout: 5_000,
 		});
 		expect(firstDelta["text"]).toBeTruthy();
 
@@ -92,7 +92,7 @@ describe("Integration: Switch to Streaming Session", () => {
 		// ── Step 4: Verify live deltas arrive after switch ──────────
 		const postSwitchDelta = await client.waitForAny(
 			["delta", "thinking_delta"],
-			{ timeout: 30_000 },
+			{ timeout: 5_000 },
 		);
 		expect(postSwitchDelta["text"]).toBeTruthy();
 		expect(typeof postSwitchDelta["text"]).toBe("string");
@@ -131,7 +131,7 @@ describe("Integration: Switch to Streaming Session", () => {
 		});
 
 		// Wait for streaming to start and accumulate cached events
-		await client.waitForAny(["delta", "thinking_delta"], { timeout: 60_000 });
+		await client.waitForAny(["delta", "thinking_delta"], { timeout: 5_000 });
 		await new Promise((r) => setTimeout(r, 2_000));
 
 		const cachedDeltaCount = client
@@ -181,7 +181,7 @@ describe("Integration: Switch to Streaming Session", () => {
 
 		// Now verify LIVE streaming continues after the cached replay
 		const liveDelta = await client.waitForAny(["delta", "thinking_delta"], {
-			timeout: 30_000,
+			timeout: 5_000,
 		});
 		expect(liveDelta["text"]).toBeTruthy();
 

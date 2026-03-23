@@ -19,6 +19,9 @@
 	} from "../../stores/instance.svelte.js";
 	import Icon from "../shared/Icon.svelte";
 	import { clickOutside } from "../shared/use-click-outside.svelte.js";
+	import DirectoryAutocomplete from "./DirectoryAutocomplete.svelte";
+	import ProjectContextMenu from "./ProjectContextMenu.svelte";
+	import { confirm } from "../../stores/ui.svelte.js";
 
 	// ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -38,6 +41,12 @@
 	let addError = $state("");
 	let adding = $state(false);
 	let addInstanceId = $state("");
+
+	// ─── Context menu state ───────────────────────────────────────────────────
+	let ctxMenuProject: ProjectInfo | null = $state(null);
+	let ctxMenuAnchor: HTMLElement | null = $state(null);
+	let renamingSlug: string | null = $state(null);
+	let renameValue = $state("");
 
 	// ─── Derived ────────────────────────────────────────────────────────────────
 
@@ -132,14 +141,64 @@
 		}, ADD_PROJECT_TIMEOUT_MS);
 	}
 
-	function handleAddKeydown(e: KeyboardEvent) {
+	function handleProjectContextMenu(project: ProjectInfo, anchor: HTMLElement) {
+		ctxMenuProject = project;
+		ctxMenuAnchor = anchor;
+	}
+
+	function handleCloseContextMenu() {
+		ctxMenuProject = null;
+		ctxMenuAnchor = null;
+	}
+
+	function handleCtxRename(slug: string) {
+		renamingSlug = slug;
+		const proj = projects.find((p) => p.slug === slug);
+		renameValue = proj?.title ?? slug;
+	}
+
+	async function handleCtxDelete(slug: string, title: string) {
+		const confirmed = await confirm(
+			`Remove project '${title}' from conduit?`,
+			"Remove",
+		);
+		if (confirmed) {
+			wsSend({ type: "remove_project", slug });
+		}
+	}
+
+	function commitProjectRename(slug: string) {
+		// Guard: if renamingSlug was already cleared (e.g. by Escape),
+		// the blur handler may still fire — skip to avoid double-send.
+		if (renamingSlug !== slug) return;
+		const newTitle = renameValue.trim();
+		renamingSlug = null;
+		if (newTitle && newTitle.length > 0) {
+			const proj = projects.find((p) => p.slug === slug);
+			if (proj && newTitle !== proj.title) {
+				wsSend({ type: "rename_project", slug, title: newTitle });
+			}
+		}
+	}
+
+	function cancelProjectRename() {
+		renamingSlug = null;
+	}
+
+	function handleRenameKeydown(e: KeyboardEvent, slug: string) {
 		if (e.key === "Enter") {
 			e.preventDefault();
-			handleSubmitAdd();
+			e.stopPropagation();
+			commitProjectRename(slug);
 		} else if (e.key === "Escape") {
 			e.preventDefault();
-			handleCancelAdd();
+			e.stopPropagation();
+			cancelProjectRename();
 		}
+	}
+
+	function focusOnMount(node: HTMLElement) {
+		node.focus();
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
@@ -153,6 +212,7 @@
 			}
 		}
 	}
+
 
 	// ─── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -179,7 +239,7 @@
 	});
 </script>
 
-<div class="proj-switcher relative" use:clickOutside={() => { open = false; showAddForm = false; addError = ""; }}>
+<div class="proj-switcher relative" use:clickOutside={() => { if (document.getElementById("confirm-modal")) return; open = false; showAddForm = false; addError = ""; }}>
 	<!-- Main button — always rendered -->
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -251,16 +311,20 @@
 						</div>
 						{#each instanceProjects as project (project.slug)}
 						{@const isActive = project.slug === currentSlug}
+						{@const isRenaming = renamingSlug === project.slug}
 						<a
 							href="/p/{project.slug}/"
 							data-testid="project-item"
 							data-slug={project.slug}
-					class={"flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors duration-100 hover:bg-[rgba(var(--overlay-rgb),0.04)] rounded-md no-underline text-inherit visited:text-inherit" +
+					class={"group/proj flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors duration-100 hover:bg-[rgba(var(--overlay-rgb),0.04)] rounded-md no-underline text-inherit visited:text-inherit" +
 							(isActive
 								? " bg-bg-surface"
 								: "")}
 						style={isActive ? "box-shadow: inset 3px 0 0 var(--color-brand-a), inset 3px 0 12px rgba(255,45,123,0.1);" : ""}
-						onclick={(e) => selectProject(e, project.slug)}
+						onclick={(e) => {
+							if (isRenaming) { e.preventDefault(); return; }
+							selectProject(e, project.slug);
+						}}
 					>
 						<!-- Indicator dot -->
 						<span
@@ -268,21 +332,47 @@
 								(isActive ? " bg-accent" : " bg-text-dimmer/40")}
 						></span>
 						<!-- Name -->
-						<span
-							class={"flex-1 text-[13px] truncate" +
-								(isActive
-									? " font-semibold text-text"
-									: " text-text-secondary")}
-						>
-							{project.title}
-						</span>
-						<!-- Client count -->
-						{#if project.clientCount && project.clientCount > 0}
+						{#if isRenaming}
+							<input
+								type="text"
+								class="flex-1 min-w-0 bg-input-bg border border-accent rounded py-px px-1 text-xs text-text outline-none"
+								style="font-family: var(--font-brand);"
+								bind:value={renameValue}
+								onkeydown={(e) => handleRenameKeydown(e, project.slug)}
+								onblur={() => commitProjectRename(project.slug)}
+								onclick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+								use:focusOnMount
+							/>
+						{:else}
 							<span
-								class="shrink-0 text-xs text-text-dimmer tabular-nums"
+								class={"flex-1 text-[13px] truncate" +
+									(isActive
+										? " font-semibold text-text"
+										: " text-text-secondary")}
 							>
-								{project.clientCount}
+								{project.title}
 							</span>
+						{/if}
+						{#if !isRenaming}
+							<!-- Client count -->
+							{#if project.clientCount && project.clientCount > 0}
+								<span
+									class="shrink-0 text-xs text-text-dimmer tabular-nums"
+								>
+									{project.clientCount}
+								</span>
+							{/if}
+							<button
+								class="proj-more-btn shrink-0 w-5 h-5 border-none rounded p-0 bg-transparent cursor-pointer flex items-center justify-center text-text-dimmer hover:text-text hover:bg-bg-alt transition-colors duration-100"
+								title="More options"
+								onclick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleProjectContextMenu(project, e.currentTarget as HTMLElement);
+								}}
+							>
+								<Icon name="ellipsis" size={13} />
+							</button>
 						{/if}
 					</a>
 				{/each}
@@ -290,16 +380,20 @@
 			{:else}
 				{#each projects as project (project.slug)}
 					{@const isActive = project.slug === currentSlug}
+					{@const isRenaming = renamingSlug === project.slug}
 					<a
 						href="/p/{project.slug}/"
 						data-testid="project-item"
 						data-slug={project.slug}
-					class={"flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors duration-100 hover:bg-[rgba(var(--overlay-rgb),0.04)] rounded-md no-underline text-inherit visited:text-inherit" +
+					class={"group/proj flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-colors duration-100 hover:bg-[rgba(var(--overlay-rgb),0.04)] rounded-md no-underline text-inherit visited:text-inherit" +
 						(isActive
 							? " bg-bg-surface"
 							: "")}
 						style={isActive ? "box-shadow: inset 3px 0 0 var(--color-brand-a), inset 3px 0 12px rgba(255,45,123,0.1);" : ""}
-						onclick={(e) => selectProject(e, project.slug)}
+						onclick={(e) => {
+							if (isRenaming) { e.preventDefault(); return; }
+							selectProject(e, project.slug);
+						}}
 					>
 						<!-- Indicator dot -->
 						<span
@@ -307,21 +401,47 @@
 								(isActive ? " bg-accent" : " bg-text-dimmer/40")}
 						></span>
 						<!-- Name -->
-						<span
-							class={"flex-1 text-[13px] truncate" +
-								(isActive
-									? " font-semibold text-text"
-									: " text-text-secondary")}
-						>
-							{project.title}
-						</span>
-						<!-- Client count -->
-						{#if project.clientCount && project.clientCount > 0}
+						{#if isRenaming}
+							<input
+								type="text"
+								class="flex-1 min-w-0 bg-input-bg border border-accent rounded py-px px-1 text-xs text-text outline-none"
+								style="font-family: var(--font-brand);"
+								bind:value={renameValue}
+								onkeydown={(e) => handleRenameKeydown(e, project.slug)}
+								onblur={() => commitProjectRename(project.slug)}
+								onclick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+								use:focusOnMount
+							/>
+						{:else}
 							<span
-								class="shrink-0 text-xs text-text-dimmer tabular-nums"
+								class={"flex-1 text-[13px] truncate" +
+									(isActive
+										? " font-semibold text-text"
+										: " text-text-secondary")}
 							>
-								{project.clientCount}
+								{project.title}
 							</span>
+						{/if}
+						{#if !isRenaming}
+							<!-- Client count -->
+							{#if project.clientCount && project.clientCount > 0}
+								<span
+									class="shrink-0 text-xs text-text-dimmer tabular-nums"
+								>
+									{project.clientCount}
+								</span>
+							{/if}
+							<button
+								class="proj-more-btn shrink-0 w-5 h-5 border-none rounded p-0 bg-transparent cursor-pointer flex items-center justify-center text-text-dimmer hover:text-text hover:bg-bg-alt transition-colors duration-100"
+								title="More options"
+								onclick={(e) => {
+									e.preventDefault();
+									e.stopPropagation();
+									handleProjectContextMenu(project, e.currentTarget as HTMLElement);
+								}}
+							>
+								<Icon name="ellipsis" size={13} />
+							</button>
 						{/if}
 					</a>
 				{/each}
@@ -333,14 +453,9 @@
 				{#if showAddForm}
 					<!-- Add project form -->
 					<div class="px-3 py-2 flex flex-col gap-1.5">
-						<input
-							type="text"
-							placeholder="/path/to/project"
-							autocomplete="off"
-							spellcheck="false"
-							class="w-full bg-input-bg border border-border rounded-md py-1.5 px-2 text-[12px] text-text font-mono outline-none focus:border-accent placeholder:text-text-dimmer"
+						<DirectoryAutocomplete
 							bind:value={addDirectory}
-							onkeydown={handleAddKeydown}
+							onsubmit={handleSubmitAdd}
 						/>
 						{#if hasMultipleInstances}
 							<select
@@ -393,5 +508,15 @@
 				{/if}
 			</div>
 		</div>
+	{/if}
+
+	{#if ctxMenuProject && ctxMenuAnchor}
+		<ProjectContextMenu
+			project={ctxMenuProject}
+			anchor={ctxMenuAnchor}
+			onrename={handleCtxRename}
+			ondelete={handleCtxDelete}
+			onclose={handleCloseContextMenu}
+		/>
 	{/if}
 </div>

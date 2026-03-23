@@ -52,18 +52,18 @@ describe("Integration: Send Message", () => {
 		});
 
 		// Wait for at least one delta (streamed text)
-		const delta = await client.waitFor("delta", { timeout: 30_000 });
+		const delta = await client.waitFor("delta", { timeout: 5_000 });
 		expect(delta["text"]).toBeTruthy();
 		expect(typeof delta["text"]).toBe("string");
 
 		// Wait for done signal
-		const done = await client.waitFor("done", { timeout: 60_000 });
+		const done = await client.waitFor("done", { timeout: 5_000 });
 		expect(done["code"]).toBe(0);
 
 		// result events (from message.updated) may or may not arrive depending
 		// on SSE event ordering — the critical path is delta + done above
 		await client.close();
-	}, 90_000);
+	}, 10_000);
 
 	it("does not send flat text field to OpenCode (Bug A)", async () => {
 		// This test verifies the fix for the original 400 error.

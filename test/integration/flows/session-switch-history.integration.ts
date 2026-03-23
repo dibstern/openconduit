@@ -39,7 +39,7 @@ describe("Integration: Session Switch History", () => {
 		});
 
 		// Wait for the full model round-trip
-		await client.waitFor("done", { timeout: 80_000 });
+		await client.waitFor("done", { timeout: 5_000 });
 		client.clearReceived();
 
 		// Create a new session (auto-switches away from session A)
@@ -97,7 +97,7 @@ describe("Integration: Session Switch History", () => {
 
 		// Wait for the first streaming delta — proof the model started responding
 		const firstDelta = await client.waitFor("delta", {
-			timeout: 60_000,
+			timeout: 5_000,
 		});
 		const deltaSnippet = (firstDelta["text"] as string).trim();
 		expect(deltaSnippet.length).toBeGreaterThan(0);

@@ -39,16 +39,16 @@ describe("Integration: Message Lifecycle", () => {
 		expect(status["status"]).toBe("processing");
 
 		// 2. Should receive at least one delta (streamed text)
-		const delta = await client.waitFor("delta", { timeout: 30_000 });
+		const delta = await client.waitFor("delta", { timeout: 5_000 });
 		expect(delta["text"]).toBeTruthy();
 		expect(typeof delta["text"]).toBe("string");
 
 		// 3. Should receive done with code 0 (successful completion)
-		const done = await client.waitFor("done", { timeout: 60_000 });
+		const done = await client.waitFor("done", { timeout: 5_000 });
 		expect(done["code"]).toBe(0);
 
 		await client.close();
-	}, 90_000);
+	}, 10_000);
 
 	it("sequential messages: second message works after first completes", async () => {
 		const client = await harness.connectWsClient();
@@ -65,7 +65,7 @@ describe("Integration: Message Lifecycle", () => {
 			predicate: (m) => m["status"] === "processing",
 			timeout: 5_000,
 		});
-		const done1 = await client.waitFor("done", { timeout: 60_000 });
+		const done1 = await client.waitFor("done", { timeout: 5_000 });
 		expect(done1["code"]).toBe(0);
 
 		// Clear messages between turns
@@ -85,11 +85,11 @@ describe("Integration: Message Lifecycle", () => {
 		expect(status2["status"]).toBe("processing");
 
 		// Should receive delta for second message
-		const delta2 = await client.waitFor("delta", { timeout: 30_000 });
+		const delta2 = await client.waitFor("delta", { timeout: 5_000 });
 		expect(delta2["text"]).toBeTruthy();
 
 		// Should complete
-		const done2 = await client.waitFor("done", { timeout: 60_000 });
+		const done2 = await client.waitFor("done", { timeout: 5_000 });
 		expect(done2["code"]).toBe(0);
 
 		await client.close();
@@ -106,7 +106,7 @@ describe("Integration: Message Lifecycle", () => {
 		});
 
 		// Wait for full cycle
-		await client.waitFor("done", { timeout: 60_000 });
+		await client.waitFor("done", { timeout: 5_000 });
 
 		// After done, the last status-related message should indicate idle/done
 		// (no lingering processing status)
@@ -116,5 +116,5 @@ describe("Integration: Message Lifecycle", () => {
 		expect(allDone[allDone.length - 1]!["code"]).toBe(0);
 
 		await client.close();
-	}, 90_000);
+	}, 10_000);
 });
