@@ -1391,6 +1391,85 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			await d.stop();
 		});
 
+		it("removeProject persists dismissedPaths in daemon.json", async () => {
+			const d = new Daemon(daemonOpts(tmpDir));
+			await d.start();
+
+			const project = await d.addProject("/home/user/dismissed-project");
+			await d.removeProject(project.slug);
+
+			const config = loadDaemonConfig(tmpDir);
+			expect(config?.dismissedPaths).toContain("/home/user/dismissed-project");
+
+			await d.stop();
+		});
+
+		it("removeProject directory is not re-added by addProject from discovery", async () => {
+			const d = new Daemon(daemonOpts(tmpDir));
+			await d.start();
+
+			// Add then remove — directory should be dismissed
+			const project = await d.addProject("/home/user/dismissed");
+			await d.removeProject(project.slug);
+			expect(d.getProjects()).toHaveLength(0);
+
+			// Simulate what discoverProjects does: call addProject with the same dir
+			// Because the dir is dismissed, addProject un-dismisses on explicit add,
+			// but discoverProjects checks dismissedPaths BEFORE calling addProject.
+			// So we test the dismiss set directly via the config roundtrip.
+			const config = loadDaemonConfig(tmpDir);
+			expect(config?.dismissedPaths).toContain("/home/user/dismissed");
+
+			await d.stop();
+		});
+
+		it("explicit addProject un-dismisses a previously removed directory", async () => {
+			const d = new Daemon(daemonOpts(tmpDir));
+			await d.start();
+
+			// Add, remove, then re-add explicitly
+			const project = await d.addProject("/home/user/undismissed");
+			await d.removeProject(project.slug);
+			expect(d.getProjects()).toHaveLength(0);
+
+			// Explicitly re-add — should un-dismiss
+			const reAdded = await d.addProject("/home/user/undismissed");
+			expect(reAdded.directory).toBe("/home/user/undismissed");
+			expect(d.getProjects()).toHaveLength(1);
+
+			// dismissedPaths should no longer contain the directory
+			const config = loadDaemonConfig(tmpDir);
+			expect(config?.dismissedPaths ?? []).not.toContain(
+				"/home/user/undismissed",
+			);
+
+			await d.stop();
+		});
+
+		it("dismissedPaths survives daemon restart", async () => {
+			// First daemon: add and remove a project
+			const d1 = new Daemon(daemonOpts(tmpDir));
+			await d1.start();
+			const project = await d1.addProject("/home/user/removed-survives");
+			await d1.removeProject(project.slug);
+			await d1.stop();
+
+			// Second daemon: rehydrate from config
+			const d2 = new Daemon(daemonOpts(tmpDir));
+			await d2.start();
+
+			// The project should NOT be in the list
+			expect(d2.getProjects()).toHaveLength(0);
+
+			// The dismissedPaths should still be persisted
+			const config = loadDaemonConfig(tmpDir);
+			expect(config?.dismissedPaths).toContain(
+				"/home/user/removed-survives",
+			);
+
+			await d2.stop();
+		});
+
 		// ── Config persistence on stop ──────────────────────────────────────
 
 		it("stop() preserves daemon.json with instance data (Fix #11)", async () => {

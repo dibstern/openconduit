@@ -179,6 +179,8 @@ export class Daemon {
 	 * dedicated getter methods for every query.
 	 */
 	readonly registry = new ProjectRegistry();
+	/** Directories the user explicitly removed — skipped by auto-discovery. */
+	private readonly dismissedPaths = new Set<string>();
 	private startTime: number = Date.now();
 	private clientCount = 0;
 	private shuttingDown = false;
@@ -418,6 +420,13 @@ export class Daemon {
 				this.log.info(
 					`Rehydrated ${this.registry.size} project(s) from saved config`,
 				);
+			}
+		}
+
+		// Rehydrate dismissed paths (directories the user explicitly removed)
+		if (savedConfig?.dismissedPaths) {
+			for (const p of savedConfig.dismissedPaths) {
+				if (typeof p === "string") this.dismissedPaths.add(p);
 			}
 		}
 
@@ -903,6 +912,9 @@ export class Daemon {
 		// Normalize to absolute path with no trailing slash
 		directory = resolve(directory);
 
+		// Un-dismiss: explicit add overrides a prior removal
+		this.dismissedPaths.delete(directory);
+
 		// Check if directory is already registered
 		const existing = this.registry.findByDirectory(directory);
 		if (existing) {
@@ -952,9 +964,14 @@ export class Daemon {
 
 	/** Remove a project by slug */
 	async removeProject(slug: string): Promise<void> {
-		if (!this.registry.has(slug)) {
+		const entry = this.registry.get(slug);
+		if (!entry) {
 			throw new Error(`Project "${slug}" not found`);
 		}
+
+		// Remember the directory so auto-discovery won't re-add it
+		this.dismissedPaths.add(entry.project.directory);
+
 		await this.registry.remove(slug);
 
 		// Sync recent projects
@@ -1021,6 +1038,9 @@ export class Daemon {
 			for (const p of projects) {
 				const dir = p.worktree ?? p.path;
 				if (dir && dir !== "/") {
+					// Skip directories the user explicitly removed
+					const normalizedDir = resolve(dir);
+					if (this.dismissedPaths.has(normalizedDir)) continue;
 					try {
 						const sizeBefore = this.registry.size;
 						await this.addProject(dir);
@@ -1275,6 +1295,9 @@ export class Daemon {
 					...(inst.env != null && { env: inst.env }),
 					...(extUrl != null && { url: extUrl }),
 				};
+			}),
+			...(this.dismissedPaths.size > 0 && {
+				dismissedPaths: Array.from(this.dismissedPaths),
 			}),
 		};
 	}
