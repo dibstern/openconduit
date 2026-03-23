@@ -517,6 +517,14 @@ export class Daemon {
 			}
 		}
 
+		// Start IPC server early so the CLI can send commands while the rest
+		// of the daemon initialises (TLS, HTTP, relays, port scanning).
+		// IPC handlers use closures over `this.*` that resolve at call time,
+		// and addProject() gracefully handles a missing httpServer by
+		// registering without a relay (caught later by the relay startup loop
+		// or the instance_status_changed listener).
+		await this.startIPCServer();
+
 		// Initialize push notification manager (non-fatal if it fails)
 		try {
 			const { PushNotificationManager } = await import("../server/push.js");
@@ -766,9 +774,6 @@ export class Daemon {
 				}
 			}
 		});
-
-		// Start IPC server
-		await this.startIPCServer();
 
 		// Install signal handlers
 		installSignalHandlers(() => {
