@@ -46,6 +46,8 @@ export interface DaemonConfig {
 		env?: Record<string, string>;
 		url?: string;
 	}>;
+	/** Directories the user explicitly removed — skip in auto-discovery. */
+	dismissedPaths?: string[];
 }
 
 export interface CrashInfo {

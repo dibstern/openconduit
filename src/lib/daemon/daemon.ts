@@ -179,6 +179,8 @@ export class Daemon {
 	 * dedicated getter methods for every query.
 	 */
 	readonly registry = new ProjectRegistry();
+	/** Directories the user explicitly removed — skipped by auto-discovery. */
+	private readonly dismissedPaths = new Set<string>();
 	private startTime: number = Date.now();
 	private clientCount = 0;
 	private shuttingDown = false;
@@ -421,6 +423,13 @@ export class Daemon {
 			}
 		}
 
+		// Rehydrate dismissed paths (directories the user explicitly removed)
+		if (savedConfig?.dismissedPaths) {
+			for (const p of savedConfig.dismissedPaths) {
+				if (typeof p === "string") this.dismissedPaths.add(p);
+			}
+		}
+
 		// ── Probe-and-convert: if the "default" instance was created as
 		// unmanaged (via opencodeUrl from CLI), check whether it's actually
 		// reachable.  If not, convert to managed so we auto-spawn OpenCode.
@@ -508,6 +517,14 @@ export class Daemon {
 			}
 		}
 
+		// Start IPC server early so the CLI can send commands while the rest
+		// of the daemon initialises (TLS, HTTP, relays, port scanning).
+		// IPC handlers use closures over `this.*` that resolve at call time,
+		// and addProject() gracefully handles a missing httpServer by
+		// registering without a relay (caught later by the relay startup loop
+		// or the instance_status_changed listener).
+		await this.startIPCServer();
+
 		// Initialize push notification manager (non-fatal if it fails)
 		try {
 			const { PushNotificationManager } = await import("../server/push.js");
@@ -566,6 +583,7 @@ export class Daemon {
 					} satisfies import("../server/http-router.js").RouterProject;
 				});
 			},
+			removeProject: (slug) => this.removeProject(slug),
 			port: this.port,
 			isTls: this.tlsEnabled,
 			...(this.pushManager != null && { pushManager: this.pushManager }),
@@ -758,9 +776,6 @@ export class Daemon {
 			}
 		});
 
-		// Start IPC server
-		await this.startIPCServer();
-
 		// Install signal handlers
 		installSignalHandlers(() => {
 			this.stop();
@@ -903,6 +918,9 @@ export class Daemon {
 		// Normalize to absolute path with no trailing slash
 		directory = resolve(directory);
 
+		// Un-dismiss: explicit add overrides a prior removal
+		this.dismissedPaths.delete(directory);
+
 		// Check if directory is already registered
 		const existing = this.registry.findByDirectory(directory);
 		if (existing) {
@@ -952,9 +970,14 @@ export class Daemon {
 
 	/** Remove a project by slug */
 	async removeProject(slug: string): Promise<void> {
-		if (!this.registry.has(slug)) {
+		const entry = this.registry.get(slug);
+		if (!entry) {
 			throw new Error(`Project "${slug}" not found`);
 		}
+
+		// Remember the directory so auto-discovery won't re-add it
+		this.dismissedPaths.add(entry.project.directory);
+
 		await this.registry.remove(slug);
 
 		// Sync recent projects
@@ -1021,6 +1044,9 @@ export class Daemon {
 			for (const p of projects) {
 				const dir = p.worktree ?? p.path;
 				if (dir && dir !== "/") {
+					// Skip directories the user explicitly removed
+					const normalizedDir = resolve(dir);
+					if (this.dismissedPaths.has(normalizedDir)) continue;
 					try {
 						const sizeBefore = this.registry.size;
 						await this.addProject(dir);
@@ -1145,6 +1171,13 @@ export class Daemon {
 						...(p.instanceId != null && { instanceId: p.instanceId }),
 					};
 				},
+				removeProject: async (slug: string) => {
+					await this.removeProject(slug);
+				},
+				setProjectTitle: (slug: string, title: string) => {
+					this.registry.updateProject(slug, { title });
+					this.persistConfig();
+				},
 				getInstances: () => this.getInstances(),
 				addInstance: (id, config) =>
 					this.instanceManager.addInstance(id, config),
@@ -1268,6 +1301,9 @@ export class Daemon {
 					...(inst.env != null && { env: inst.env }),
 					...(extUrl != null && { url: extUrl }),
 				};
+			}),
+			...(this.dismissedPaths.size > 0 && {
+				dismissedPaths: Array.from(this.dismissedPaths),
 			}),
 		};
 	}

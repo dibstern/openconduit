@@ -430,10 +430,32 @@ export function handleDone(
 		}
 	}
 
+	// Finalize any tools still in non-terminal states (pending/running).
+	// A race between the status-poller "done" and late SSE tool_result events
+	// can leave tool cards stuck if we clear the UUID map too early.
+	let toolsFinalized = false;
+	const finalizedMessages = [...chatState.messages];
+	for (let i = 0; i < finalizedMessages.length; i++) {
+		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
+		const m = finalizedMessages[i]!;
+		if (
+			m.type === "tool" &&
+			(m.status === "pending" || m.status === "running")
+		) {
+			finalizedMessages[i] = { ...m, status: "completed" };
+			toolsFinalized = true;
+		}
+	}
+	if (toolsFinalized) {
+		chatState.messages = finalizedMessages;
+	}
+
 	chatState.streaming = false;
 	chatState.processing = false;
 	chatState.currentAssistantText = "";
-	toolUuidMap.clear();
+	// Do NOT clear toolUuidMap here — late-arriving SSE tool_result events
+	// need the map to update tool cards. The map is cleared in clearMessages()
+	// on session switch, which is the correct lifecycle boundary.
 }
 
 export function handleStatus(

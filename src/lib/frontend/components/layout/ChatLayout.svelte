@@ -7,23 +7,22 @@
 	import { untrack } from "svelte";
 	import Header from "./Header.svelte";
 	import Sidebar from "./Sidebar.svelte";
-	import InputArea from "./InputArea.svelte";
+	import InputArea from "../input/InputArea.svelte";
 	import MessageList from "../chat/MessageList.svelte";
 	import ConnectOverlay from "../overlays/ConnectOverlay.svelte";
 	import Banners from "../overlays/Banners.svelte";
 	import Toast from "../overlays/Toast.svelte";
-	import ConfirmModal from "../overlays/ConfirmModal.svelte";
 	import ImageLightbox from "../overlays/ImageLightbox.svelte";
 	import QrModal from "../overlays/QrModal.svelte";
 	import SettingsPanel from "../overlays/SettingsPanel.svelte";
 	import DebugPanel from "../debug/DebugPanel.svelte";
 	import InfoPanels from "../overlays/InfoPanels.svelte";
 	import RewindBanner from "../overlays/RewindBanner.svelte";
-	import TodoOverlay from "../features/TodoOverlay.svelte";
-	import TerminalPanel from "../features/TerminalPanel.svelte";
-	import PlanMode from "../features/PlanMode.svelte";
-	import FileViewer from "../features/FileViewer.svelte";
-	import PermissionNotification from "../features/PermissionNotification.svelte";
+	import TodoOverlay from "../todo/TodoOverlay.svelte";
+	import TerminalPanel from "../terminal/TerminalPanel.svelte";
+	import PlanMode from "../chat/PlanMode.svelte";
+	import FileViewer from "../file/FileViewer.svelte";
+	import PermissionNotification from "../permissions/PermissionNotification.svelte";
 	import {
 		uiState,
 		closeFileViewer,
@@ -40,6 +39,9 @@
 		connect,
 		disconnect,
 		onConnect,
+		onNavigateToSession,
+		clearNavigateToSession,
+		initSWNavigationListener,
 		onPlanMode,
 		onRewind,
 		wsSend,
@@ -47,7 +49,7 @@
 	import { slugState } from "../../stores/router.svelte.js";
 	import { chatState, clearMessages } from "../../stores/chat.svelte.js";
 	import { terminalState, destroyAll } from "../../stores/terminal.svelte.js";
-	import { clearSessionState } from "../../stores/session.svelte.js";
+	import { clearSessionState, switchToSession } from "../../stores/session.svelte.js";
 	import { clearAllPermissions } from "../../stores/permissions.svelte.js";
 	import { clearDiscoveryState } from "../../stores/discovery.svelte.js";
 	import { todoState, clearTodoState } from "../../stores/todo.svelte.js";
@@ -324,6 +326,15 @@
 			resetProjectUI();
 			planModeData = { mode: null, content: "" };
 
+			// Register notification-click → session navigation callback.
+			// Uses wsSend so switchToSession can notify the server.
+			onNavigateToSession((sessionId) => {
+				switchToSession(sessionId, wsSend);
+			});
+
+			// Listen for SW postMessage (push notification clicks)
+			initSWNavigationListener();
+
 			onConnect(() => {
 				// Fetch current version for sidebar footer
 				fetchCurrentVersion();
@@ -343,6 +354,7 @@
 		});
 
 		return () => {
+			clearNavigateToSession();
 			disconnect();
 		};
 	});
@@ -594,7 +606,6 @@
 <!-- /#layout -->
 
 <!-- Global overlays (outside layout for proper z-index stacking) -->
-<ConfirmModal />
 <ImageLightbox />
 <Toast />
 <QrModal visible={qrVisible} onClose={handleQrClose} />

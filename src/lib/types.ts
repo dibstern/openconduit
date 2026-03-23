@@ -204,6 +204,10 @@ export interface ProjectRelayConfig {
 		directory: string;
 		instanceId?: string;
 	}>;
+	/** Remove a project from the registry. */
+	removeProject?: (slug: string) => void | Promise<void>;
+	/** Set a project's display title. */
+	setProjectTitle?: (slug: string, title: string) => void;
 	/** Add a new project by directory path. Returns the created project info. */
 	addProject?: (
 		directory: string,
@@ -259,4 +263,22 @@ export interface ProjectRelayConfig {
 	 * so it can abort in-flight relay creation when a project is removed.
 	 */
 	signal?: AbortSignal;
+	/**
+	 * Override the default poller gating config (SSE grace period, staleness
+	 * threshold, max concurrent pollers). Useful for tests that need
+	 * accelerated timing without real-time waits.
+	 */
+	pollerGatingConfig?: Partial<
+		import("./relay/monitoring-types.js").PollerGatingConfig
+	>;
+	/**
+	 * Override the session-status polling interval in milliseconds.
+	 * Default: 500ms. Tests can use a shorter interval for faster feedback.
+	 */
+	statusPollerInterval?: number;
+	/**
+	 * Override the message polling interval in milliseconds.
+	 * Default: 750ms. Tests can use a shorter interval for faster feedback.
+	 */
+	messagePollerInterval?: number;
 }

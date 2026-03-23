@@ -72,6 +72,8 @@ export interface RequestRouterDeps {
 	auth: AuthManager;
 	staticDir: string;
 	getProjects: () => RouterProject[];
+	/** Remove a project by slug (optional — daemon mode only). */
+	removeProject?: (slug: string) => Promise<void>;
 	port: number;
 	isTls: boolean;
 	pushManager?: PushNotificationManager;
@@ -112,6 +114,7 @@ export class RequestRouter {
 	private readonly auth: AuthManager;
 	private readonly staticDir: string;
 	private readonly getProjects: () => RouterProject[];
+	private readonly removeProject?: (slug: string) => Promise<void>;
 	private readonly port: number;
 	private readonly isTls: boolean;
 	private readonly pushManager?: PushNotificationManager;
@@ -125,6 +128,7 @@ export class RequestRouter {
 		this.auth = deps.auth;
 		this.staticDir = deps.staticDir;
 		this.getProjects = deps.getProjects;
+		if (deps.removeProject) this.removeProject = deps.removeProject;
 		this.port = deps.port;
 		this.isTls = deps.isTls;
 		if (deps.pushManager != null) this.pushManager = deps.pushManager;
@@ -318,6 +322,43 @@ export class RequestRouter {
 					} satisfies ProjectsListResponse),
 				);
 				return;
+			}
+
+			// ─── Delete project API ────────────────────────────────
+			{
+				const deleteMatch = pathname.match(/^\/api\/projects\/([^/]+)$/);
+				if (deleteMatch && req.method === "DELETE") {
+					// biome-ignore lint/style/noNonNullAssertion: safe — guarded by regex match on line above
+					const slug = decodeURIComponent(deleteMatch[1]!);
+					if (!this.removeProject) {
+						res.writeHead(501, { "Content-Type": "application/json" });
+						res.end(
+							JSON.stringify({
+								error: {
+									code: "NOT_SUPPORTED",
+									message: "Removing projects is not supported in this mode",
+								},
+							} satisfies ApiError),
+						);
+						return;
+					}
+					try {
+						await this.removeProject(slug);
+						res.writeHead(200, { "Content-Type": "application/json" });
+						res.end(JSON.stringify({ ok: true }));
+					} catch (err) {
+						res.writeHead(404, { "Content-Type": "application/json" });
+						res.end(
+							JSON.stringify({
+								error: {
+									code: "NOT_FOUND",
+									message: err instanceof Error ? err.message : "Unknown error",
+								},
+							} satisfies ApiError),
+						);
+					}
+					return;
+				}
 			}
 
 			// ─── Push notification API ──────────────────────────────────

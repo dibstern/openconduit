@@ -85,6 +85,7 @@ import {
 } from "./ui.svelte.js";
 import { setLatestVersion } from "./version.svelte.js";
 import {
+	directoryListeners,
 	fileBrowserListeners,
 	fileHistoryListeners,
 	planModeListeners,
@@ -364,6 +365,11 @@ export function handleMessage(msg: RelayMessage): void {
 			for (const fn of projectListeners) fn(msg);
 			break;
 
+		// ─── Directory Listing ──────────────────────────────────────────
+		case "directory_list":
+			for (const fn of directoryListeners) fn(msg);
+			break;
+
 		// ─── Todo ────────────────────────────────────────────────────────
 		case "todo_state":
 			handleTodoState(msg);
@@ -399,6 +405,7 @@ export function handleMessage(msg: RelayMessage): void {
 			triggerNotifications({
 				type: msg.eventType,
 				...(msg.message != null ? { message: msg.message } : {}),
+				...(msg.sessionId != null ? { sessionId: msg.sessionId } : {}),
 			} as RelayMessage);
 			break;
 

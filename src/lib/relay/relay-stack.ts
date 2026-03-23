@@ -51,6 +51,7 @@ import {
 } from "./monitoring-reducer.js";
 import type {
 	MonitoringState,
+	PollerGatingConfig,
 	SessionEvalContext,
 } from "./monitoring-types.js";
 import { DEFAULT_POLLER_GATING_CONFIG } from "./monitoring-types.js";
@@ -112,6 +113,15 @@ export interface RelayStackConfig {
 	pushManager?: PushNotificationManager;
 	/** Config directory for cache storage (default: projectDir/.conduit) */
 	configDir?: string;
+	/**
+	 * Override the default poller gating config (SSE grace period, staleness
+	 * threshold, max concurrent pollers). Forwarded to createProjectRelay.
+	 */
+	pollerGatingConfig?: import("./monitoring-types.js").PollerGatingConfig;
+	/** Override the session-status polling interval in milliseconds (default: 500). */
+	statusPollerInterval?: number;
+	/** Override the message polling interval in milliseconds (default: 750). */
+	messagePollerInterval?: number;
 }
 
 // ─── Stack ───────────────────────────────────────────────────────────────────
@@ -220,7 +230,7 @@ export async function createProjectRelay(
 	// ── Session status poller (polls GET /session/status for processing indicators) ──
 	const statusPoller: SessionStatusPoller = new SessionStatusPoller({
 		client,
-		interval: 500,
+		interval: config.statusPollerInterval ?? 500,
 		log: statusLog,
 		getSessionParentMap: (): Map<string, string> =>
 			sessionMgr.getSessionParentMap(),
@@ -235,6 +245,9 @@ export async function createProjectRelay(
 		client,
 		log: pollerMgrLog,
 		hasViewers: (sid) => registry.hasViewers(sid),
+		...(config.messagePollerInterval != null && {
+			interval: config.messagePollerInterval,
+		}),
 	});
 
 	// ── PTY sessions with server-side scrollback (claude-relay architecture) ──
@@ -251,6 +264,10 @@ export async function createProjectRelay(
 	// ── Monitoring reducer state ──────────────────────────────────────────────
 	const sseTracker = createSessionSSETracker();
 	let monitoringState: MonitoringState = initialMonitoringState();
+	const pollerGatingCfg: PollerGatingConfig = {
+		...DEFAULT_POLLER_GATING_CONFIG,
+		...config.pollerGatingConfig,
+	};
 
 	// ── Health check ────────────────────────────────────────────────────────
 
@@ -461,6 +478,12 @@ export async function createProjectRelay(
 		}),
 		...(config.getProjects != null && { getProjects: config.getProjects }),
 		...(config.triggerScan != null && { triggerScan: config.triggerScan }),
+		...(config.removeProject != null && {
+			removeProject: config.removeProject,
+		}),
+		...(config.setProjectTitle != null && {
+			setProjectTitle: config.setProjectTitle,
+		}),
 	};
 
 	const clientQueue = new ClientMessageQueue({
@@ -511,6 +534,7 @@ export async function createProjectRelay(
 			listPendingQuestions: () => client.listPendingQuestions(),
 			listPendingPermissions: () => client.listPendingPermissions(),
 			statusPoller,
+			slug: config.slug,
 		},
 		sseConsumer,
 	);
@@ -557,9 +581,13 @@ export async function createProjectRelay(
 				doneMsg,
 				doneResult.route,
 				isSubagent,
+				sessionId,
 			);
 			if (notification.sendPush && config.pushManager) {
-				sendPushForEvent(config.pushManager, doneMsg, sseLog);
+				sendPushForEvent(config.pushManager, doneMsg, sseLog, {
+					slug: config.slug,
+					sessionId,
+				});
 			}
 			if (
 				notification.broadcastCrossSession &&
@@ -615,11 +643,7 @@ export async function createProjectRelay(
 		}
 
 		const prevState = monitoringState;
-		const result = evaluateAll(
-			prevState,
-			contexts,
-			DEFAULT_POLLER_GATING_CONFIG,
-		);
+		const result = evaluateAll(prevState, contexts, pollerGatingCfg);
 		monitoringState = result.state;
 
 		if (result.effects.length > 0) {
@@ -693,7 +717,10 @@ export async function createProjectRelay(
 				sessionMgr.getSessionParentMap().has(polledSessionId);
 
 			if (config.pushManager && !isSubagentPoller) {
-				sendPushForEvent(config.pushManager, msg, pollerLog);
+				sendPushForEvent(config.pushManager, msg, pollerLog, {
+					slug: config.slug,
+					sessionId: polledSessionId ?? undefined,
+				});
 			}
 
 			// Cross-session browser notification for dropped notification-worthy events
@@ -711,6 +738,7 @@ export async function createProjectRelay(
 									(msg as { message?: string }).message ?? "An error occurred",
 							}
 						: {}),
+					...(polledSessionId != null ? { sessionId: polledSessionId } : {}),
 				});
 			}
 		}
@@ -951,6 +979,15 @@ export async function createRelayStack(
 		addProject: addProjectRelay,
 		...(pushMgr != null && { pushManager: pushMgr }),
 		...(config.configDir != null && { configDir: config.configDir }),
+		...(config.pollerGatingConfig != null && {
+			pollerGatingConfig: config.pollerGatingConfig,
+		}),
+		...(config.statusPollerInterval != null && {
+			statusPollerInterval: config.statusPollerInterval,
+		}),
+		...(config.messagePollerInterval != null && {
+			messagePollerInterval: config.messagePollerInterval,
+		}),
 	});
 	relays.set(config.slug, relay);
 

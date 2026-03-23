@@ -8,6 +8,9 @@
 	import { onMount } from "svelte";
 	import { navigate } from "../stores/router.svelte.js";
 	import type { DashboardProject } from "./dashboard-types.js";
+	import ProjectContextMenu from "../components/project/ProjectContextMenu.svelte";
+	import Icon from "../components/shared/Icon.svelte";
+	import { confirm } from "../stores/ui.svelte.js";
 
 	export type { DashboardProject };
 
@@ -36,6 +39,45 @@
 	// ─── Derived ────────────────────────────────────────────────────────────────
 
 	const isEmpty = $derived(!loading && projects.length === 0);
+
+	// ─── Context menu state ───────────────────────────────────────────────────
+	let ctxMenuProject: DashboardProject | null = $state(null);
+	let ctxMenuAnchor: HTMLElement | null = $state(null);
+
+	function handleProjectContextMenu(
+		project: DashboardProject,
+		anchor: HTMLElement,
+	) {
+		ctxMenuProject = project;
+		ctxMenuAnchor = anchor;
+	}
+
+	function handleCloseContextMenu() {
+		ctxMenuProject = null;
+		ctxMenuAnchor = null;
+	}
+
+	async function handleCtxDelete(slug: string, title: string) {
+		const confirmed = await confirm(
+			`Remove project '${title}' from conduit?`,
+			"Remove",
+		);
+		if (!confirmed) return;
+		try {
+			const res = await fetch(
+				`/api/projects/${encodeURIComponent(slug)}`,
+				{ method: "DELETE" },
+			);
+			if (res.ok) {
+				await fetchProjects();
+			} else {
+				// Optimistic removal failed — project will reappear on next poll
+				projects = projects.filter((p) => p.slug !== slug);
+			}
+		} catch {
+			// Network error — project list will refresh on next poll
+		}
+	}
 
 	// ─── Fetch projects on mount ────────────────────────────────────────────────
 
@@ -154,7 +196,7 @@
 	class="bg-bg min-h-screen flex flex-col items-center p-[40px_20px] text-text font-sans"
 >
 	<h1 class="text-2xl font-semibold mb-2">Conduit</h1>
-	<div class="text-[13px] text-text-muted mb-8">Select a project</div>
+	<div class="text-base text-text-muted mb-8">Select a project</div>
 
 	<div class="flex flex-col gap-3 w-full max-w-[480px]">
 		{#if loading}
@@ -163,7 +205,7 @@
 			<div class="text-center text-text-dimmer text-sm py-10 px-5">
 				No projects registered. Run
 				<code
-					class="bg-bg-alt px-1.5 py-0.5 rounded text-[13px] text-text"
+					class="bg-bg-alt px-1.5 py-0.5 rounded text-base text-text"
 					>conduit</code
 				> in a project directory to add one.
 			</div>
@@ -173,14 +215,25 @@
 					href="/p/{project.slug}/"
 					data-testid="project-card"
 					data-slug={project.slug}
-					class="block bg-bg-alt border border-border rounded-xl p-[16px_20px] no-underline text-text transition-[border-color,background] hover:border-accent hover:bg-bg-surface"
+					class="group block bg-bg-alt border border-border rounded-xl p-[16px_20px] no-underline text-text transition-[border-color,background] hover:border-accent hover:bg-bg-surface"
 					onclick={(e) => handleCardClick(e, project.slug)}
 				>
 					<div
-						class="text-[16px] font-semibold flex items-center gap-2"
+						class="text-lg font-semibold flex items-center gap-2"
 					>
 						{displayName(project)}
 						<span class="text-sm">{statusIcon(project)}</span>
+						<button
+							class="dash-more-btn shrink-0 ml-auto w-6 h-6 border-none rounded p-0 bg-transparent cursor-pointer flex items-center justify-center text-text-dimmer opacity-0 group-hover:opacity-100 hover:text-text hover:bg-bg-surface transition-[opacity,color] duration-100"
+							title="More options"
+							onclick={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								handleProjectContextMenu(project, e.currentTarget as HTMLElement);
+							}}
+						>
+							<Icon name="ellipsis" size={15} />
+						</button>
 					</div>
 				<div
 					class="text-xs text-text-muted mt-1 font-mono overflow-hidden text-ellipsis whitespace-nowrap"
@@ -201,6 +254,15 @@
 	</div>
 
 	{#if version}
-		<div class="mt-10 text-[11px] text-text-dimmer">v{version}</div>
+		<div class="mt-10 text-sm text-text-dimmer">v{version}</div>
 	{/if}
 </div>
+
+{#if ctxMenuProject && ctxMenuAnchor}
+	<ProjectContextMenu
+		project={{ slug: ctxMenuProject.slug, title: ctxMenuProject.title, directory: ctxMenuProject.path }}
+		anchor={ctxMenuAnchor}
+		ondelete={handleCtxDelete}
+		onclose={handleCloseContextMenu}
+	/>
+{/if}

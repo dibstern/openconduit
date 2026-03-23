@@ -22,6 +22,8 @@ export default defineConfig({
 		"pin-page.spec.ts",
 		"unified-rendering.spec.ts",
 		"scroll-stability.spec.ts",
+		"terminal.spec.ts",
+		"notification-session-nav-replay.spec.ts",
 		"fork-session.spec.ts",
 	],
 	fullyParallel: false,

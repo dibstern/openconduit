@@ -82,6 +82,10 @@ export interface HandlerDeps {
 		directory: string;
 		instanceId?: string;
 	}>;
+	/** Remove a project from the registry (optional — daemon mode only). */
+	removeProject?: (slug: string) => void | Promise<void>;
+	/** Set a project's display title (optional — daemon mode only). */
+	setProjectTitle?: (slug: string, title: string) => void;
 }
 
 export type MessageHandler<K extends keyof PayloadMap = keyof PayloadMap> = (

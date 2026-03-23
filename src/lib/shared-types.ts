@@ -356,6 +356,7 @@ export type RelayMessage =
 			current?: string;
 			addedSlug?: string;
 	  }
+	| { type: "directory_list"; path: string; entries: string[] }
 	// ── File browser ───────────────────────────────────────────────────────
 	| { type: "file_list"; path: string; entries: FileEntry[] }
 	| { type: "file_content"; path: string; content: string; binary?: boolean }
@@ -438,6 +439,8 @@ export type RelayMessage =
 			eventType: string;
 			/** Error message (for error events) */
 			message?: string;
+			/** Session that triggered the event (for notification click routing) */
+			sessionId?: string;
 	  };
 
 // ─── Instance Types ─────────────────────────────────────────────────────────

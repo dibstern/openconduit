@@ -8,8 +8,7 @@
 	} from "../../stores/theme.svelte.js";
 	import { uiState } from "../../stores/ui.svelte.js";
 	import { routerState } from "../../stores/router.svelte.js";
-
-	let pickerEl = $state<HTMLDivElement>();
+	import { clickOutside } from "../shared/use-click-outside.svelte.js";
 
 	const lists = $derived(getThemeLists());
 
@@ -20,12 +19,6 @@
 		"base0B",
 		"base0D",
 	] as const;
-
-	function handleClickOutside(e: MouseEvent) {
-		if (pickerEl && !pickerEl.contains(e.target as Node)) {
-			closeThemePicker();
-		}
-	}
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === "Escape") {
@@ -39,13 +32,9 @@
 
 	$effect(() => {
 		if (themeState.pickerOpen) {
-			setTimeout(() => {
-				document.addEventListener("click", handleClickOutside);
-				document.addEventListener("keydown", handleKeydown);
-			}, 0);
+			document.addEventListener("keydown", handleKeydown);
 		}
 		return () => {
-			document.removeEventListener("click", handleClickOutside);
 			document.removeEventListener("keydown", handleKeydown);
 		};
 	});
@@ -72,8 +61,9 @@
 
 {#snippet themeButton(id: string, theme: Base16Theme)}
 	<button
-		class="theme-picker-item"
+		class="theme-picker-item text-base"
 		class:active={themeState.currentThemeId === id}
+		class:font-medium={themeState.currentThemeId === id}
 		onclick={() => selectTheme(id)}
 		role="option"
 		aria-selected={themeState.currentThemeId === id}
@@ -96,7 +86,7 @@
 {#snippet themeSection(header: string, items: Array<{ id: string; theme: Base16Theme }>)}
 	{#if items.length > 0}
 		<div class="theme-picker-section">
-			<div class="theme-picker-header">{header}</div>
+			<div class="theme-picker-header text-xs font-semibold tracking-[0.05em] uppercase">{header}</div>
 			{#each items as { id, theme }}
 				{@render themeButton(id, theme)}
 			{/each}
@@ -106,10 +96,10 @@
 
 {#if themeState.pickerOpen}
 	<div
-		bind:this={pickerEl}
 		class="theme-picker"
 		role="listbox"
 		aria-label="Select theme"
+		use:clickOutside={closeThemePicker}
 	>
 		{@render themeSection("Dark", lists.dark)}
 		{@render themeSection("Light", lists.light)}
@@ -146,10 +136,6 @@
 	}
 
 	.theme-picker-header {
-		font-size: 10px;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
 		color: var(--color-text-muted);
 		padding: 8px 8px 4px;
 		position: sticky;
@@ -168,7 +154,6 @@
 		border-radius: 4px;
 		cursor: pointer;
 		font-family: inherit;
-		font-size: 12px;
 		color: var(--color-text-secondary);
 		text-align: left;
 	}
@@ -179,7 +164,6 @@
 
 	.theme-picker-item.active {
 		color: var(--color-text);
-		font-weight: 500;
 	}
 
 	.theme-swatches {

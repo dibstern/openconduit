@@ -5,7 +5,7 @@
 //   - Model switch works and messages succeed
 //   - New session resets model selection
 
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
 	createRelayHarness,
 	type RelayHarness,
@@ -20,6 +20,10 @@ describe("Integration: Model Selection", () => {
 
 	afterAll(async () => {
 		if (harness) await harness.stop();
+	});
+
+	beforeEach(() => {
+		harness.mock.resetQueues();
 	});
 
 	it("model_list only contains configured providers", async () => {
@@ -139,11 +143,11 @@ describe("Integration: Model Selection", () => {
 		});
 		expect(status["status"]).toBe("processing");
 
-		const done = await client.waitFor("done", { timeout: 60_000 });
+		const done = await client.waitFor("done", { timeout: 5_000 });
 		expect(done["code"]).toBe(0);
 
 		await client.close();
-	}, 90_000);
+	}, 10_000);
 
 	it("new_session resets model selection without breaking messages", async () => {
 		const client = await harness.connectWsClient();
@@ -171,7 +175,7 @@ describe("Integration: Model Selection", () => {
 		// Create a new session — should reset model selection
 		client.send({ type: "new_session", title: "Model Reset Test" });
 		await client.waitFor("session_switched", {
-			timeout: 10_000,
+			timeout: 5_000,
 		});
 
 		// Let the session fully initialize before sending a message
@@ -187,14 +191,14 @@ describe("Integration: Model Selection", () => {
 		// The key assertion: the new session accepts messages (enters processing).
 		const status = await client.waitFor("status", {
 			predicate: (m) => m["status"] === "processing",
-			timeout: 10_000,
+			timeout: 5_000,
 		});
 		expect(status["status"]).toBe("processing");
 
 		// Wait for either done (fast) or result (model is working, just slow to finalize)
 		const evidence = await Promise.race([
-			client.waitFor("done", { timeout: 90_000 }),
-			client.waitFor("result", { timeout: 90_000 }),
+			client.waitFor("done", { timeout: 5_000 }),
+			client.waitFor("result", { timeout: 5_000 }),
 		]);
 		expect(evidence.type).toMatch(/^(done|result)$/);
 

@@ -81,13 +81,13 @@ describe("Integration: Cancel / Abort Lifecycle", () => {
 		// Should enter processing again
 		const status = await client.waitFor("status", {
 			predicate: (m) => m["status"] === "processing",
-			timeout: 10_000,
+			timeout: 5_000,
 		});
 		expect(status["status"]).toBe("processing");
 
 		// Should complete — wait for done (delta may or may not arrive
 		// depending on model streaming behavior after abort)
-		const done = await client.waitFor("done", { timeout: 90_000 });
+		const done = await client.waitFor("done", { timeout: 5_000 });
 		expect(done["code"]).toBe(0);
 
 		await client.close();
@@ -128,7 +128,7 @@ describe("Integration: Cancel / Abort Lifecycle", () => {
 		});
 		expect(status["status"]).toBe("processing");
 
-		await client.waitFor("done", { timeout: 60_000 });
+		await client.waitFor("done", { timeout: 5_000 });
 		await client.close();
-	}, 90_000);
+	}, 10_000);
 });
