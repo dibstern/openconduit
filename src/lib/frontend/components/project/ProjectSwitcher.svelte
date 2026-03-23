@@ -185,8 +185,7 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		id="project-switcher-btn"
-		class="flex items-center justify-between gap-2 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-[rgba(var(--overlay-rgb),0.04)] transition-colors duration-150"
-		style="font-family: var(--font-brand);"
+	class="flex items-center justify-between gap-2 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-[rgba(var(--overlay-rgb),0.04)] transition-colors duration-150 font-brand"
 		onclick={toggleDropdown}
 	>
 		<div class="flex flex-col min-w-0">
@@ -221,8 +220,7 @@
 	<!-- Dropdown menu -->
 	{#if open}
 		<div
-			class="absolute top-full left-0 right-0 z-[120] mt-0.5 min-w-[240px] max-w-[320px] bg-bg-surface border border-border rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-1 overflow-hidden"
-			style="font-family: var(--font-brand);"
+		class="absolute top-full left-0 right-0 z-[120] mt-0.5 min-w-[240px] max-w-[320px] bg-bg-surface border border-border rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.3)] p-1 overflow-hidden font-brand"
 			data-testid="project-switcher-dropdown"
 		>
 			<!-- Header -->

@@ -188,15 +188,13 @@
 	<!-- Title -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<span
-		class="session-item-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap"
-		style="font-family: var(--font-brand);"
+		class="session-item-title flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-brand"
 		ondblclick={handleDblClick}
 	>
 		{#if isRenaming}
 			<input
 				type="text"
-				class="session-rename-input w-full bg-input-bg border border-accent rounded py-px px-1 text-xs text-text outline-none"
-				style="font-family: var(--font-brand);"
+			class="session-rename-input w-full bg-input-bg border border-accent rounded py-px px-1 text-xs text-text outline-none font-brand"
 				bind:value={renameValue}
 				onkeydown={handleRenameKeydown}
 				onblur={handleRenameBlur}
@@ -221,8 +219,7 @@
 	<!-- Meta (time ago + message count) -->
 	{#if metaText && !isRenaming}
 		<span
-			class="session-item-meta shrink-0 text-sm text-text-dimmer whitespace-nowrap"
-			style="font-family: var(--font-brand);"
+		class="session-item-meta shrink-0 text-sm text-text-dimmer whitespace-nowrap font-brand"
 		>
 			{metaText}
 		</span>

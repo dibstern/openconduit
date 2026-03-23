@@ -41,8 +41,7 @@
 >
 	{#if showText}
 		<span
-			class="font-medium tracking-[0.14em] text-text {config.textSize}"
-			style="font-family: var(--font-brand);"
+			class="font-medium tracking-[0.14em] text-text font-brand {config.textSize}"
 		>
 			conduit
 		</span>

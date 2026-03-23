@@ -144,8 +144,7 @@
 <div id="model-display" class="relative inline-flex items-center" use:clickOutside={() => { dropdownOpen = false; }}>
 	<!-- Model button -->
 	<button
-		class="model-btn inline-flex items-center gap-[2px] h-9 px-2 border-none bg-transparent text-text-muted text-xs font-medium cursor-pointer whitespace-nowrap transition-[background,color] duration-150 rounded-[10px] max-w-[180px] max-sm:max-w-[120px] hover:bg-bg-alt hover:text-text-secondary {hasModel ? '' : 'opacity-50'}"
-		style="font-family: var(--font-brand);"
+	class="model-btn inline-flex items-center gap-[2px] h-9 px-2 border-none bg-transparent text-text-muted text-xs font-medium cursor-pointer whitespace-nowrap transition-[background,color] duration-150 rounded-[10px] max-w-[180px] max-sm:max-w-[120px] hover:bg-bg-alt hover:text-text-secondary font-brand {hasModel ? '' : 'opacity-50'}"
 		title="Switch model"
 		onclick={toggleDropdown}
 	>
@@ -161,8 +160,7 @@
 	<!-- Model dropdown -->
 	{#if dropdownOpen}
 		<div
-			class="model-dropdown absolute bottom-[calc(100%+4px)] left-0 min-w-80 max-w-[90vw] max-h-[400px] overflow-y-auto bg-bg-alt border border-border rounded-xl shadow-[0_-4px_24px_rgba(var(--shadow-rgb),0.4)] z-[200] py-1.5"
-			style="font-family: var(--font-brand);"
+		class="model-dropdown absolute bottom-[calc(100%+4px)] left-0 min-w-80 max-w-[90vw] max-h-[400px] overflow-y-auto bg-bg-alt border border-border rounded-xl shadow-[0_-4px_24px_rgba(var(--shadow-rgb),0.4)] z-[200] py-1.5 font-brand"
 		>
 			{#if allGroups.length === 0}
 				<div
