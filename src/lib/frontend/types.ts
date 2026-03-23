@@ -86,6 +86,7 @@ export interface AssistantMessage {
 	html: string;
 	finalized: boolean;
 	messageId?: string;
+	needsRender?: boolean;
 }
 
 export interface ThinkingMessage {

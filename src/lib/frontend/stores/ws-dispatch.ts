@@ -34,6 +34,7 @@ import {
 	historyState,
 	prependMessages,
 	registerClearMessagesHook,
+	renderDeferredMarkdown,
 } from "./chat.svelte.js";
 import {
 	handleAgentList,
@@ -568,6 +569,7 @@ export async function replayEvents(events: RelayMessage[]): Promise<void> {
 	flushPendingRender();
 	commitReplayBatch();
 	chatState.replaying = false;
+	renderDeferredMarkdown();
 }
 
 // ─── Auxiliary handlers (only called from handleMessage) ────────────────────

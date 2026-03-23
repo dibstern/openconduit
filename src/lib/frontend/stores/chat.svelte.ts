@@ -632,6 +632,7 @@ export function clearMessages(): void {
 	replayBatch = null;
 	chatState.replaying = false; // safety: clear stale flag on session switch
 	onClearMessages?.(); // abort in-flight async replays
+	cancelDeferredMarkdown(); // abort in-flight deferred renders
 	chatState.messages = [];
 	chatState.currentAssistantText = "";
 	chatState.streaming = false;
@@ -737,20 +738,82 @@ export function handleMessageRemoved(
 function flushAssistantRender(): void {
 	if (!chatState.currentAssistantText) return;
 
-	const html = renderMarkdown(chatState.currentAssistantText);
+	const html = chatState.replaying
+		? chatState.currentAssistantText // raw text fallback during replay
+		: renderMarkdown(chatState.currentAssistantText);
+
 	const messages = [...getMessages()];
 
 	for (let i = messages.length - 1; i >= 0; i--) {
 		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
 		const m = messages[i]!;
 		if (m.type === "assistant" && !m.finalized) {
-			messages[i] = {
-				...m,
-				rawText: chatState.currentAssistantText,
-				html,
-			};
+			if (chatState.replaying) {
+				messages[i] = {
+					...m,
+					rawText: chatState.currentAssistantText,
+					html,
+					needsRender: true,
+				};
+			} else {
+				messages[i] = {
+					...m,
+					rawText: chatState.currentAssistantText,
+					html,
+				};
+			}
 			setMessages(messages);
 			return;
 		}
+	}
+}
+
+// ─── Deferred Markdown Rendering ────────────────────────────────────────────
+// After replay completes, messages marked with `needsRender` have raw text
+// in their `html` field. renderDeferredMarkdown processes them in batches
+// via requestIdleCallback/setTimeout to avoid blocking the main thread.
+
+let deferredGeneration = 0;
+
+export function cancelDeferredMarkdown(): void {
+	deferredGeneration++;
+}
+
+export function renderDeferredMarkdown(): void {
+	const generation = ++deferredGeneration;
+	const BATCH_SIZE = 5;
+
+	function processBatch(): void {
+		if (generation !== deferredGeneration) return; // aborted
+
+		const updated = [...chatState.messages];
+		let rendered = 0;
+		for (let i = 0; i < updated.length && rendered < BATCH_SIZE; i++) {
+			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
+			const m = updated[i]!;
+			if (m.type === "assistant" && m.needsRender) {
+				// Use spread-omit to remove needsRender (exactOptionalPropertyTypes)
+				const { needsRender: _, ...rest } = m;
+				updated[i] = { ...rest, html: renderMarkdown(m.rawText) };
+				rendered++;
+			}
+		}
+		if (rendered > 0) {
+			chatState.messages = updated;
+		}
+
+		// Continue if more unrendered messages remain
+		const hasMore = updated.some(
+			(m) => m.type === "assistant" && (m as AssistantMessage).needsRender,
+		);
+		if (hasMore) {
+			setTimeout(processBatch, 0);
+		}
+	}
+
+	if (typeof requestIdleCallback === "function") {
+		requestIdleCallback(() => processBatch());
+	} else {
+		setTimeout(processBatch, 0);
 	}
 }
