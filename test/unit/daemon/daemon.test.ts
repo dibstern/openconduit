@@ -1468,6 +1468,43 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			await d2.stop();
 		});
 
+		// ── REST API: DELETE /api/projects/:slug ────────────────────────────
+
+		it("DELETE /api/projects/:slug removes a project via REST", async () => {
+			const d = new Daemon(daemonOpts(tmpDir));
+			await d.start();
+
+			const project = await d.addProject("/home/user/rest-delete-test");
+			expect(d.getProjects()).toHaveLength(1);
+
+			const port = d.port;
+			const res = await fetch(
+				`http://localhost:${port}/api/projects/${project.slug}`,
+				{ method: "DELETE" },
+			);
+			expect(res.status).toBe(200);
+			const body = await res.json();
+			expect(body.ok).toBe(true);
+
+			expect(d.getProjects()).toHaveLength(0);
+
+			await d.stop();
+		});
+
+		it("DELETE /api/projects/:slug returns 404 for unknown slug", async () => {
+			const d = new Daemon(daemonOpts(tmpDir));
+			await d.start();
+
+			const port = d.port;
+			const res = await fetch(
+				`http://localhost:${port}/api/projects/nonexistent`,
+				{ method: "DELETE" },
+			);
+			expect(res.status).toBe(404);
+
+			await d.stop();
+		});
+
 		// ── Config persistence on stop ──────────────────────────────────────
 
 		it("stop() preserves daemon.json with instance data (Fix #11)", async () => {

@@ -575,6 +575,7 @@ export class Daemon {
 					} satisfies import("../server/http-router.js").RouterProject;
 				});
 			},
+			removeProject: (slug) => this.removeProject(slug),
 			port: this.port,
 			isTls: this.tlsEnabled,
 			...(this.pushManager != null && { pushManager: this.pushManager }),
