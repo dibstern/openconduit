@@ -12,7 +12,6 @@
 	import ConnectOverlay from "../overlays/ConnectOverlay.svelte";
 	import Banners from "../overlays/Banners.svelte";
 	import Toast from "../overlays/Toast.svelte";
-	import ConfirmModal from "../overlays/ConfirmModal.svelte";
 	import ImageLightbox from "../overlays/ImageLightbox.svelte";
 	import QrModal from "../overlays/QrModal.svelte";
 	import SettingsPanel from "../overlays/SettingsPanel.svelte";
@@ -594,7 +593,6 @@
 <!-- /#layout -->
 
 <!-- Global overlays (outside layout for proper z-index stacking) -->
-<ConfirmModal />
 <ImageLightbox />
 <Toast />
 <QrModal visible={qrVisible} onClose={handleQrClose} />

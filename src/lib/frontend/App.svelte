@@ -8,6 +8,7 @@
 	import PinPage from "./pages/PinPage.svelte";
 	import DashboardPage from "./pages/DashboardPage.svelte";
 	import SetupPage from "./pages/SetupPage.svelte";
+	import ConfirmModal from "./components/overlays/ConfirmModal.svelte";
 
 	const route = $derived(getCurrentRoute());
 </script>
@@ -21,3 +22,5 @@
 {:else if route.page === "setup"}
 	<SetupPage />
 {/if}
+
+<ConfirmModal />
