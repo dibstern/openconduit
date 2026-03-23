@@ -105,6 +105,15 @@ describe("backward transitions rejected", () => {
 		expect(result.action).toBe("reject");
 	});
 
+	it("rejects error -> completed", () => {
+		const reg = createToolRegistry({ log, uuidFn: testUuid });
+		reg.start("t1", "Bash");
+		reg.executing("t1");
+		reg.complete("t1", "fail", true);
+		const result = reg.complete("t1", "late success", false);
+		expect(result.action).toBe("reject");
+	});
+
 	it("duplicate start after complete returns duplicate", () => {
 		registry.start("call-1", "Read");
 		registry.complete("call-1", "done", false);

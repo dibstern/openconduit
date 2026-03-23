@@ -51,6 +51,8 @@ export interface ToolRegistry {
 
 // ─── Transition Table ───────────────────────────────────────────────────────
 
+// NOTE: complete() intentionally allows overriding "completed" status
+// for late SSE results after handleDone force-finalization. See complete() impl.
 const VALID_TRANSITIONS: Record<ToolStatus, ReadonlySet<ToolStatus>> = {
 	pending: new Set(["running", "completed", "error"]),
 	running: new Set(["completed", "error"]),
