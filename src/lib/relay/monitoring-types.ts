@@ -2,7 +2,6 @@
 import type { SessionStatus } from "../instance/opencode-client.js";
 
 // ── Session monitoring phases ────────────────────────────────────────────
-
 export type SessionMonitorPhase =
 	| { readonly phase: "idle" }
 	| { readonly phase: "busy-grace"; readonly busySince: number }
@@ -23,7 +22,6 @@ export type SessionMonitorPhase =
 	  };
 
 // ── SSE coverage ────────────────────────────────────────────────────────
-
 export type SSECoverage =
 	| { readonly kind: "active"; readonly lastEventAt: number }
 	| { readonly kind: "stale"; readonly lastEventAt: number }
@@ -31,7 +29,6 @@ export type SSECoverage =
 	| { readonly kind: "disconnected" };
 
 // ── Evaluation context ──────────────────────────────────────────────────
-
 export interface SessionEvalContext {
 	readonly now: number;
 	readonly status: SessionStatus;
@@ -42,7 +39,6 @@ export interface SessionEvalContext {
 }
 
 // ── Effect reasons (const-derived) ──────────────────────────────────────
-
 export const POLLER_START_REASONS = [
 	"sse-disconnected",
 	"sse-stale",
@@ -80,13 +76,11 @@ export type MonitoringEffect =
 	  };
 
 // ── Global state ────────────────────────────────────────────────────────
-
 export interface MonitoringState {
 	readonly sessions: ReadonlyMap<string, SessionMonitorPhase>;
 }
 
 // ── Configuration ───────────────────────────────────────────────────────
-
 export interface PollerGatingConfig {
 	readonly sseActiveThresholdMs: number;
 	readonly sseGracePeriodMs: number;
