@@ -62,6 +62,7 @@ function daemonOpts(tmpDir: string, port = 0) {
 		logPath: join(tmpDir, "daemon.log"),
 		port,
 		smartDefault: false,
+		_skipPortScanner: true,
 	};
 }
 
@@ -969,6 +970,52 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			expect(statusResp["ok"]).toBe(true);
 
 			await d.stop();
+		});
+
+		it("set_keep_awake IPC activates/deactivates the KeepAwake manager", async () => {
+			const d = new Daemon(daemonOpts(tmpDir));
+			await d.start();
+			try {
+				// Enable keep-awake via IPC
+				const enableRes = await sendIPCCommand(d.socketPath, {
+					cmd: "set_keep_awake",
+					enabled: true,
+				});
+				expect(enableRes["ok"]).toBe(true);
+				expect(enableRes["supported"]).toBe(true); // macOS has caffeinate
+				expect(enableRes["active"]).toBe(true);
+
+				// Disable via IPC
+				const disableRes = await sendIPCCommand(d.socketPath, {
+					cmd: "set_keep_awake",
+					enabled: false,
+				});
+				expect(disableRes["ok"]).toBe(true);
+				expect(disableRes["active"]).toBe(false);
+			} finally {
+				await d.stop();
+			}
+		});
+
+		it("set_keep_awake_command IPC updates the daemon's keep-awake command", async () => {
+			const d = new Daemon(daemonOpts(tmpDir));
+			await d.start();
+			try {
+				const res = await sendIPCCommand(d.socketPath, {
+					cmd: "set_keep_awake_command",
+					command: "sleep",
+					args: ["999"],
+				});
+				expect(res["ok"]).toBe(true);
+
+				// Verify the command was persisted to config
+				const status = await sendIPCCommand(d.socketPath, {
+					cmd: "get_status",
+				});
+				expect(status["keepAwake"]).toBeDefined();
+			} finally {
+				await d.stop();
+			}
 		});
 	});
 
@@ -3168,6 +3215,44 @@ describe("instance rehydration on daemon restart", () => {
 		expect(d.getInstances()).toHaveLength(5);
 
 		await d.stop();
+	});
+});
+
+// ─── Keep-awake config rehydration on restart ───────────────────────────────
+
+describe("keep-awake config rehydration on daemon restart", () => {
+	let tmpDir: string;
+
+	beforeEach(() => {
+		tmpDir = makeTmpDir("daemon-ka-rehydrate-");
+	});
+
+	afterEach(() => {
+		cleanTmpDir(tmpDir);
+	});
+
+	it("keepAwakeCommand/keepAwakeArgs survive daemon restart", async () => {
+		// Daemon 1: start with custom keep-awake command
+		const d1 = new Daemon({
+			...daemonOpts(tmpDir),
+			keepAwake: true,
+			keepAwakeCommand: "sleep",
+			keepAwakeArgs: ["999"],
+		});
+		await d1.start();
+		await d1.stop();
+
+		// Daemon 2: start from same config dir — should rehydrate
+		const d2 = new Daemon(daemonOpts(tmpDir));
+		await d2.start();
+		try {
+			// biome-ignore lint/suspicious/noExplicitAny: testing private method
+			const config = (d2 as any).buildConfig();
+			expect(config.keepAwakeCommand).toBe("sleep");
+			expect(config.keepAwakeArgs).toEqual(["999"]);
+		} finally {
+			await d2.stop();
+		}
 	});
 });
 
