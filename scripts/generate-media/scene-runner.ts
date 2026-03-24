@@ -197,10 +197,17 @@ export async function runScenes(scenes: SceneDefinition[]): Promise<void> {
 			await scene.run(ctx);
 
 			if (config.animated) {
-				await page.close();
 				const video = page.video();
 				if (!video) throw new Error("No video recorded");
-				const videoPath = await video.path();
+				// Save video to a known path before closing (ensures proper finalization)
+				const videoPath = path.join(
+					MEDIA_DIR,
+					"_video_tmp",
+					`${config.name}.webm`,
+				);
+				mkdirSync(path.dirname(videoPath), { recursive: true });
+				await page.close();
+				await video.saveAs(videoPath);
 				const outputPath = path.join(MEDIA_DIR, config.outputFile);
 				await phase("convert-gif", () =>
 					convertToGif(videoPath, outputPath, config.viewport),

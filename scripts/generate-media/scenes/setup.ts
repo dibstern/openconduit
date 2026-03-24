@@ -51,42 +51,43 @@ export const setupScene: SceneDefinition = {
 		await hold(2000, "first-step");
 
 		await phase("walk-wizard", async () => {
-			for (let i = 0; i < 5; i++) {
-				// Capture current heading text before clicking
-				const heading = page.locator("h2, h3").first();
-				const headingText = await heading.textContent().catch(() => null);
+			let stepNum = 0;
+			for (let i = 0; i < 8; i++) {
+				// Check if we've reached the done screen
+				const doneVisible = await page
+					.getByText("All set")
+					.first()
+					.isVisible()
+					.catch(() => false);
+				if (doneVisible) break;
 
-				// Try "Skip" / "Finish anyway" first, then "Next" / "Open Conduit"
+				// Priority: skip/finish > next > enable (push — fails in headless,
+				// but surfaces "Finish anyway" after failure)
 				const skipBtn = page
 					.locator("button")
 					.filter({ hasText: /skip|finish anyway/i });
-				const nextBtn = page
+				const nextBtn = page.locator("button").filter({ hasText: /^next$/i });
+				const enableBtn = page
 					.locator("button")
-					.filter({ hasText: /next|open conduit/i });
+					.filter({ hasText: /enable push/i });
 
 				if ((await skipBtn.count()) > 0) {
 					await skipBtn.first().click();
 				} else if ((await nextBtn.count()) > 0) {
 					await nextBtn.first().click();
+				} else if ((await enableBtn.count()) > 0) {
+					// Click Enable — it fails in headless, surfacing "Finish anyway"
+					await enableBtn.first().click();
+					await page.waitForTimeout(2000);
+					// Don't count as a visible step — loop again to find "Finish anyway"
+					continue;
 				} else {
 					break;
 				}
 
-				// Wait for step transition (heading text changes)
-				try {
-					await page.waitForFunction(
-						(prevText) => {
-							const el = document.querySelector("h2, h3");
-							return el && el.textContent !== prevText;
-						},
-						headingText,
-						{ timeout: 5000 },
-					);
-				} catch {
-					// Last step may not change heading — that's fine
-				}
-
-				await hold(1800, `step-${i + 1}`);
+				stepNum++;
+				await page.waitForTimeout(500); // Let transition settle
+				await hold(1800, `step-${stepNum}`);
 			}
 		});
 
