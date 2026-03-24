@@ -96,7 +96,7 @@ describe("shouldCache", () => {
 			"result",
 			"done",
 			"error",
-		];
+		] as const;
 		for (const type of cacheableTypes) {
 			expect(shouldCache(type)).toBe(true);
 		}
@@ -114,7 +114,7 @@ describe("shouldCache", () => {
 			// status events are sent directly via wsHandler, never through the
 			// pipeline — so they should NOT be cacheable.
 			"status",
-		];
+		] as const;
 		for (const type of nonCacheable) {
 			expect(shouldCache(type)).toBe(false);
 		}
