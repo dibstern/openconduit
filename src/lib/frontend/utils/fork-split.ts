@@ -36,7 +36,16 @@ export function splitAtForkPoint(
 	}
 
 	if (splitIndex === -1) {
-		// Fork point not found — treat all as inherited (conservative)
+		// Fork point not found — treat all as inherited (conservative).
+		// This is a data integrity issue: the forkMessageId should always
+		// appear in the messages. Common cause: historyToChatMessages not
+		// propagating messageId from HistoryMessage to ChatMessage.
+		if (messages.length > 0) {
+			console.warn(
+				`[fork-split] forkMessageId "${forkMessageId}" not found in ${messages.length} messages. ` +
+					"All messages will render as inherited. Check that historyToChatMessages sets messageId.",
+			);
+		}
 		return { inherited: messages, current: [] };
 	}
 

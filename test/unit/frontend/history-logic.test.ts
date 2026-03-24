@@ -292,3 +292,110 @@ describe("groupIntoTurns with OpenCode normalized messages", () => {
 		expect(turns[1]!.assistant?.parts?.[0]?.text).toBe("6");
 	});
 });
+
+// ─── messageId propagation (fork-split dependency) ───────────────────────────
+
+import {
+	historyToChatMessages,
+} from "../../../src/lib/frontend/utils/history-logic.js";
+import { splitAtForkPoint } from "../../../src/lib/frontend/utils/fork-split.js";
+
+describe("historyToChatMessages — messageId propagation", () => {
+	test("assistant messages carry the HistoryMessage id as messageId", () => {
+		const history: HistoryMessage[] = [
+			{
+				id: "msg_user1",
+				role: "user",
+				parts: [{ id: "p1", type: "text", text: "hello" }],
+			},
+			{
+				id: "msg_asst1",
+				role: "assistant",
+				parts: [{ id: "pt101", type: "text", text: "hi there" }],
+			},
+		];
+		const chatMsgs = historyToChatMessages(history);
+		const assistantMsg = chatMsgs.find((m) => m.type === "assistant");
+		expect(assistantMsg).toBeDefined();
+		expect("messageId" in assistantMsg!).toBe(true);
+		expect((assistantMsg as { messageId?: string }).messageId).toBe("msg_asst1");
+	});
+
+	test("only first text part of an assistant message gets messageId", () => {
+		const history: HistoryMessage[] = [
+			{
+				id: "msg_multi",
+				role: "assistant",
+				parts: [
+					{ id: "p1", type: "text", text: "part one" },
+					{ id: "p2", type: "text", text: "part two" },
+				],
+			},
+		];
+		const chatMsgs = historyToChatMessages(history);
+		const assistants = chatMsgs.filter((m) => m.type === "assistant");
+		expect(assistants).toHaveLength(2);
+		expect((assistants[0] as { messageId?: string }).messageId).toBe("msg_multi");
+		expect("messageId" in assistants[1]!).toBe(false);
+	});
+});
+
+describe("fork split with history-loaded messages", () => {
+	test("splitAtForkPoint finds fork point in history-converted messages", () => {
+		const history: HistoryMessage[] = [
+			{
+				id: "msg_u1",
+				role: "user",
+				parts: [{ id: "pt102", type: "text", text: "remember alpha" }],
+			},
+			{
+				id: "msg_a1",
+				role: "assistant",
+				parts: [{ id: "pt103", type: "text", text: "ok" }],
+			},
+			{
+				id: "msg_u2",
+				role: "user",
+				parts: [{ id: "pt104", type: "text", text: "remember beta" }],
+			},
+			{
+				id: "msg_a2",
+				role: "assistant",
+				parts: [{ id: "pt105", type: "text", text: "ok" }],
+			},
+		];
+		const chatMsgs = historyToChatMessages(history);
+
+		// Fork at msg_a1 — first two messages are inherited, last two are current
+		const split = splitAtForkPoint(chatMsgs, "msg_a1");
+		expect(split.inherited.length).toBeGreaterThan(0);
+		expect(split.current.length).toBeGreaterThan(0);
+
+		// The current messages should include the second user message
+		const currentUserMsg = split.current.find((m) => m.type === "user");
+		expect(currentUserMsg).toBeDefined();
+	});
+
+	test("new messages appended after history are in current, not inherited", () => {
+		const history: HistoryMessage[] = [
+			{
+				id: "msg_u1",
+				role: "user",
+				parts: [{ id: "p1", type: "text", text: "hello" }],
+			},
+			{
+				id: "msg_a1",
+				role: "assistant",
+				parts: [{ id: "p2", type: "text", text: "hi" }],
+			},
+		];
+		const chatMsgs = historyToChatMessages(history);
+
+		// Simulate a new user message sent after the fork
+		chatMsgs.push({ type: "user", uuid: "new-user-msg", text: "new question" });
+
+		const split = splitAtForkPoint(chatMsgs, "msg_a1");
+		expect(split.current).toHaveLength(1);
+		expect(split.current[0]!.type).toBe("user");
+	});
+});
