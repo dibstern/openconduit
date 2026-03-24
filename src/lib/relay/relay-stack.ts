@@ -242,7 +242,7 @@ export async function createProjectRelay(
 	});
 
 	// ── Shared session registry (single source of truth for client→session tracking) ──
-	const registry = new SessionRegistry();
+	const registry = new SessionRegistry(log.child("session-registry"));
 
 	// ── Message poller manager (REST fallback for CLI sessions without SSE events) ──
 	// Manages multiple pollers concurrently — one per busy session.
@@ -403,17 +403,30 @@ export async function createProjectRelay(
 		}
 		wsHandler.broadcast(msg);
 	});
+	// Track sessions deleted while a "created" handler is awaiting rebuild.
+	// Prevents startPolling() for sessions that were deleted during the async gap.
+	const deletedSessions = new Set<string>();
+
 	sessionMgr.on("session_lifecycle", async (ev) => {
 		const sid = ev.sessionId;
 		translator.reset(sid);
 
 		if (ev.type === "created") {
+			deletedSessions.delete(sid); // clear stale flag from recycled IDs
 			const existingMessages = await rebuildTranslatorFromHistory(
 				translator,
 				(id) => client.getMessages(id),
 				sid,
 				sessionLog,
 			);
+
+			if (deletedSessions.has(sid)) {
+				sessionLog.debug(
+					`Skipping poller start for ${sid.slice(0, 12)} — deleted during init`,
+				);
+				deletedSessions.delete(sid); // clean up — only needed for the await window
+				return;
+			}
 
 			if (existingMessages) {
 				pollerManager.startPolling(sid, existingMessages);
@@ -423,7 +436,8 @@ export async function createProjectRelay(
 				);
 			}
 		} else {
-			// deleted — clean up poller, activity, SSE tracker, and monitoring state
+			// deleted — mark for guard, then clean up poller, activity, SSE tracker, and monitoring state
+			deletedSessions.add(sid);
 			pollerManager.stopPolling(sid);
 			statusPoller.clearMessageActivity(sid);
 			sseTracker.remove(sid);
