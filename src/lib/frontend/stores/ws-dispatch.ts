@@ -298,9 +298,10 @@ export function handleMessage(msg: RelayMessage): void {
 				const historyMsgs = msg.history.messages;
 				const hasMore = msg.history.hasMore;
 				const msgCount = historyMsgs.length;
+				const gen = replayGeneration; // snapshot before async
 				convertHistoryAsync(historyMsgs, renderMarkdown)
 					.then((chatMsgs) => {
-						if (chatMsgs) {
+						if (chatMsgs && gen === replayGeneration) {
 							prependMessages(chatMsgs);
 							seedRegistryFromMessages(chatMsgs);
 							historyState.hasMore = hasMore;
@@ -404,10 +405,12 @@ export function handleMessage(msg: RelayMessage): void {
 			const historyMsg = msg as Extract<RelayMessage, { type: "history_page" }>;
 			const rawMessages = historyMsg.messages ?? [];
 			const hasMore = historyMsg.hasMore ?? false;
+			const gen = replayGeneration; // snapshot before async
 			convertHistoryAsync(rawMessages, renderMarkdown)
 				.then((chatMsgs) => {
-					if (chatMsgs) {
+					if (chatMsgs && gen === replayGeneration) {
 						prependMessages(chatMsgs);
+						seedRegistryFromMessages(chatMsgs);
 						historyState.hasMore = hasMore;
 						historyState.messageCount += rawMessages.length;
 					}
