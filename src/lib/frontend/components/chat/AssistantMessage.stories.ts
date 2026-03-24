@@ -46,3 +46,12 @@ export const RichMarkdown: Story = {
 export const Empty: Story = {
 	args: { message: mockAssistantEmpty },
 };
+
+/**
+ * Demonstrates the copy-on-click interaction on a finalized message.
+ * Click once on the message body (not on code blocks) to prime, then click again to copy.
+ * Verify the background highlight stays within the card's rounded edges.
+ */
+export const CopyInteraction: Story = {
+	args: { message: mockAssistantMarkdown },
+};

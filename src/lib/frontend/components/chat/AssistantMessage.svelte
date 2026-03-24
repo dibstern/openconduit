@@ -366,13 +366,13 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
 	bind:this={containerEl}
-	class="msg-assistant group max-w-[760px] mx-auto mb-3 px-5 {containerCopyClass}"
+	class="msg-assistant group max-w-[760px] mx-auto mb-3 px-5"
 	data-uuid={message.uuid}
 	onclick={handleClick}
 	onkeydown={handleKeydown}
 	role="article"
 >
-	<div class="bg-bg-surface rounded-[10px] py-4 px-5 relative glow-brand-b transition-colors duration-150">
+	<div class="bg-bg-surface rounded-[10px] py-4 px-5 relative glow-brand-b transition-colors duration-150 {containerCopyClass}">
 		<!-- Action buttons (hover) — top-right icon row -->
 		{#if message.finalized}
 			<div
