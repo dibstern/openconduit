@@ -46,9 +46,21 @@ const modelList: RelayMessage = {
 const agentList: RelayMessage = {
 	type: "agent_list",
 	agents: [
-		{ id: "code", name: "Code", description: "General coding assistant" },
+		{ id: "build", name: "Build", description: "Full-stack development" },
 		{ id: "plan", name: "Plan", description: "Architecture and planning" },
 	],
+};
+
+const projectList: RelayMessage = {
+	type: "project_list",
+	projects: [
+		{
+			slug: "myapp",
+			title: "My App",
+			directory: "/Users/dev/projects/myapp",
+		},
+	],
+	current: "myapp",
 };
 
 // ─── Main UI Scene ──────────────────────────────────────────────────────────
@@ -89,6 +101,7 @@ export const mainUiInit: MockMessage[] = msgs(
 	},
 	modelList,
 	agentList,
+	projectList,
 );
 
 export const mainUiTurn1: MockMessage[] = msgs(
@@ -209,6 +222,7 @@ export const approvalInit: MockMessage[] = msgs(
 	},
 	modelList,
 	agentList,
+	projectList,
 );
 
 export const approvalPermission: MockMessage = {
@@ -266,7 +280,7 @@ export const dashboardProjects = [
 export const setupInfo = {
 	httpsUrl: "https://192.168.1.42:2634",
 	httpUrl: "http://192.168.1.42:2633",
-	hasCert: false,
+	hasCert: true,
 	lanMode: false,
 };
 
@@ -296,6 +310,7 @@ export const splitInit: MockMessage[] = msgs(
 	},
 	modelList,
 	agentList,
+	projectList,
 );
 
 // ─── Approval Turn 2 Start ──────────────────────────────────────────────────
@@ -381,6 +396,7 @@ export const sidebarInit: MockMessage[] = msgs(
 	},
 	modelList,
 	agentList,
+	projectList,
 );
 
 // ─── Split Scene ────────────────────────────────────────────────────────────

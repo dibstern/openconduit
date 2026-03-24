@@ -1,7 +1,9 @@
 // ─── Setup Scene ─────────────────────────────────────────────────────────────
 // Generates GENERATE-SETUP.gif — Animated walkthrough of the setup wizard,
-// clicking through each step to the "All set" screen.
+// showing the cert step, then simulating HTTPS redirect and walking through
+// PWA, push, and done steps.
 
+import path from "node:path";
 import {
 	waitForFonts,
 	waitForIcons,
@@ -20,12 +22,26 @@ export const setupScene: SceneDefinition = {
 	},
 
 	async run({ page, previewUrl, phase, assert, hold }) {
+		// Phase 1: Show cert step with hasCert: true
+		let serveCert = true;
+
 		await phase("setup-routes", async () => {
 			await page.route("**/api/setup-info", (route) =>
 				route.fulfill({
 					status: 200,
 					contentType: "application/json",
-					body: JSON.stringify(setupInfo),
+					body: JSON.stringify(
+						serveCert ? setupInfo : { ...setupInfo, hasCert: false },
+					),
+				}),
+			);
+
+			// Mock HTTPS cert verification endpoint
+			await page.route("**/info", (route) =>
+				route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: '{"ok":true}',
 				}),
 			);
 
@@ -34,7 +50,7 @@ export const setupScene: SceneDefinition = {
 				route.fulfill({
 					status: 200,
 					contentType: "application/javascript",
-					body: "// mock service worker\nself.addEventListener('install', () => self.skipWaiting());\nself.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));",
+					body: "self.addEventListener('install', () => self.skipWaiting());",
 				}),
 			);
 
@@ -53,99 +69,63 @@ export const setupScene: SceneDefinition = {
 				route.fulfill({
 					status: 200,
 					contentType: "application/json",
-					body: JSON.stringify({ ok: true }),
+					body: '{"ok":true}',
 				}),
 			);
 		});
 
-		// Mock push APIs in the browser context before navigating
 		await phase("mock-push-apis", async () => {
-			await page.addInitScript(() => {
-				// Mock Notification API so requestPermission succeeds
-				const notifMock = {
-					_perm: "default" as NotificationPermission,
-				};
-				Object.defineProperty(window, "Notification", {
-					value: {
-						get permission() {
-							return notifMock._perm;
-						},
-						async requestPermission() {
-							notifMock._perm = "granted";
-							return "granted" as NotificationPermission;
-						},
-					},
-					writable: true,
-					configurable: true,
-				});
-
-				// Mock PushManager on service worker registrations
-				const originalRegister = navigator.serviceWorker?.register?.bind(
-					navigator.serviceWorker,
-				);
-				if (navigator.serviceWorker && originalRegister) {
-					navigator.serviceWorker.register = async (
-						...args: Parameters<ServiceWorkerContainer["register"]>
-					) => {
-						const reg = await originalRegister(...args);
-						// Patch pushManager.subscribe to return a mock subscription
-						const origSubscribe = reg.pushManager.subscribe.bind(
-							reg.pushManager,
-						);
-						reg.pushManager.subscribe = async () => {
-							try {
-								return await origSubscribe({
-									userVisibleOnly: true,
-									applicationServerKey: new Uint8Array(65),
-								});
-							} catch {
-								// If real subscribe fails, return a mock
-								return {
-									endpoint: "https://mock.push/endpoint",
-									expirationTime: null,
-									options: {
-										userVisibleOnly: true,
-										applicationServerKey: new ArrayBuffer(65),
-									},
-									getKey: () => new ArrayBuffer(0),
-									unsubscribe: async () => true,
-									toJSON: () => ({
-										endpoint: "https://mock.push/endpoint",
-										keys: { p256dh: "mock", auth: "mock" },
-									}),
-								} as unknown as PushSubscription;
-							}
-						};
-						return reg;
-					};
-				}
+			await page.addInitScript({
+				path: path.join(import.meta.dirname, "../fixtures/push-mock.js"),
 			});
 		});
 
 		await phase("navigate", async () => {
 			await page.goto(`${previewUrl}/setup`);
-			await page.evaluate(() => {
-				localStorage.removeItem("setup-done");
-				localStorage.removeItem("setup-pending");
+			await page.addInitScript({
+				content:
+					"localStorage.removeItem('setup-done'); localStorage.removeItem('setup-pending');",
 			});
 			await page.reload();
 			await waitForFonts(page);
 			await waitForIcons(page);
 		});
 
-		await assert("wizard-loaded", async () => {
+		// Cert step
+		await assert("cert-step-loaded", async () => {
 			await page
-				.getByText("Conduit")
+				.getByText("certificate")
 				.first()
 				.waitFor({ state: "visible", timeout: 5000 });
 		});
 
-		await hold(2000, "first-step");
+		await hold(2500, "cert-step");
 
-		await phase("walk-wizard", async () => {
+		// Phase 2: Simulate the HTTPS redirect by switching to hasCert: false
+		// (so cert step is skipped) and using ?completed=1 to carry forward
+		// the step numbering. This mimics what the user sees after the cert
+		// step redirects to HTTPS.
+		await phase("simulate-https-redirect", async () => {
+			serveCert = false;
+			await page.goto(`${previewUrl}/setup?completed=1`);
+			await waitForFonts(page);
+			await waitForIcons(page);
+		});
+
+		// PWA step (displayed as step 2 of N)
+		await assert("pwa-step-loaded", async () => {
+			const pwaOrSkip = page.locator("button").filter({
+				hasText: /skip|add to home|install/i,
+			});
+			await pwaOrSkip.first().waitFor({ state: "visible", timeout: 5000 });
+		});
+
+		await hold(2000, "pwa-step");
+
+		// Walk through remaining steps
+		await phase("walk-remaining", async () => {
 			let stepNum = 0;
-			for (let i = 0; i < 8; i++) {
-				// Check if we've reached the done screen
+			for (let i = 0; i < 5; i++) {
 				const doneVisible = await page
 					.getByText("All set")
 					.first()
@@ -153,40 +133,30 @@ export const setupScene: SceneDefinition = {
 					.catch(() => false);
 				if (doneVisible) break;
 
-				// Try Next first, then Enable, then Skip/Finish anyway
-				const nextBtn = page.locator("button").filter({ hasText: /^next$/i });
-				const enableBtn = page
-					.locator("button")
-					.filter({ hasText: /enable push/i });
 				const skipBtn = page
 					.locator("button")
 					.filter({ hasText: /skip|finish anyway/i });
+				const enableBtn = page
+					.locator("button")
+					.filter({ hasText: /enable push/i });
 
-				if ((await nextBtn.count()) > 0) {
-					await nextBtn.first().click();
+				if ((await skipBtn.count()) > 0) {
+					await skipBtn.first().click();
 				} else if ((await enableBtn.count()) > 0) {
 					await enableBtn.first().click();
-					// Wait for the push flow to complete (mocked, should be fast)
-					await page.waitForTimeout(1500);
-					// Check if we auto-advanced to next step
-					const stillOnPush = await enableBtn.count();
-					if (stillOnPush > 0) {
-						// Didn't auto-advance — look for finish anyway
-						const finishBtn = page
-							.locator("button")
-							.filter({ hasText: /finish anyway/i });
-						if ((await finishBtn.count()) > 0) {
-							await finishBtn.first().click();
-						}
+					await page.waitForTimeout(2000);
+					const finishBtn = page
+						.locator("button")
+						.filter({ hasText: /finish anyway/i });
+					if ((await finishBtn.count()) > 0) {
+						await finishBtn.first().click();
 					}
-				} else if ((await skipBtn.count()) > 0) {
-					await skipBtn.first().click();
 				} else {
 					break;
 				}
 
 				stepNum++;
-				await page.waitForTimeout(500); // Let transition settle
+				await page.waitForTimeout(500);
 				await hold(1800, `step-${stepNum}`);
 			}
 		});
