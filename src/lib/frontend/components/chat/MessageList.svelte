@@ -4,7 +4,7 @@
 <!-- Preserves #messages ID for E2E. -->
 
 <script lang="ts">
-	import { tick } from "svelte";
+	import { tick, untrack } from "svelte";
 	import { chatState, historyState } from "../../stores/chat.svelte.js";
 	import { findSession, sessionState } from "../../stores/session.svelte.js";
 	import { splitAtForkPoint } from "../../utils/fork-split.js";
@@ -61,6 +61,11 @@
 	// to ~1s while deferred markdown rendering changes element heights.
 	// A wheel/touchmove from the user aborts settling immediately so
 	// intentional scroll-up is never overridden.
+	//
+	// NOTE: tracks messages.length so that the msgCount===0 branch can
+	// reset lastScrolledSessionId when clearMessages() is called. This
+	// allows the settle loop to re-fire after server replay even when
+	// the session ID hasn't changed (reconnect, same-session replay).
 	let lastScrolledSessionId = "";
 
 	$effect(() => {
@@ -106,7 +111,14 @@
 	let prevScrollHeight = 0;
 	let prevScrollTop = 0;
 
-	// Track first message UUID, count, and session to detect prepends
+	// Derived first-message UUID — changes only on prepend or session switch,
+	// NOT on appends or content updates. This prevents the $effect.pre from
+	// firing spuriously when message html/status fields change.
+	const firstMessageUuid = $derived(
+		chatState.messages.length > 0 ? chatState.messages[0]!.uuid : "",
+	);
+
+	// Track previous state for prepend detection
 	let prevFirstUuid = "";
 	let prevMessageCount = 0;
 	let prevSessionId = $state("");
@@ -114,10 +126,8 @@
 	// Capture scroll state BEFORE DOM update using $effect.pre
 	$effect.pre(() => {
 		const currentSessionId = sessionState.currentId ?? "";
-		const msgs = chatState.messages;
-		const currentCount = msgs.length;
-		const firstMsg = currentCount > 0 ? msgs[0] : null;
-		const currentFirstUuid = firstMsg ? firstMsg["uuid"] : "";
+		const currentFirstUuid = firstMessageUuid;
+		const currentCount = chatState.messages.length;
 
 		// Session changed — reset tracking, skip prepend detection
 		if (currentSessionId !== prevSessionId) {
@@ -166,20 +176,21 @@
 	// reassignments, user_message from another tab) must NOT snap the user back
 	// to the bottom while they are browsing history. The initial scroll-to-bottom
 	// after session switch is handled by the dedicated session-change $effect above.
+	//
+	// NOTE: processing and streaming are checked via untrack() so they act as
+	// guards (checked but not tracked). The effect only re-runs when actual
+	// content changes (message count, permission count) — not on every
+	// processing/streaming toggle, which eliminates 2-3 spurious runs per delta.
 	$effect(() => {
-		// Touch messages array to track dependency
+		// Tracked dependencies — only these trigger re-runs:
 		const _len = chatState.messages.length;
-		// Also track permissions changes to scroll when new permission/question arrives
 		const _permLen = permissionsState.pendingPermissions.length;
 		const _qLen = permissionsState.pendingQuestions.length;
-		// Only auto-scroll when the session is actively producing content
-		const isActive = chatState.processing || chatState.streaming;
+		// Untracked guards — checked but don't trigger re-runs:
+		const isActive = untrack(() => chatState.processing || chatState.streaming);
 		if (!awaitingPrepend && isActive) {
-			// Scroll after DOM update
 			tick().then(() => {
 				scrollToBottom();
-				// Schedule a second scroll after the browser has finalized layout
-				// (deferred images, syntax highlighting, etc. may change heights).
 				requestAnimationFrame(() => {
 					if (!uiState.isUserScrolledUp) {
 						scrollToBottom();
