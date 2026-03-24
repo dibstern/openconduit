@@ -60,6 +60,46 @@ export const chatState = $state({
 	turnEpoch: 0,
 });
 
+// ─── Phase Transitions ─────────────────────────────────────────────────────
+// Enforce valid combinations of processing/streaming/replaying.
+// All production code MUST use these instead of setting booleans directly.
+// Tests may still set booleans directly for arbitrary state setup.
+
+/** Session is idle — no LLM activity, no streaming. */
+export function phaseToIdle(): void {
+	chatState.processing = false;
+	chatState.streaming = false;
+}
+
+/** Receiving deltas. Does NOT set processing — that is handleStatus's
+ *  responsibility. During replay, status events are not cached, so
+ *  streaming can be true without processing. */
+export function phaseToStreaming(): void {
+	chatState.streaming = true;
+}
+
+/** Start event replay. Preserves current processing/streaming state. */
+export function phaseStartReplay(): void {
+	chatState.replaying = true;
+}
+
+/** End event replay, reconcile processing state.
+ *  @param llmActive — whether the replayed event stream ended mid-turn */
+export function phaseEndReplay(llmActive: boolean): void {
+	// Either signal means the session is active: llmActive (last replayed
+	// turn still in-flight) OR chatState.processing (live status:processing
+	// arrived during a yield). See ws-dispatch.ts replayEvents().
+	chatState.processing = llmActive || chatState.processing;
+	chatState.replaying = false;
+}
+
+/** Full reset — used by clearMessages on session switch. */
+function phaseReset(): void {
+	chatState.processing = false;
+	chatState.streaming = false;
+	chatState.replaying = false;
+}
+
 /** Pagination state for history loading (shared between HistoryLoader and dispatch). */
 export const historyState = $state({
 	/** Whether there are more history pages to fetch from the server.
@@ -190,6 +230,9 @@ function flushAndFinalizeAssistant(): string | undefined {
 	);
 	if (found) setMessages(messages);
 
+	// Clear streaming sub-state. The caller is responsible for the full
+	// phase transition (handleDone → phaseToIdle, handleToolStart leaves
+	// processing=true, addUserMessage during replay leaves state as-is).
 	chatState.streaming = false;
 	chatState.currentAssistantText = "";
 	return finalizedMessageId;
@@ -262,7 +305,7 @@ export function handleDelta(
 			...(messageId != null && { messageId }),
 		};
 		setMessages([...getMessages(), assistantMsg]);
-		chatState.streaming = true;
+		phaseToStreaming();
 		chatState.currentAssistantText = "";
 	}
 
@@ -465,12 +508,16 @@ export function handleDone(
 		setMessages(messages);
 	}
 
+	// Streaming is always cleared on done (even during replay).
+	// flushAndFinalizeAssistant already cleared it if there was an
+	// unfinalized assistant, but belt-and-suspenders for edge cases
+	// (e.g., done without any preceding deltas).
+	chatState.streaming = false;
+
 	chatState.turnEpoch++;
 	// Don't clear processing during event replay — replayed `done` events
 	// are historical (previous assistant turns) and must not overwrite the
 	// live processing flag set by the server's status:processing message.
-	// Without this guard, a replayed `done` from an earlier turn clears
-	// processing AFTER the server re-asserted it, hiding the Stop button.
 	if (!chatState.replaying) {
 		chatState.processing = false;
 	}
@@ -480,7 +527,7 @@ export function handleStatus(
 	msg: Extract<RelayMessage, { type: "status" }>,
 ): void {
 	if (msg.status === "processing") {
-		chatState.processing = true;
+		chatState.processing = true; // Safe direct write — never creates impossible state
 		// Reset so queued styling can be applied for new processing turns
 		chatState.queuedFlagsCleared = false;
 		// Apply queued flag to the last unresponded user message.
@@ -534,9 +581,10 @@ export function handleError(
 		// Same guard as handleDone — historical errors from replay must not
 		// clear live processing state.
 		if (!chatState.replaying) {
-			chatState.processing = false;
+			phaseToIdle();
+		} else {
+			chatState.streaming = false; // Clear streaming even during replay
 		}
-		chatState.streaming = false;
 	}
 }
 
@@ -684,13 +732,12 @@ export function seedRegistryFromMessages(
 
 export function clearMessages(): void {
 	replayBatch = null;
-	chatState.replaying = false; // safety: clear stale flag on session switch
+	chatState.replaying = false; // early: must be cleared before abort hook fires
 	onClearMessages?.(); // abort in-flight async replays
 	cancelDeferredMarkdown(); // abort in-flight deferred renders
 	chatState.messages = [];
 	chatState.currentAssistantText = "";
-	chatState.streaming = false;
-	chatState.processing = false;
+	phaseReset(); // clears processing/streaming/replaying (replaying already false)
 	chatState.queuedFlagsCleared = false;
 	chatState.turnEpoch = 0;
 	queuedAtEpoch = -1;

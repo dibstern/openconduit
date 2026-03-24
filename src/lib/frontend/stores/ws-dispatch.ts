@@ -38,6 +38,8 @@ import {
 	handleToolResult,
 	handleToolStart,
 	historyState,
+	phaseEndReplay,
+	phaseStartReplay,
 	prependMessages,
 	registerClearMessagesHook,
 	renderDeferredMarkdown,
@@ -554,7 +556,7 @@ export function handleMessage(msg: RelayMessage): void {
 // that appears while llmActive is true was queued behind an in-progress turn.
 
 export async function replayEvents(events: RelayMessage[]): Promise<void> {
-	chatState.replaying = true;
+	phaseStartReplay();
 	const generation = ++replayGeneration;
 
 	beginReplayBatch();
@@ -657,15 +659,11 @@ export async function replayEvents(events: RelayMessage[]): Promise<void> {
 	// Reconcile processing state: during replay, handleDone is guarded
 	// from clearing chatState.processing (to avoid overwriting a live
 	// status:processing message from the server that arrived during a
-	// yield). Now that replay is complete, derive the correct state:
-	// - llmActive: true if the last replayed turn is still in-flight
-	// - chatState.processing: may have been set to true by a live
-	//   status:processing WS message during a yield (status events are
-	//   NOT cacheable, so this can only come from a live server message)
-	// Either signal means the session is active.
-	chatState.processing = llmActive || chatState.processing;
-
-	chatState.replaying = false;
+	// yield). Now that replay is complete, reconcile the processing state.
+	// phaseEndReplay merges two signals: llmActive (last replayed turn
+	// still in-flight) and chatState.processing (live status:processing
+	// arrived during a yield — status events are NOT cacheable).
+	phaseEndReplay(llmActive);
 	renderDeferredMarkdown();
 }
 
