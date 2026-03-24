@@ -123,7 +123,8 @@ export function createToolRegistry(
 	): ToolTransitionResult {
 		const tracked = entries.get(id);
 		if (!tracked) {
-			log?.("error", `executing() called for unknown tool "${id}"`);
+			// Expected during session loading: SSE delivers events for tools
+			// established before the cache/registry started tracking.
 			return { action: "reject", reason: `Unknown tool ID: ${id}` };
 		}
 
@@ -177,7 +178,8 @@ export function createToolRegistry(
 	): ToolTransitionResult {
 		const tracked = entries.get(id);
 		if (!tracked) {
-			log?.("error", `complete() called for unknown tool "${id}"`);
+			// Expected during session loading: SSE delivers tool_result for tools
+			// established before the cache/registry started tracking.
 			return { action: "reject", reason: `Unknown tool ID: ${id}` };
 		}
 

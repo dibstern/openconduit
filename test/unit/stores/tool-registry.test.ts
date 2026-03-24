@@ -373,12 +373,11 @@ describe("diagnostics", () => {
 		expect(log).not.toHaveBeenCalledWith("error", expect.anything());
 	});
 
-	it("logs error on orphan event", () => {
-		registry.executing("orphan-1");
-		expect(log).toHaveBeenCalledWith(
-			"error",
-			expect.stringContaining("orphan-1"),
-		);
+	it("silently rejects orphan executing event (expected overlap)", () => {
+		const result = registry.executing("orphan-1");
+		expect(result.action).toBe("reject");
+		// Not an error — expected during session loading overlap
+		expect(log).not.toHaveBeenCalledWith("error", expect.anything());
 	});
 
 	it("logs info on dedup", () => {

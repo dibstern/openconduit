@@ -200,10 +200,8 @@ describe("tool lifecycle", () => {
 		expect(tool!.input).toEqual({ filePath: "/repo/src/foo.ts", offset: 10 });
 	});
 
-	it("throws on executing for unknown tool id", () => {
-		expect(() =>
-			handleToolExecuting(msg({ type: "tool_executing", id: "unknown" })),
-		).toThrow(/unknown/i);
+	it("silently ignores executing for unknown tool id (expected overlap)", () => {
+		handleToolExecuting(msg({ type: "tool_executing", id: "unknown" }));
 		expect(chatState.messages).toHaveLength(0);
 	});
 

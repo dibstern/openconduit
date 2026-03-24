@@ -206,14 +206,6 @@ describe("handleMessage does NOT call triggerNotifications for other types", () 
 	});
 
 	it("does not call triggerNotifications for 'tool_result'", () => {
-		// Set up tool first so the registry knows about it
-		handleMessage({
-			type: "tool_start",
-			id: "t1",
-			name: "Read",
-		} as RelayMessage);
-		triggerNotificationsMock.mockClear();
-
 		handleMessage({
 			type: "tool_result",
 			id: "t1",
