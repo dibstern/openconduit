@@ -9,5 +9,4 @@ test-results/.playwright-artifacts-0
 /test-results
 docs/plans/audits/
 /test-debug
-.storybook/*
 
