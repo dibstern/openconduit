@@ -1,10 +1,15 @@
 // Fork Metadata Persistence
-// Stores fork-point message IDs in ~/.conduit/fork-metadata.json.
-// Maps sessionId -> forkMessageId (the last inherited message in a forked session).
+// Stores fork-point metadata in ~/.conduit/fork-metadata.json.
+// Maps sessionId → { forkMessageId, parentID } for user-initiated forks.
 
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { DEFAULT_CONFIG_DIR } from "../env.js";
+
+export interface ForkEntry {
+	forkMessageId: string;
+	parentID: string;
+}
 
 const FILENAME = "fork-metadata.json";
 const TMP_FILENAME = ".fork-metadata.json.tmp";
@@ -14,12 +19,23 @@ function resolveDir(configDir?: string): string {
 }
 
 /** Load all fork metadata from disk. Returns empty map on missing/corrupt file. */
-export function loadForkMetadata(configDir?: string): Map<string, string> {
+export function loadForkMetadata(
+	configDir?: string,
+): Map<string, ForkEntry> {
 	try {
 		const dir = resolveDir(configDir);
 		const data = readFileSync(join(dir, FILENAME), "utf-8");
-		const obj = JSON.parse(data) as Record<string, string>;
-		return new Map(Object.entries(obj));
+		const obj = JSON.parse(data) as Record<string, ForkEntry | string>;
+		const map = new Map<string, ForkEntry>();
+		for (const [k, v] of Object.entries(obj)) {
+			if (typeof v === "string") {
+				// Legacy format: value is just forkMessageId string
+				map.set(k, { forkMessageId: v, parentID: "" });
+			} else if (v && typeof v === "object") {
+				map.set(k, v);
+			}
+		}
+		return map;
 	} catch {
 		return new Map();
 	}
@@ -27,7 +43,7 @@ export function loadForkMetadata(configDir?: string): Map<string, string> {
 
 /** Atomic write of fork metadata to disk. */
 export function saveForkMetadata(
-	meta: Map<string, string>,
+	meta: Map<string, ForkEntry>,
 	configDir?: string,
 ): void {
 	const dir = resolveDir(configDir);

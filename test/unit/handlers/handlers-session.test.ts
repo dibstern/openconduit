@@ -185,10 +185,12 @@ describe("handleForkSession (ticket 5.3)", () => {
 	it("stores forkMessageId from messageId payload", async () => {
 		let storedSessionId: string | undefined;
 		let storedMessageId: string | undefined;
+		let storedParentId: string | undefined;
 		const forkMeta = {
-			setForkMessageId: (sid: string, mid: string) => {
+			setForkEntry: (sid: string, entry: { forkMessageId: string; parentID: string }) => {
 				storedSessionId = sid;
-				storedMessageId = mid;
+				storedMessageId = entry.forkMessageId;
+			storedParentId = entry.parentID;
 			},
 		};
 		const depsWithMeta = { ...deps, forkMeta };
@@ -203,7 +205,7 @@ describe("handleForkSession (ticket 5.3)", () => {
 	it("includes forkMessageId in session_forked broadcast", async () => {
 		const depsWithMeta = {
 			...deps,
-			forkMeta: { setForkMessageId: () => {} },
+			forkMeta: { setForkEntry: () => {} },
 		};
 		await handleForkSession(depsWithMeta, "client-1", {
 			sessionId: "ses_original",
@@ -220,8 +222,8 @@ describe("handleForkSession (ticket 5.3)", () => {
 	it("determines forkMessageId from last message on whole-session fork", async () => {
 		let storedMessageId: string | undefined;
 		const forkMeta = {
-			setForkMessageId: (_sid: string, mid: string) => {
-				storedMessageId = mid;
+			setForkEntry: (_sid: string, entry: { forkMessageId: string; parentID: string }) => {
+				storedMessageId = entry.forkMessageId;
 			},
 		};
 		// Re-create deps with a client that includes getMessages

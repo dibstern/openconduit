@@ -13,7 +13,6 @@
 	let { parentTitle, parentId }: Props = $props();
 
 	function navigateToParent() {
-		console.log("[ForkDivider] navigateToParent called, parentId:", parentId);
 		wsSend({ type: "switch_session", sessionId: parentId });
 	}
 </script>

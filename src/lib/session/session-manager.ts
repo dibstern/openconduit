@@ -4,7 +4,7 @@
 // storage. This layer proxies session CRUD and maintains in-memory active state.
 
 import { EventEmitter } from "node:events";
-import { loadForkMetadata, saveForkMetadata } from "../daemon/fork-metadata.js";
+import { type ForkEntry, loadForkMetadata, saveForkMetadata } from "../daemon/fork-metadata.js";
 import type {
 	OpenCodeClient,
 	SessionDetail,
@@ -78,7 +78,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 	 * Fork-point metadata: maps forked sessionId → messageId at the fork point.
 	 * Loaded from disk on construction, updated on fork, saved on mutation.
 	 */
-	private forkMeta: Map<string, string>;
+	private forkMeta: Map<string, ForkEntry>;
 
 	constructor(options: SessionManagerOptions) {
 		super();
@@ -328,9 +328,9 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 		return this.lastMessageAt;
 	}
 
-	/** Record the fork-point messageId for a forked session and persist to disk. */
-	setForkMessageId(sessionId: string, messageId: string): void {
-		this.forkMeta.set(sessionId, messageId);
+	/** Record fork-point metadata for a forked session and persist to disk. */
+	setForkEntry(sessionId: string, entry: ForkEntry): void {
+		this.forkMeta.set(sessionId, entry);
 		saveForkMetadata(this.forkMeta, this.configDir);
 	}
 
@@ -395,7 +395,7 @@ function toSessionInfoList(
 	sessions: SessionDetail[],
 	statuses?: Record<string, SessionStatus>,
 	lastMessageAt?: ReadonlyMap<string, number>,
-	forkMeta?: ReadonlyMap<string, string>,
+	forkMeta?: ReadonlyMap<string, ForkEntry>,
 ): SessionInfo[] {
 	return sessions
 		.map((s) => {
@@ -403,15 +403,18 @@ function toSessionInfoList(
 			const lastMsgTime = lastMessageAt?.get(s.id);
 			const displayTime = lastMsgTime ?? s.time?.created ?? 0;
 
-			const forkMessageId = forkMeta?.get(s.id);
+			const forkEntry = forkMeta?.get(s.id);
+			// parentID: prefer OpenCode's value, fall back to conduit's fork metadata
+			// (OpenCode does not set parentID on user-initiated forks, only on subagent sessions)
+			const parentID = s.parentID ?? forkEntry?.parentID;
 
 			const info: SessionInfo = {
 				id: s.id,
 				title: s.title ?? "Untitled",
 				updatedAt: displayTime,
 				messageCount: 0, // OpenCode doesn't include this in list; frontend can fetch if needed
-				...(s.parentID != null && { parentID: s.parentID }),
-				...(forkMessageId != null && { forkMessageId }),
+				...(parentID != null && { parentID }),
+				...(forkEntry != null && { forkMessageId: forkEntry.forkMessageId }),
 			};
 			if (statuses) {
 				const status = statuses[s.id];

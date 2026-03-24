@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
+	type ForkEntry,
 	loadForkMetadata,
 	saveForkMetadata,
 } from "../../../src/lib/daemon/fork-metadata.js";
@@ -24,9 +25,9 @@ describe("fork-metadata persistence", () => {
 	});
 
 	it("saves and loads fork metadata", () => {
-		const meta = new Map([
-			["ses_1", "msg_a"],
-			["ses_2", "msg_b"],
+		const meta = new Map<string, ForkEntry>([
+			["ses_1", { forkMessageId: "msg_a", parentID: "p1" }],
+			["ses_2", { forkMessageId: "msg_b", parentID: "p2" }],
 		]);
 		saveForkMetadata(meta, testDir);
 		const loaded = loadForkMetadata(testDir);
@@ -34,7 +35,7 @@ describe("fork-metadata persistence", () => {
 	});
 
 	it("saves atomically (tmp + rename)", () => {
-		const meta = new Map([["ses_1", "msg_a"]]);
+		const meta = new Map([["ses_1", { forkMessageId: "msg_a", parentID: "p1" }]]);
 		saveForkMetadata(meta, testDir);
 		expect(existsSync(join(testDir, ".fork-metadata.json.tmp"))).toBe(false);
 		expect(existsSync(join(testDir, "fork-metadata.json"))).toBe(true);

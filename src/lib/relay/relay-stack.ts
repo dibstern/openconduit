@@ -455,8 +455,8 @@ export async function createProjectRelay(
 		registry,
 		pollerManager,
 		forkMeta: {
-			setForkMessageId: (sid: string, mid: string) =>
-				sessionMgr.setForkMessageId(sid, mid),
+			setForkEntry: (sid, entry) =>
+				sessionMgr.setForkEntry(sid, entry),
 		},
 		...(config.getInstances != null && { getInstances: config.getInstances }),
 		...(config.addInstance != null && { addInstance: config.addInstance }),
