@@ -99,7 +99,6 @@ vi.mock(
 	emptyComponent,
 );
 
-
 // ─── Mock stores ────────────────────────────────────────────────────────────
 // Mock all stores EXCEPT router.svelte.ts (which must be real to test
 // reactive dependencies on routerState.path / slugState.current).
