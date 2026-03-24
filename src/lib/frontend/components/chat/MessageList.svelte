@@ -115,7 +115,7 @@
 	// NOT on appends or content updates. This prevents the $effect.pre from
 	// firing spuriously when message html/status fields change.
 	const firstMessageUuid = $derived(
-		chatState.messages.length > 0 ? chatState.messages[0]!.uuid : "",
+		chatState.messages.length > 0 ? chatState.messages[0]?.uuid : "",
 	);
 
 	// Track previous state for prepend detection

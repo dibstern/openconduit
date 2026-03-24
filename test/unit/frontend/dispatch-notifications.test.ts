@@ -74,6 +74,7 @@ vi.mock("../../../src/lib/frontend/stores/ui.svelte.js", () => ({
 import {
 	chatState,
 	clearMessages,
+	phaseToStreaming,
 } from "../../../src/lib/frontend/stores/chat.svelte.js";
 import { handleMessage } from "../../../src/lib/frontend/stores/ws.svelte.js";
 
@@ -168,8 +169,7 @@ describe("handleMessage calls triggerNotifications for notification_event (cross
 	});
 
 	it("does NOT update chat state for notification_event (only triggers notification)", () => {
-		chatState.processing = true;
-		chatState.streaming = true;
+		phaseToStreaming();
 
 		handleMessage({
 			type: "notification_event",

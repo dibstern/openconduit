@@ -25,6 +25,8 @@ import {
 	handleToolResult,
 	handleToolStart,
 	historyState,
+	phaseToProcessing,
+	phaseToStreaming,
 	prependMessages,
 } from "../../../src/lib/frontend/stores/chat.svelte.js";
 import { sessionState } from "../../../src/lib/frontend/stores/session.svelte.js";
@@ -479,15 +481,14 @@ describe("handleError", () => {
 	});
 
 	it("stops processing on non-RETRY error", () => {
-		chatState.processing = true;
-		chatState.streaming = true;
+		phaseToStreaming();
 		handleError({ type: "error", code: "FATAL", message: "fail" });
 		expect(chatState.processing).toBe(false);
 		expect(chatState.streaming).toBe(false);
 	});
 
 	it("does NOT stop processing on RETRY", () => {
-		chatState.processing = true;
+		phaseToProcessing();
 		handleError({ type: "error", code: "RETRY", message: "retry" });
 		expect(chatState.processing).toBe(true);
 	});

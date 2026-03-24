@@ -57,6 +57,7 @@ import {
 	chatState,
 	clearMessages,
 	clearQueuedFlags,
+	phaseToProcessing,
 } from "../../../src/lib/frontend/stores/chat.svelte.js";
 import { sessionState } from "../../../src/lib/frontend/stores/session.svelte.js";
 import {
@@ -282,7 +283,7 @@ describe("Regression: queued flag preserved during replayEvents", () => {
 describe("Multi-tab: live user_message queued flag", () => {
 	it("marks live user_message as queued when session is processing", () => {
 		// Another tab sent a message; this client's session is already processing
-		chatState.processing = true;
+		phaseToProcessing();
 		handleMessage({ type: "user_message", text: "from other tab" });
 
 		const users = userMessages();
@@ -308,7 +309,7 @@ describe("chatState.queuedFlagsCleared tracking", () => {
 	});
 
 	it("becomes true when clearQueuedFlags is called", () => {
-		chatState.processing = true;
+		phaseToProcessing();
 		clearQueuedFlags();
 		expect(chatState.queuedFlagsCleared).toBe(true);
 	});
