@@ -10,6 +10,7 @@ import type {
 	ToolMessage,
 } from "../types.js";
 import { historyToChatMessages } from "../utils/history-logic.js";
+import { createFrontendLogger } from "../utils/logger.js";
 import { renderMarkdown } from "../utils/markdown.js";
 import {
 	addUserMessage,
@@ -109,6 +110,8 @@ import {
 } from "./ws-listeners.js";
 import { triggerNotifications } from "./ws-notifications.js";
 import { wsSend } from "./ws-send.svelte.js";
+
+const log = createFrontendLogger("ws");
 
 // ─── LLM Content Start (queued-flag coordination) ───────────────────────────
 // Single source of truth for event types that indicate the LLM started
@@ -278,7 +281,7 @@ export function handleMessage(msg: RelayMessage): void {
 				// (full fidelity — same code paths as live streaming).
 				// Fire-and-forget — handleMessage stays synchronous.
 				replayEvents(msg.events).catch((err) => {
-					console.warn("[ws] Replay error:", err);
+					log.warn("Replay error:", err);
 				});
 				// Events cache covers the full session — suppress history loading.
 				// historyState.hasMore stays false (set by clearMessages above),
@@ -299,7 +302,7 @@ export function handleMessage(msg: RelayMessage): void {
 						}
 					})
 					.catch((err) => {
-						console.warn("[ws] History conversion error:", err);
+						log.warn("History conversion error:", err);
 					});
 			} else {
 				// Empty session (neither events nor history) — hasMore stays false
@@ -405,7 +408,7 @@ export function handleMessage(msg: RelayMessage): void {
 					historyState.loading = false; // ALWAYS reset, even on abort
 				})
 				.catch((err) => {
-					console.warn("[ws] History page conversion error:", err);
+					log.warn("History page conversion error:", err);
 					historyState.loading = false;
 				});
 			break;
@@ -515,10 +518,8 @@ export function handleMessage(msg: RelayMessage): void {
 		}
 
 		default:
-			// Unknown message type — log in dev mode only
-			if (import.meta.env.DEV) {
-				console.debug("[ws] Unhandled message type:", msg.type, msg);
-			}
+			// Unknown message type — debug-only (tree-shaken in production)
+			log.debug("Unhandled message type:", msg.type, msg);
 			break;
 	}
 

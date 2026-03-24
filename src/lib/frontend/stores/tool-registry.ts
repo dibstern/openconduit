@@ -5,6 +5,7 @@
 import type { ToolStatus } from "../../shared-types.js";
 import type { ChatMessage, ToolMessage } from "../types.js";
 import { generateUuid } from "../utils/format.js";
+import type { FrontendLogger } from "../utils/logger.js";
 
 // ─── Public Types ───────────────────────────────────────────────────────────
 
@@ -23,10 +24,8 @@ export type FinalizationResult =
 	| { action: "finalized"; indices: number[] }
 	| { action: "none" };
 
-type LogFn = (level: "info" | "warn" | "error", message: string) => void;
-
 export interface ToolRegistryOptions {
-	log?: LogFn;
+	log?: FrontendLogger;
 	uuidFn?: () => string;
 }
 
@@ -96,8 +95,7 @@ export function createToolRegistry(
 		messageId?: string,
 	): ToolTransitionResult {
 		if (entries.has(id)) {
-			log?.(
-				"info",
+			log?.info(
 				`Duplicate tool_start for "${name}" (${id}), existing entry retained.`,
 			);
 			return { action: "duplicate" };
@@ -153,7 +151,7 @@ export function createToolRegistry(
 
 		if (!canTransition(tracked.status, "running")) {
 			const msg = `Invalid transition ${tracked.status} -> running for tool "${id}"`;
-			log?.("error", msg);
+			log?.error(msg);
 			return {
 				action: "reject",
 				reason: `Cannot transition from ${tracked.status} to running`,
@@ -200,7 +198,7 @@ export function createToolRegistry(
 			}
 			// error→completed: Truly unexpected backward transition
 			const msg = `Invalid transition ${tracked.status} -> ${targetStatus} for tool "${id}"`;
-			log?.("error", msg);
+			log?.error(msg);
 			return {
 				action: "reject",
 				reason: `Cannot transition from ${tracked.status} to ${targetStatus}`,

@@ -13,6 +13,7 @@ import type {
 	UserMessage,
 } from "../types.js";
 import { generateUuid } from "../utils/format.js";
+import { createFrontendLogger } from "../utils/logger.js";
 import { renderMarkdown } from "../utils/markdown.js";
 import { discoveryState } from "./discovery.svelte.js";
 import { createToolRegistry } from "./tool-registry.js";
@@ -101,19 +102,13 @@ let renderTimer: ReturnType<typeof setTimeout> | null = null;
 let thinkingStartTime = 0;
 
 /** Centralized tool lifecycle state machine. Enforces forward-only transitions. */
-const registry = createToolRegistry({
-	log: (level, message) => {
-		const tag = `[ToolRegistry] ${message}`;
-		if (level === "error") {
-			console.error(tag);
-			if (import.meta.env.DEV) throw new Error(tag);
-		} else if (level === "warn") {
-			console.warn(tag);
-		} else {
-			console.debug(tag);
-		}
+const registryLog = createFrontendLogger("ToolRegistry", {
+	onError(...args: unknown[]) {
+		if (import.meta.env.DEV)
+			throw new Error(["[ToolRegistry]", ...args].map(String).join(" "));
 	},
 });
+const registry = createToolRegistry({ log: registryLog });
 
 /** Append a new tool message to chatState.messages. */
 function applyToolCreate(tool: ToolMessage): void {

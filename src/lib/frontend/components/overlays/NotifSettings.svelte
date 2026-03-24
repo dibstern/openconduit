@@ -12,7 +12,11 @@
 		getNotifSettings,
 		saveNotifSettings,
 	} from "../../utils/notif-settings.js";
+	import { createFrontendLogger } from "../../utils/logger.js";
 	import { setPushActive } from "../../stores/ws.svelte.js";
+
+	const pushLog = createFrontendLogger("push");
+	const notifLog = createFrontendLogger("notif");
 
 	// ─── Props ──────────────────────────────────────────────────────────────────
 
@@ -119,7 +123,7 @@
 				await swReg.unregister();
 			}
 		} catch (err) {
-			console.warn("[push] Toggle failed:", err);
+			pushLog.warn("Toggle failed:", err);
 			settings.push = false;
 			setPushActive(false);
 			pushError =
@@ -154,7 +158,7 @@
 				});
 				setTimeout(() => n.close(), 5000);
 			} catch (err) {
-				console.warn("[notif] Test notification failed:", err);
+				notifLog.warn("Test notification failed:", err);
 			}
 		}
 
