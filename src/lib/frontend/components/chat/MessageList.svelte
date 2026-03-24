@@ -67,7 +67,16 @@
 	$effect(() => {
 		const sid = sessionState.currentId ?? "";
 		const msgCount = chatState.messages.length;
-		if (sid && sid !== lastScrolledSessionId && msgCount > 0) {
+
+		// When messages are cleared (e.g. server session_switched replays after
+		// an optimistic cache restore), reset tracking so scroll-to-bottom fires
+		// again once replay/history finishes loading.
+		if (msgCount === 0) {
+			lastScrolledSessionId = "";
+			return;
+		}
+
+		if (sid && sid !== lastScrolledSessionId) {
 			lastScrolledSessionId = sid;
 			tick().then(() => {
 				if (!messagesEl) return;
