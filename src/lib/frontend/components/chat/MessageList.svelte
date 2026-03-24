@@ -354,21 +354,6 @@
 		</div>
 	{/each}
 
-	<!-- Processing indicator: bouncing bar (like TUI's blue back-and-forth indicator) -->
-	{#if chatState.processing}
-		<div class="max-w-[760px] mx-auto px-5 pb-3">
-			<div
-				class="h-[3px] rounded-full overflow-hidden bg-bg-alt"
-				style="--bounce-track: 100%; --bounce-width: 30%;"
-			>
-				<div
-					class="h-full rounded-full bg-accent animate-bounce-bar"
-					style="width: var(--bounce-width);"
-				></div>
-			</div>
-		</div>
-	{/if}
-
 	<!-- Scroll-to-bottom button -->
 	<button
 		id="scroll-btn"

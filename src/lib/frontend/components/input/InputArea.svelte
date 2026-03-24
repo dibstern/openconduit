@@ -427,6 +427,23 @@
 		{#if showContextMini}
 			<ContextBar percent={uiState.contextPercent} />
 		{/if}
+
+		<!-- Processing indicator: animated bounce bar aligned with context mini bar -->
+		{#if isProcessing}
+			<div class="flex items-center gap-2 pb-1.5 px-2">
+				<div class="min-w-6"></div>
+				<div
+					class="flex-1 h-[3px] rounded-full overflow-hidden bg-bg-alt"
+					style="--bounce-width: 0.3;"
+				>
+					<div
+						class="h-full rounded-full bg-accent animate-bounce-bar"
+						style="width: calc(var(--bounce-width) * 100%);"
+					></div>
+				</div>
+			</div>
+		{/if}
+
 		<div
 			id="input-row"
 			class="flex flex-col bg-input-bg border border-border rounded-3xl py-1.5 px-1.5 transition-[border-color,box-shadow] duration-200 max-md:rounded-[20px] focus-within:border-text-dimmer focus-within:shadow-[0_0_0_1px_var(--color-border)]"

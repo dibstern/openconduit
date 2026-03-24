@@ -451,7 +451,11 @@
 		transform: translateX(0);
 	}
 	50% {
-		transform: translateX(calc(var(--bounce-track) - var(--bounce-width)));
+		/* translateX % is relative to the element's own width, so we compute
+		   (1 - fraction) / fraction * 100% to traverse the full track. */
+		transform: translateX(
+			calc((1 - var(--bounce-width)) / var(--bounce-width) * 100%)
+		);
 	}
 }
 
