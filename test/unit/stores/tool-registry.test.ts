@@ -5,18 +5,37 @@ import {
 	type ToolRegistry,
 } from "../../../src/lib/frontend/stores/tool-registry.js";
 import type { ChatMessage } from "../../../src/lib/frontend/types.js";
+import type { FrontendLogger } from "../../../src/lib/frontend/utils/logger.js";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 let seq = 0;
 const testUuid = () => `uuid-${++seq}`;
 
-let log: ReturnType<typeof vi.fn>;
+function createMockLogger(): FrontendLogger & {
+	debug: ReturnType<typeof vi.fn>;
+	verbose: ReturnType<typeof vi.fn>;
+	info: ReturnType<typeof vi.fn>;
+	warn: ReturnType<typeof vi.fn>;
+	error: ReturnType<typeof vi.fn>;
+} {
+	const mock: ReturnType<typeof createMockLogger> = {
+		debug: vi.fn(),
+		verbose: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+		child: () => mock,
+	};
+	return mock;
+}
+
+let log: ReturnType<typeof createMockLogger>;
 let registry: ToolRegistry;
 
 beforeEach(() => {
 	seq = 0;
-	log = vi.fn();
+	log = createMockLogger();
 	registry = createToolRegistry({ log, uuidFn: testUuid });
 });
 
@@ -96,7 +115,7 @@ describe("backward transitions rejected", () => {
 		const result = registry.executing("call-1");
 		expect(result.action).toBe("reject");
 		// Should NOT log an error — this is an expected overlap condition
-		expect(log).not.toHaveBeenCalledWith("error", expect.anything());
+		expect(log.error).not.toHaveBeenCalled();
 	});
 
 	it("errors on error -> running (truly invalid)", () => {
@@ -105,8 +124,7 @@ describe("backward transitions rejected", () => {
 		registry.complete("call-1", "fail", true);
 		const result = registry.executing("call-1");
 		expect(result.action).toBe("reject");
-		expect(log).toHaveBeenCalledWith(
-			"error",
+		expect(log.error).toHaveBeenCalledWith(
 			expect.stringContaining("Invalid transition"),
 		);
 	});
@@ -118,8 +136,7 @@ describe("backward transitions rejected", () => {
 		reg.complete("t1", "fail", true);
 		const result = reg.complete("t1", "late success", false);
 		expect(result.action).toBe("reject");
-		expect(log).toHaveBeenCalledWith(
-			"error",
+		expect(log.error).toHaveBeenCalledWith(
 			expect.stringContaining("Invalid transition"),
 		);
 	});
@@ -129,11 +146,11 @@ describe("backward transitions rejected", () => {
 		reg.start("t1", "Bash");
 		reg.executing("t1");
 		reg.complete("t1", "fail", true);
-		log.mockClear();
+		log.error.mockClear();
 		const result = reg.complete("t1", "fail again", true);
 		expect(result.action).toBe("reject");
 		// Should NOT log an error — idempotent
-		expect(log).not.toHaveBeenCalledWith("error", expect.anything());
+		expect(log.error).not.toHaveBeenCalled();
 	});
 
 	it("allows running -> running for metadata/input updates", () => {
@@ -370,22 +387,21 @@ describe("diagnostics", () => {
 		registry.executing("call-1");
 
 		// completed -> running is expected overlap, not an error
-		expect(log).not.toHaveBeenCalledWith("error", expect.anything());
+		expect(log.error).not.toHaveBeenCalled();
 	});
 
 	it("silently rejects orphan executing event (expected overlap)", () => {
 		const result = registry.executing("orphan-1");
 		expect(result.action).toBe("reject");
 		// Not an error — expected during session loading overlap
-		expect(log).not.toHaveBeenCalledWith("error", expect.anything());
+		expect(log.error).not.toHaveBeenCalled();
 	});
 
 	it("logs info on dedup", () => {
 		registry.start("call-1", "Read");
 		registry.start("call-1", "Read");
 
-		expect(log).toHaveBeenCalledWith(
-			"info",
+		expect(log.info).toHaveBeenCalledWith(
 			expect.stringContaining("Duplicate tool_start"),
 		);
 	});
@@ -464,7 +480,7 @@ describe("uuidFn", () => {
 			const result = registry.executing("t1", { path: "/foo" });
 			expect(result.action).toBe("reject");
 			// Not an error — expected overlap
-			expect(log).not.toHaveBeenCalledWith("error", expect.anything());
+			expect(log.error).not.toHaveBeenCalled();
 		});
 
 		it("seeded completed tools accept late complete() override", () => {

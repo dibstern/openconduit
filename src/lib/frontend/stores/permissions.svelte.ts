@@ -7,7 +7,10 @@ import type {
 	QuestionRequest,
 	RelayMessage,
 } from "../types.js";
+import { createFrontendLogger } from "../utils/logger.js";
 import { sessionState } from "./session.svelte.js";
+
+const log = createFrontendLogger("permissions");
 
 // ─── State ──────────────────────────────────────────────────────────────────
 
@@ -217,7 +220,7 @@ export function handleAskUser(
 	const { toolId, questions, toolUseId } = msg;
 
 	if (!toolId || !Array.isArray(questions)) {
-		console.warn("[permissions] handleAskUser: dropped — invalid payload", {
+		log.warn("handleAskUser: dropped — invalid payload", {
 			toolId,
 			questionsType: typeof questions,
 			msg,

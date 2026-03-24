@@ -5,7 +5,10 @@
 <script lang="ts">
 	import { untrack } from "svelte";
 	import Icon from "../shared/Icon.svelte";
+	import { createFrontendLogger } from "../../utils/logger.js";
 	import type { Base16Theme } from "../../stores/theme-compute.js";
+
+	const log = createFrontendLogger("push");
 	import {
 		getCachedInstances,
 		getProxyDetection,
@@ -172,7 +175,7 @@
 				await swReg.unregister();
 			}
 		} catch (err) {
-			console.warn("[push] Toggle failed:", err);
+			log.warn("Toggle failed:", err);
 			notifSettings.push = false;
 			setPushActive(false);
 			pushError = err instanceof Error ? err.message : "Push notification setup failed.";

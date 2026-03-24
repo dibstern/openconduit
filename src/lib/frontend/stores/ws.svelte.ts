@@ -4,6 +4,7 @@
 // Server-side waitForRelay() handles relay readiness on the upgrade path.
 
 import type { ConnectionStatus, RelayMessage } from "../types.js";
+import { createFrontendLogger } from "../utils/logger.js";
 import { chatState } from "./chat.svelte.js";
 import { clearInstanceState } from "./instance.svelte.js";
 import { getCurrentSessionId } from "./router.svelte.js";
@@ -45,6 +46,8 @@ export { _resetRateLimit, wsSend, wsSendTyped } from "./ws-send.svelte.js";
 
 import { handleMessage } from "./ws-dispatch.js";
 import { flushOfflineQueue, setWsGetter } from "./ws-send.svelte.js";
+
+const log = createFrontendLogger("ws");
 
 // ─── Constants ──────────────────────────────────────────────────────────────
 
@@ -200,7 +203,7 @@ function doConnect(slug: string | undefined): void {
 	_connectTimeout = setTimeout(() => {
 		_connectTimeout = null;
 		if (_ws === ws && ws.readyState !== WebSocket.OPEN) {
-			console.warn("[ws] Connect timeout, closing");
+			log.warn("Connect timeout, closing");
 			wsDebugLog("timeout", wsState.status);
 			ws.close();
 		}
@@ -279,7 +282,7 @@ function doConnect(slug: string | undefined): void {
 		try {
 			msg = JSON.parse(event.data) as RelayMessage;
 		} catch {
-			console.warn("[ws] Failed to parse message:", event.data);
+			log.warn("Failed to parse message:", event.data);
 			wsDebugLogMessage(wsState.status);
 			return;
 		}
@@ -289,7 +292,7 @@ function doConnect(slug: string | undefined): void {
 		try {
 			handleMessage(msg);
 		} catch (err) {
-			console.warn("[ws] Handler error for", msg.type, err);
+			log.warn("Handler error for", msg.type, err);
 		}
 	});
 }
