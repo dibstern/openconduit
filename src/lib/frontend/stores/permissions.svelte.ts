@@ -295,7 +295,7 @@ export function clearAll(): void {
 }
 
 /** Clear only session-local pending items (for session switch).
- *  Keeps remote permissions so the PermissionNotification persists. */
+ *  Keeps remote permissions so the AttentionBanner persists. */
 export function clearSessionLocal(previousSessionId: string | null): void {
 	if (previousSessionId) {
 		permissionsState.pendingPermissions =

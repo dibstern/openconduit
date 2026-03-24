@@ -493,7 +493,7 @@ export function handleMessage(msg: RelayMessage): void {
 			} as RelayMessage;
 
 			// Track cross-session question notifications so the
-			// PermissionNotification component can show them.
+			// AttentionBanner component can show them.
 			if (msg.eventType === "ask_user" && msg.sessionId) {
 				addRemoteQuestion(msg.sessionId);
 			} else if (msg.eventType === "ask_user_resolved" && msg.sessionId) {

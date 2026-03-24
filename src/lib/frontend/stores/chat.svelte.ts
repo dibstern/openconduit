@@ -533,18 +533,22 @@ export function handleError(
  *  When `queued` is true the message is visually dimmed with a shimmer —
  *  it has been sent to the server but is waiting for the LLM to start.
  *
- *  Defensively finalizes any in-progress assistant message so that
- *  subsequent delta events create a new AssistantMessage block instead
- *  of appending to the one before the user message. */
+ *  During replay, defensively finalizes any in-progress assistant message
+ *  so that subsequent delta events create a new AssistantMessage block.
+ *  During live streaming (queued=true), the assistant message is left
+ *  unfinalized so deltas keep updating it in-place and the queued user
+ *  message stays at the bottom instead of splitting the response. */
 export function addUserMessage(
 	text: string,
 	images?: string[],
 	queued?: boolean,
 ): void {
-	// If the assistant is mid-stream, finalize the current message.
-	// This can happen during event replay when user_message events
-	// appear between delta events without an intervening done event.
-	if (chatState.streaming && chatState.currentAssistantText) {
+	// Finalize the in-progress assistant message only during replay,
+	// where user_message events can appear between delta events without
+	// an intervening done event.  During live streaming (queued=true),
+	// keep the assistant message unfinalized so subsequent deltas
+	// continue updating it and the queued user message stays at the end.
+	if (!queued && chatState.streaming && chatState.currentAssistantText) {
 		if (renderTimer !== null) {
 			clearTimeout(renderTimer);
 			renderTimer = null;

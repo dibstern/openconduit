@@ -340,7 +340,7 @@ export function handleSSEEvent(
 			if (targetSessionId) {
 				wsHandler.sendToSession(targetSessionId, msg);
 				// Broadcast a lightweight notification so clients on OTHER
-				// sessions know a question exists (PermissionNotification).
+				// sessions know a question exists (AttentionBanner).
 				wsHandler.broadcast({
 					type: "notification_event",
 					eventType: msg.type,

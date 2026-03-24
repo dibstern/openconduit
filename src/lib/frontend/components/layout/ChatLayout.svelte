@@ -22,7 +22,7 @@
 	import TerminalPanel from "../terminal/TerminalPanel.svelte";
 	import PlanMode from "../chat/PlanMode.svelte";
 	import FileViewer from "../file/FileViewer.svelte";
-	import PermissionNotification from "../permissions/PermissionNotification.svelte";
+	import AttentionBanner from "../permissions/AttentionBanner.svelte";
 	import {
 		uiState,
 		closeFileViewer,
@@ -536,8 +536,8 @@
 		<!-- Banners (update available, skip permissions, etc.) -->
 		<Banners />
 
-		<!-- Remote permission notification (other sessions needing approval) -->
-		<PermissionNotification />
+		<!-- Cross-session attention banner (permissions & questions from other sessions) -->
+		<AttentionBanner />
 
 		<!-- Todo Sticky Overlay -->
 		<TodoOverlay items={todoItems} />
