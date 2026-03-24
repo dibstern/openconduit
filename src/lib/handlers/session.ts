@@ -183,14 +183,14 @@ export async function handleViewSession(
 	// Sync: processing status (no await needed)
 	deps.wsHandler.sendTo(clientId, {
 		type: "status",
-		status: deps.statusPoller?.isProcessing(id) ? "processing" : "idle",
+		status: deps.statusPoller.isProcessing(id) ? "processing" : "idle",
 	});
 
 	// Fire-and-forget: seed REST message poller for externally-started sessions.
-	if (deps.pollerManager && !deps.pollerManager.isPolling(id)) {
+	if (!deps.pollerManager.isPolling(id)) {
 		deps.client
 			.getMessages(id)
-			.then((msgs) => deps.pollerManager?.startPolling(id, msgs))
+			.then((msgs) => deps.pollerManager.startPolling(id, msgs))
 			.catch((err) =>
 				deps.log.warn(
 					`Failed to seed poller for ${id.slice(0, 12)}, will retry: ${err instanceof Error ? err.message : err}`,
@@ -398,7 +398,7 @@ export async function handleForkSession(
 	}
 
 	// Persist fork-point metadata (forkMessageId + parentID)
-	if (forkMessageId && deps.forkMeta) {
+	if (forkMessageId) {
 		deps.forkMeta.setForkEntry(forked.id, {
 			forkMessageId,
 			parentID: sessionId,

@@ -2,6 +2,7 @@
 // Canonical type definitions for conduit, derived from ticket specs.
 
 import type { Logger } from "./logger.js";
+import type { KnownOpenCodeEvent } from "./relay/opencode-events.js";
 import type { PushNotificationManager } from "./server/push.js";
 import type { PartType, PermissionId, ToolStatus } from "./shared-types.js";
 
@@ -28,11 +29,16 @@ export type {
 	UsageInfo,
 } from "./shared-types.js";
 
-/** OpenCode SSE event shape (all events) */
-export interface OpenCodeEvent {
+/** OpenCode SSE event shape — structural base for all events */
+export interface BaseOpenCodeEvent {
 	type: string;
 	properties: Record<string, unknown>;
 }
+
+// Composed union: every typed SSE event + the structural fallback for
+// unknown/future events.  Downstream consumers continue to import
+// `OpenCodeEvent`; the union is transparent.
+export type OpenCodeEvent = KnownOpenCodeEvent | BaseOpenCodeEvent;
 
 /** OpenCode global SSE event (wrapped) */
 export interface GlobalEvent {
