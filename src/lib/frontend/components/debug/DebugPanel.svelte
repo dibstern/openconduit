@@ -118,43 +118,42 @@
 	function payloadSummary(payload: unknown): string {
 		if (!payload || typeof payload !== "object") return "";
 		const p = payload as Record<string, unknown>;
-		// Helper: show last 6 chars of an ID (tool IDs all start with "toolu_01" so the prefix is useless)
-		const shortId = (v: unknown) => typeof v === "string" ? `…${v.slice(-6)}` : "";
+		const id = (v: unknown) => typeof v === "string" ? v : "";
 
 		switch (p.type) {
 			// ── Chat-visible: streaming ──────────────────────────────────────
 			case "delta":
-				return `${typeof p.text === "string" ? `${p.text.length}ch` : ""}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+				return `${typeof p.text === "string" ? `${p.text.length}ch` : ""}${p.messageId ? ` msg=${id(p.messageId)}` : ""}`;
 			case "thinking_start":
 			case "thinking_stop":
-				return p.messageId ? `msg=${shortId(p.messageId)}` : "";
+				return p.messageId ? `msg=${id(p.messageId)}` : "";
 			case "thinking_delta":
-				return `${typeof p.text === "string" ? `${p.text.length}ch` : ""}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+				return `${typeof p.text === "string" ? `${p.text.length}ch` : ""}${p.messageId ? ` msg=${id(p.messageId)}` : ""}`;
 
 			// ── Chat-visible: tools ──────────────────────────────────────────
 			case "tool_start":
-				return `${p.name ?? "?"} id=${shortId(p.id)}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+				return `${p.name ?? "?"} id=${id(p.id)}${p.messageId ? ` msg=${id(p.messageId)}` : ""}`;
 			case "tool_executing":
-				return `${p.name ?? "?"} id=${shortId(p.id)}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+				return `${p.name ?? "?"} id=${id(p.id)}${p.messageId ? ` msg=${id(p.messageId)}` : ""}`;
 			case "tool_result":
-				return `${p.is_error ? "ERR " : ""}${shortId(p.id)}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+				return `${p.is_error ? "ERR " : ""}${id(p.id)}${p.messageId ? ` msg=${id(p.messageId)}` : ""}`;
 			case "tool_content":
-				return `id=${shortId(p.toolId)}`;
+				return `id=${id(p.toolId)}`;
 
 			// ── Chat-visible: permissions / questions ────────────────────────
 			case "permission_request":
-				return `${p.toolName ?? "?"} sess=${shortId(p.sessionId)} req=${shortId(p.requestId)}`;
+				return `${p.toolName ?? "?"} sess=${id(p.sessionId)} req=${id(p.requestId)}`;
 			case "permission_resolved":
-				return `${p.decision} req=${shortId(p.requestId)}`;
+				return `${p.decision} req=${id(p.requestId)}`;
 			case "ask_user":
-				return `tool=${shortId(p.toolId)}`;
+				return `tool=${id(p.toolId)}`;
 			case "ask_user_resolved":
 			case "ask_user_error":
-				return `tool=${shortId(p.toolId)}`;
+				return `tool=${id(p.toolId)}`;
 
 			// ── Chat-visible: session lifecycle ──────────────────────────────
 			case "result":
-				return `sess=${shortId(p.sessionId)} cost=$${typeof p.cost === "number" ? p.cost.toFixed(4) : "?"}`;
+				return `sess=${id(p.sessionId)} cost=$${typeof p.cost === "number" ? p.cost.toFixed(4) : "?"}`;
 			case "done":
 				return `code=${p.code ?? "?"}`;
 			case "status":
@@ -164,7 +163,7 @@
 
 			// ── Session management ───────────────────────────────────────────
 			case "session_switched":
-				return `id=${shortId(p.id)}${p.requestId ? ` req=${shortId(p.requestId)}` : ""}${Array.isArray(p.events) ? ` +${p.events.length} cached` : ""}`;
+				return `id=${id(p.id)}${p.requestId ? ` req=${id(p.requestId)}` : ""}${Array.isArray(p.events) ? ` +${p.events.length} cached` : ""}`;
 			case "session_list":
 				return Array.isArray(p.sessions) ? `${p.sessions.length} sessions` : "";
 
@@ -172,7 +171,7 @@
 			case "connection_status":
 				return String(p.status ?? "");
 			case "notification_event":
-				return `${p.eventType ?? "?"}${p.sessionId ? ` sess=${shortId(p.sessionId)}` : ""}${p.message ? `: ${p.message}` : ""}`;
+				return `${p.eventType ?? "?"}${p.sessionId ? ` sess=${id(p.sessionId)}` : ""}${p.message ? `: ${p.message}` : ""}`;
 			case "client_count":
 				return `${p.count ?? 0} clients`;
 
