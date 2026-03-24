@@ -1,19 +1,53 @@
 // ─── File Browser Handlers ───────────────────────────────────────────────────
 
+import ignore, { type Ignore } from "ignore";
 import type { PayloadMap } from "./payloads.js";
 import type { HandlerDeps } from "./types.js";
+
+// ─── Gitignore Helpers ──────────────────────────────────────────────────────
+
+/** Directories we always skip (even if .gitignore is unavailable). */
+const ALWAYS_SKIP = new Set([".git", ".svn", ".hg"]);
+
+/**
+ * Fetch and parse .gitignore from the project root.
+ * Returns an `ignore` instance ready for path testing.
+ * Silently returns an empty matcher if .gitignore doesn't exist.
+ */
+async function loadGitignore(deps: HandlerDeps): Promise<Ignore> {
+	const ig = ignore();
+	try {
+		const res = await deps.client.getFileContent(".gitignore");
+		if (res.content) ig.add(res.content);
+	} catch {
+		// No .gitignore or fetch failed — that's fine, use empty rules
+	}
+	return ig;
+}
+
+// ─── Handlers ───────────────────────────────────────────────────────────────
 
 export async function handleGetFileList(
 	deps: HandlerDeps,
 	clientId: string,
 	payload: PayloadMap["get_file_list"],
 ): Promise<void> {
-	const dirPath = payload.path;
-	const files = await deps.client.listDirectory(dirPath);
+	const dirPath = payload.path ?? ".";
+	const [files, ig] = await Promise.all([
+		deps.client.listDirectory(dirPath),
+		loadGitignore(deps),
+	]);
+
+	const filtered = files.filter((f) => {
+		if (ALWAYS_SKIP.has(f.name)) return false;
+		const rel = dirPath === "." ? f.name : `${dirPath}/${f.name}`;
+		return !ig.ignores(rel);
+	});
+
 	deps.wsHandler.sendTo(clientId, {
 		type: "file_list",
-		path: dirPath ?? ".",
-		entries: files as Array<{
+		path: dirPath,
+		entries: filtered as Array<{
 			name: string;
 			type: "file" | "directory";
 			size?: number;
@@ -39,28 +73,6 @@ export async function handleGetFileContent(
 	}
 }
 
-/** Directories to skip when building the file tree (large, generated, or internal). */
-const SKIP_DIRS = new Set([
-	"node_modules",
-	".git",
-	".svn",
-	".hg",
-	"dist",
-	"build",
-	".next",
-	".nuxt",
-	".output",
-	".svelte-kit",
-	".turbo",
-	".cache",
-	"__pycache__",
-	".venv",
-	"venv",
-	"target",
-	"vendor",
-	".worktrees",
-]);
-
 export async function handleGetFileTree(
 	deps: HandlerDeps,
 	clientId: string,
@@ -69,7 +81,7 @@ export async function handleGetFileTree(
 	const entries: string[] = [];
 
 	try {
-		// Breadth-first walk of project directory, skipping well-known heavy dirs
+		const ig = await loadGitignore(deps);
 		const queue: string[] = ["."];
 
 		while (queue.length > 0) {
@@ -78,9 +90,11 @@ export async function handleGetFileTree(
 			const items = await deps.client.listDirectory(dir);
 
 			for (const item of items) {
+				if (ALWAYS_SKIP.has(item.name)) continue;
 				const path = dir === "." ? item.name : `${dir}/${item.name}`;
+				if (ig.ignores(path)) continue;
+
 				if (item.type === "directory") {
-					if (SKIP_DIRS.has(item.name)) continue;
 					entries.push(`${path}/`);
 					queue.push(path);
 				} else {
