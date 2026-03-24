@@ -44,7 +44,7 @@ function setupState(opts: {
 // ─── Meta ───────────────────────────────────────────────────────────────────
 
 const meta = {
-	title: "Permissions/AttentionBanner",
+	title: "Overlays/AttentionBanner",
 	component: NotificationStack,
 	tags: ["autodocs"],
 	beforeEach: () => {

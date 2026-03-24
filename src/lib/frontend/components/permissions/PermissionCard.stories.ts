@@ -36,7 +36,7 @@ const mockPermissionEditFile: PermissionRequest = {
 // ─── Meta ───────────────────────────────────────────────────────────────────
 
 const meta = {
-	title: "Permissions/PermissionCard",
+	title: "Chat/PermissionCard",
 	component: PermissionCard,
 	tags: ["autodocs"],
 } satisfies Meta<typeof PermissionCard>;

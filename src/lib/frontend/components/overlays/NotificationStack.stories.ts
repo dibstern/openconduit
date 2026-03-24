@@ -82,13 +82,18 @@ export const AttentionOnly: Story = {
 };
 
 export const Combined: Story = {
-	name: "Attention + Toasts",
+	name: "Permissions + Questions + Toasts",
 	play: () => {
 		setupAttention({
 			permissions: [
 				{ id: "perm-1", sessionId: "ses_other1", toolName: "bash" },
+				{ id: "perm-2", sessionId: "ses_other1", toolName: "edit" },
 			],
-			sessionTitles: { ses_other1: "Fix authentication bug" },
+			questionSessions: ["ses_other2"],
+			sessionTitles: {
+				ses_other1: "Fix authentication bug",
+				ses_other2: "API redesign",
+			},
 		});
 		setToasts([
 			{
