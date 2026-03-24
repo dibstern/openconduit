@@ -93,21 +93,27 @@ export class RelayError extends Error {
 	}
 
 	/** WebSocket error message shape (AC1: consistent { type, code, message }) */
-	toWebSocket(): { type: "error"; code: string; message: string } {
+	toWebSocket(): {
+		type: "error";
+		code: string;
+		message: string;
+		statusCode?: number;
+		details?: Record<string, unknown>;
+	} {
+		const details =
+			Object.keys(this.context).length > 0 ? this.context : undefined;
 		return {
 			type: "error",
 			code: this.code,
 			message: this.message,
+			...(this.statusCode !== 500 ? { statusCode: this.statusCode } : {}),
+			...(details ? { details } : {}),
 		};
 	}
 
 	/** Alias for toWebSocket() — returns a RelayMessage error variant (AC1). */
 	toMessage(): Extract<RelayMessage, { type: "error" }> {
-		return {
-			type: "error",
-			code: this.code,
-			message: this.message,
-		};
+		return this.toWebSocket();
 	}
 
 	/** Log-safe representation (redacts sensitive data) (AC6) */

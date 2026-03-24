@@ -514,14 +514,19 @@ function applyQueuedFlagInPlace(): void {
 export function handleError(
 	msg: Extract<RelayMessage, { type: "error" }>,
 ): void {
-	const { code, message } = msg;
+	const { code, message, statusCode, details } = msg;
+	const errorMeta = {
+		code,
+		...(statusCode !== undefined ? { statusCode } : {}),
+		...(details !== undefined ? { details } : {}),
+	};
 
 	if (code === "RETRY") {
 		// Subtle retry message
 		addSystemMessage(message, "info");
 	} else {
 		// Prominent error
-		addSystemMessage(message, "error");
+		addSystemMessage(message, "error", errorMeta);
 		chatState.processing = false;
 		chatState.streaming = false;
 	}
@@ -609,9 +614,22 @@ export function clearQueuedFlags(): void {
 export function addSystemMessage(
 	text: string,
 	variant: SystemMessageVariant = "info",
+	errorMeta?: {
+		code?: string;
+		statusCode?: number;
+		details?: Record<string, unknown>;
+	},
 ): void {
 	const uuid = generateUuid();
-	const msg: SystemMessage = { type: "system", uuid, text, variant };
+	const msg: SystemMessage = {
+		type: "system",
+		uuid,
+		text,
+		variant,
+		...(errorMeta?.code ? { errorCode: errorMeta.code } : {}),
+		...(errorMeta?.statusCode ? { statusCode: errorMeta.statusCode } : {}),
+		...(errorMeta?.details ? { details: errorMeta.details } : {}),
+	};
 	setMessages([...getMessages(), msg]);
 }
 

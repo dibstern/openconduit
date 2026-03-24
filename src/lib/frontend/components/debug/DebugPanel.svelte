@@ -6,11 +6,14 @@
 	import { wsState } from "../../stores/ws.svelte.js";
 	import { wsDebugState, getDebugEvents, clearDebugLog } from "../../stores/ws-debug.svelte.js";
 	import { confirm } from "../../stores/ui.svelte.js";
+	import { rawSend } from "../../stores/ws-send.svelte.js";
 
 	let copyFlash = $state(false);
 
 	function toggleVerbose() {
-		wsDebugState.verboseMessages = !wsDebugState.verboseMessages;
+		const newValue = !wsDebugState.verboseMessages;
+		wsDebugState.verboseMessages = newValue;
+		rawSend({ type: "set_log_level", level: newValue ? "verbose" : "info" });
 	}
 
 	async function handleClear() {
@@ -273,9 +276,9 @@
 			<button
 				class="cursor-pointer text-xs px-2 py-1.5 {wsDebugState.verboseMessages ? 'text-yellow-400' : 'text-gray-500 hover:text-gray-300'}"
 				onclick={toggleVerbose}
-				title={wsDebugState.verboseMessages ? "Showing all messages — click to throttle" : "Showing 1 per 100 messages — click for all"}
+				title={wsDebugState.verboseMessages ? "Verbose: showing all messages + server verbose logging" : "Normal: sampled messages + server info logging"}
 			>
-				{wsDebugState.verboseMessages ? "msgs:all" : "msgs:100"}
+				{wsDebugState.verboseMessages ? "verbose:on" : "verbose:off"}
 			</button>
 			<button
 				class="cursor-pointer text-xs px-2 py-1.5 {copyFlash ? 'text-green-400' : 'text-gray-500 hover:text-gray-300'}"
@@ -328,11 +331,24 @@
 				<div class="text-gray-600 py-2 text-center">No events yet</div>
 			{:else}
 				{#each events as evt}
-					<div class="flex gap-1.5 py-px">
-						<span class="text-gray-600 shrink-0 w-[84px] text-right">{fmtTime(evt.time)}</span>
-						<span class="{eventColor(evt.event)} shrink-0">{evt.event}</span>
-						{#if evt.detail}
-							<span class="text-gray-500 truncate">{evt.detail}</span>
+					<div>
+						<div class="flex gap-1.5 py-px items-start">
+							<span class="text-gray-600 shrink-0 w-[84px] text-right">{fmtTime(evt.time)}</span>
+							<span class="{eventColor(evt.event)} shrink-0">{evt.event}</span>
+							{#if evt.detail}
+								<span class="text-gray-500 truncate">{evt.detail}</span>
+							{/if}
+							{#if evt.payload}
+								<button
+									class="text-gray-600 hover:text-gray-300 text-[10px] ml-auto shrink-0 cursor-pointer"
+									onclick={() => { evt._expanded = !evt._expanded; }}
+								>
+									{evt._expanded ? '[-]' : '[+]'}
+								</button>
+							{/if}
+						</div>
+						{#if evt._expanded && evt.payload}
+							<pre class="text-[10px] text-green-300/70 ml-[90px] whitespace-pre-wrap break-all max-h-40 overflow-y-auto mb-1">{JSON.stringify(evt.payload, null, 2)}</pre>
 						{/if}
 					</div>
 				{/each}

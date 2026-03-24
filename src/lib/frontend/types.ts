@@ -132,6 +132,9 @@ export interface SystemMessage {
 	uuid: string;
 	text: string;
 	variant?: SystemMessageVariant;
+	errorCode?: string;
+	statusCode?: number;
+	details?: Record<string, unknown>;
 }
 
 // ─── Session Types (frontend-only) ──────────────────────────────────────────
