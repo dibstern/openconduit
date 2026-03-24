@@ -250,7 +250,7 @@
 							{displayName(project)}
 							<span class="text-sm">{statusIcon(project)}</span>
 							<button
-								class="dash-more-btn shrink-0 ml-auto w-6 h-6 border-none rounded p-0 bg-transparent cursor-pointer flex items-center justify-center text-text-dimmer opacity-0 group-hover:opacity-100 hover:text-text hover:bg-bg-surface transition-[opacity,color] duration-100"
+								class="dash-more-btn shrink-0 ml-auto w-6 h-6 border-none rounded p-0 bg-transparent cursor-pointer flex items-center justify-center text-text-dimmer hover:text-text hover:bg-bg-surface transition-colors duration-100"
 								title="More options"
 								onclick={(e) => {
 									e.preventDefault();
