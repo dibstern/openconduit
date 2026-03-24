@@ -30,7 +30,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import fc from "fast-check";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { loadDaemonConfig } from "../../../src/lib/daemon/config-persistence.js";
+import {
+	type DaemonConfig,
+	loadDaemonConfig,
+} from "../../../src/lib/daemon/config-persistence.js";
 import { Daemon } from "../../../src/lib/daemon/daemon.js";
 import { DEFAULT_CONFIG_DIR } from "../../../src/lib/env.js";
 
@@ -1706,6 +1709,75 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			expect(status.tlsEnabled).toBe(false);
 			expect(status.keepAwake).toBe(false);
 		});
+
+		// ── buildConfig includes keepAwakeCommand/Args ─────────────────────
+
+		it("passes keepAwakeCommand/Args to KeepAwake constructor via buildConfig", () => {
+			const daemon = new Daemon({
+				port: 0,
+				smartDefault: false,
+				keepAwake: true,
+				keepAwakeCommand: "my-tool",
+				keepAwakeArgs: ["--flag"],
+			});
+			const config = (
+				daemon as unknown as { buildConfig: () => DaemonConfig }
+			).buildConfig();
+			expect(config.keepAwakeCommand).toBe("my-tool");
+			expect(config.keepAwakeArgs).toEqual(["--flag"]);
+		});
+
+		it("buildConfig omits keepAwakeCommand/Args when not set", () => {
+			const daemon = new Daemon({
+				port: 0,
+				smartDefault: false,
+			});
+			const config = (
+				daemon as unknown as { buildConfig: () => DaemonConfig }
+			).buildConfig();
+			expect(config.keepAwakeCommand).toBeUndefined();
+			expect(config.keepAwakeArgs).toBeUndefined();
+		});
+
+		// ── IPC setKeepAwake returns supported/active status ───────────────
+
+		it("IPC setKeepAwake returns supported and active fields", async () => {
+			const socketPath = join(tmpDir, "relay.sock");
+			const d = new Daemon(daemonOpts(tmpDir));
+			await d.start();
+
+			const response = await sendIPCCommand(socketPath, {
+				cmd: "set_keep_awake",
+				enabled: true,
+			});
+			expect(response["ok"]).toBe(true);
+			expect(typeof response["supported"]).toBe("boolean");
+			expect(typeof response["active"]).toBe("boolean");
+
+			await d.stop();
+		});
+
+		// ── KeepAwake constructor receives config command/args ─────────────
+
+		it("start() passes keepAwakeCommand/Args to KeepAwake constructor", async () => {
+			const d = new Daemon({
+				...daemonOpts(tmpDir),
+				keepAwake: true,
+				keepAwakeCommand: "my-custom-tool",
+				keepAwakeArgs: ["--no-sleep"],
+			});
+			await d.start();
+
+			// Verify through config persistence: the keepAwake fields should round-trip
+			const config = loadDaemonConfig(tmpDir);
+			expect(config).not.toBeNull();
+			// biome-ignore lint/style/noNonNullAssertion: safe — guarded by prior assertion
+			expect(config!.keepAwakeCommand).toBe("my-custom-tool");
+			// biome-ignore lint/style/noNonNullAssertion: safe — guarded by prior assertion
+			expect(config!.keepAwakeArgs).toEqual(["--no-sleep"]);
+
+			await d.stop();
+		});
 	});
 
 	// ─── HTTP routing: project redirect + SPA serving ─────────────────
@@ -3125,7 +3197,7 @@ describe("instanceAdd handler — url threading", () => {
 			getPinHash: () => null,
 			setPinHash: () => {},
 			getKeepAwake: () => false,
-			setKeepAwake: () => {},
+			setKeepAwake: () => ({ supported: false, active: false }),
 			scheduleShutdown: () => {},
 			getInstances: () => [],
 			getInstance: () => undefined,

@@ -44,7 +44,7 @@ function makeIPCContext(manager: InstanceManager, _configDir: string) {
 		getPinHash: () => null,
 		setPinHash: () => {},
 		getKeepAwake: () => false,
-		setKeepAwake: () => {},
+		setKeepAwake: () => ({ supported: false, active: false }),
 		persistConfig: () => {},
 		scheduleShutdown: () => {},
 	};

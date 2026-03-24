@@ -31,7 +31,7 @@ export interface DaemonIPCContext {
 	/** Get current keepAwake state. */
 	getKeepAwake(): boolean;
 	/** Update keepAwake state, underlying manager, and persist config. */
-	setKeepAwake(enabled: boolean): void;
+	setKeepAwake(enabled: boolean): { supported: boolean; active: boolean };
 	/** Persist daemon config to disk. */
 	persistConfig(): void;
 	/** Schedule a graceful daemon shutdown. */
@@ -157,8 +157,8 @@ export function buildIPCHandlers(
 		},
 
 		setKeepAwake: async (enabled: boolean): Promise<IPCResponse> => {
-			ctx.setKeepAwake(enabled);
-			return { ok: true };
+			const result = ctx.setKeepAwake(enabled);
+			return { ok: true, supported: result.supported, active: result.active };
 		},
 
 		shutdown: async (): Promise<IPCResponse> => {

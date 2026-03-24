@@ -826,9 +826,11 @@ export class Daemon {
 		});
 		this.versionChecker.start();
 
-		// Initialize keep-awake (macOS caffeinate)
+		// Initialize keep-awake (macOS caffeinate, Linux systemd-inhibit, or user-configured)
 		this.keepAwakeManager = new KeepAwake({
 			enabled: this.keepAwake,
+			...(this.keepAwakeCommand != null && { command: this.keepAwakeCommand }),
+			...(this.keepAwakeArgs != null && { args: this.keepAwakeArgs }),
 		});
 		this.keepAwakeManager.activate();
 
@@ -1444,6 +1446,10 @@ export class Daemon {
 					this.keepAwake = enabled;
 					this.keepAwakeManager?.setEnabled(enabled);
 					this.persistConfig();
+					return {
+						supported: this.keepAwakeManager?.isSupported() ?? false,
+						active: this.keepAwakeManager?.isActive() ?? false,
+					};
 				},
 				persistConfig: () => this.persistConfig(),
 				scheduleShutdown: () => {
