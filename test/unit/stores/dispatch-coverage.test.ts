@@ -186,12 +186,15 @@ describe("Dispatch coverage: every CACHEABLE_EVENT_TYPE handled by replay", () =
 
 	it("replaying flag is false after replay completes", async () => {
 		await replayValidated(FIXTURE_EVENTS);
-		expect(chatState.replaying).toBe(false);
+		expect(chatState.phase).not.toBe("replaying");
 	});
 
-	it("streaming flag is false after replay completes (last event is error)", async () => {
+	it("phase transitions to streaming when replay ends mid-turn (last event is RETRY error)", async () => {
 		await replayValidated(FIXTURE_EVENTS);
-		expect(chatState.streaming).toBe(false);
+		// The fixture's last event is an error with code "RETRY" — this is
+		// non-terminal, so the LLM is still active. phaseEndReplay correctly
+		// transitions to "streaming" (not "idle").
+		expect(chatState.phase).toBe("streaming");
 	});
 
 	it("each cacheable type individually survives replay", async () => {
