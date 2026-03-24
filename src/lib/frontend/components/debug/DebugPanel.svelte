@@ -118,27 +118,65 @@
 	function payloadSummary(payload: unknown): string {
 		if (!payload || typeof payload !== "object") return "";
 		const p = payload as Record<string, unknown>;
+		// Helper: truncate an ID to first 8 chars for display
+		const shortId = (v: unknown) => typeof v === "string" ? v.slice(0, 8) : "";
+
 		switch (p.type) {
-			case "error":
-				return `[${p.code}] ${p.message}`;
-			case "tool_start":
-				return `tool=${p.tool ?? p.name ?? "?"}`;
-			case "tool_executing":
-				return `tool=${p.tool ?? p.name ?? "?"}`;
-			case "tool_result":
-				return p.isError ? `ERR tool=${p.tool ?? "?"}` : `ok tool=${p.tool ?? "?"}`;
-			case "connection_status":
-				return String(p.status ?? "");
+			// ── Chat-visible: streaming ──────────────────────────────────────
 			case "delta":
-				return typeof p.content === "string" ? `${p.content.length}ch` : "";
+				return `${typeof p.text === "string" ? `${p.text.length}ch` : ""}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+			case "thinking_start":
+			case "thinking_stop":
+				return p.messageId ? `msg=${shortId(p.messageId)}` : "";
+			case "thinking_delta":
+				return `${typeof p.text === "string" ? `${p.text.length}ch` : ""}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+
+			// ── Chat-visible: tools ──────────────────────────────────────────
+			case "tool_start":
+				return `${p.name ?? "?"} id=${shortId(p.id)}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+			case "tool_executing":
+				return `${p.name ?? "?"} id=${shortId(p.id)}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+			case "tool_result":
+				return `${p.is_error ? "ERR " : ""}${shortId(p.id)}${p.messageId ? ` msg=${shortId(p.messageId)}` : ""}`;
+			case "tool_content":
+				return `id=${shortId(p.toolId)}`;
+
+			// ── Chat-visible: permissions / questions ────────────────────────
+			case "permission_request":
+				return `${p.toolName ?? "?"} sess=${shortId(p.sessionId)} req=${shortId(p.requestId)}`;
+			case "permission_resolved":
+				return `${p.decision} req=${shortId(p.requestId)}`;
+			case "ask_user":
+				return `tool=${shortId(p.toolId)}`;
+			case "ask_user_resolved":
+			case "ask_user_error":
+				return `tool=${shortId(p.toolId)}`;
+
+			// ── Chat-visible: session lifecycle ──────────────────────────────
+			case "result":
+				return `sess=${shortId(p.sessionId)} cost=$${typeof p.cost === "number" ? p.cost.toFixed(4) : "?"}`;
 			case "done":
-				return p.messageId ? `msg=${String(p.messageId).slice(0, 8)}` : "";
+				return `code=${p.code ?? "?"}`;
 			case "status":
 				return String(p.status ?? "");
-			case "notification_event":
-				return `${p.eventType ?? "?"}${p.message ? `: ${p.message}` : ""}`;
+			case "error":
+				return `[${p.code}] ${p.message}`;
+
+			// ── Session management ───────────────────────────────────────────
+			case "session_switched":
+				return `id=${shortId(p.id)}${p.requestId ? ` req=${shortId(p.requestId)}` : ""}${Array.isArray(p.events) ? ` +${p.events.length} cached` : ""}`;
 			case "session_list":
 				return Array.isArray(p.sessions) ? `${p.sessions.length} sessions` : "";
+
+			// ── Connection / infra ───────────────────────────────────────────
+			case "connection_status":
+				return String(p.status ?? "");
+			case "notification_event":
+				return `${p.eventType ?? "?"}${p.sessionId ? ` sess=${shortId(p.sessionId)}` : ""}${p.message ? `: ${p.message}` : ""}`;
+			case "client_count":
+				return `${p.count ?? 0} clients`;
+
+			// ── Discovery / metadata ─────────────────────────────────────────
 			case "instance_list":
 				return Array.isArray(p.instances) ? `${p.instances.length} instances` : "";
 			case "pty_list":
@@ -156,8 +194,12 @@
 					.join(", ");
 				return counts;
 			}
-			case "client_count":
-				return `${p.count ?? 0} clients`;
+			case "project_list":
+				return Array.isArray(p.projects) ? `${p.projects.length} projects${p.current ? ` current=${p.current}` : ""}` : "";
+			case "command_list":
+				return Array.isArray(p.commands) ? `${p.commands.length} commands` : "";
+			case "agent_list":
+				return Array.isArray(p.agents) ? `${p.agents.length} agents${p.activeAgentId ? ` active=${p.activeAgentId}` : ""}` : "";
 			default:
 				return "";
 		}
