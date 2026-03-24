@@ -19,9 +19,7 @@ function resolveDir(configDir?: string): string {
 }
 
 /** Load all fork metadata from disk. Returns empty map on missing/corrupt file. */
-export function loadForkMetadata(
-	configDir?: string,
-): Map<string, ForkEntry> {
+export function loadForkMetadata(configDir?: string): Map<string, ForkEntry> {
 	try {
 		const dir = resolveDir(configDir);
 		const data = readFileSync(join(dir, FILENAME), "utf-8");

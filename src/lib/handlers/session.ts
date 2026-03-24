@@ -399,7 +399,10 @@ export async function handleForkSession(
 
 	// Persist fork-point metadata (forkMessageId + parentID)
 	if (forkMessageId && deps.forkMeta) {
-		deps.forkMeta.setForkEntry(forked.id, { forkMessageId, parentID: sessionId });
+		deps.forkMeta.setForkEntry(forked.id, {
+			forkMessageId,
+			parentID: sessionId,
+		});
 	}
 
 	// Find the parent title for the notification

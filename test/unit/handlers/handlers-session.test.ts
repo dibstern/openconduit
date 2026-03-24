@@ -187,10 +187,13 @@ describe("handleForkSession (ticket 5.3)", () => {
 		let storedMessageId: string | undefined;
 		let storedParentId: string | undefined;
 		const forkMeta = {
-			setForkEntry: (sid: string, entry: { forkMessageId: string; parentID: string }) => {
+			setForkEntry: (
+				sid: string,
+				entry: { forkMessageId: string; parentID: string },
+			) => {
 				storedSessionId = sid;
 				storedMessageId = entry.forkMessageId;
-			storedParentId = entry.parentID;
+				storedParentId = entry.parentID;
 			},
 		};
 		const depsWithMeta = { ...deps, forkMeta };
@@ -222,7 +225,10 @@ describe("handleForkSession (ticket 5.3)", () => {
 	it("determines forkMessageId from last message on whole-session fork", async () => {
 		let storedMessageId: string | undefined;
 		const forkMeta = {
-			setForkEntry: (_sid: string, entry: { forkMessageId: string; parentID: string }) => {
+			setForkEntry: (
+				_sid: string,
+				entry: { forkMessageId: string; parentID: string },
+			) => {
 				storedMessageId = entry.forkMessageId;
 			},
 		};

@@ -73,7 +73,10 @@ export interface HandlerDeps {
 	}>;
 	/** Optional fork-point metadata store — used to persist forkMessageId and parentID */
 	forkMeta?: {
-		setForkEntry: (sessionId: string, entry: { forkMessageId: string; parentID: string }) => void;
+		setForkEntry: (
+			sessionId: string,
+			entry: { forkMessageId: string; parentID: string },
+		) => void;
 	};
 	/** Return the current project list (for broadcasting after mutations). */
 	getProjects?: () => ReadonlyArray<{

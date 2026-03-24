@@ -146,8 +146,10 @@ function mapToolStatus(
 function convertAssistantParts(
 	parts: HistoryMessagePart[],
 	renderHtml?: (text: string) => string,
+	messageId?: string,
 ): ChatMessage[] {
 	const result: ChatMessage[] = [];
+	let firstTextSeen = false;
 
 	for (const part of parts) {
 		switch (part.type) {
@@ -163,7 +165,9 @@ function convertAssistantParts(
 					rawText,
 					html,
 					finalized: true,
+					...(messageId != null && !firstTextSeen && { messageId }),
 				} satisfies AssistantMessage);
+				firstTextSeen = true;
 				break;
 			}
 			case "reasoning": {
@@ -258,7 +262,7 @@ export function historyToChatMessages(
 		} else if (msg.role === "assistant") {
 			// Assistant messages: convert each part to the appropriate ChatMessage
 			if (msg.parts && msg.parts.length > 0) {
-				result.push(...convertAssistantParts(msg.parts, renderHtml));
+				result.push(...convertAssistantParts(msg.parts, renderHtml, msg.id));
 			}
 
 			// Append a ResultMessage if cost/token metadata is present

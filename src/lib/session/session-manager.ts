@@ -4,7 +4,11 @@
 // storage. This layer proxies session CRUD and maintains in-memory active state.
 
 import { EventEmitter } from "node:events";
-import { type ForkEntry, loadForkMetadata, saveForkMetadata } from "../daemon/fork-metadata.js";
+import {
+	type ForkEntry,
+	loadForkMetadata,
+	saveForkMetadata,
+} from "../daemon/fork-metadata.js";
 import type {
 	OpenCodeClient,
 	SessionDetail,

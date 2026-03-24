@@ -35,7 +35,9 @@ describe("fork-metadata persistence", () => {
 	});
 
 	it("saves atomically (tmp + rename)", () => {
-		const meta = new Map([["ses_1", { forkMessageId: "msg_a", parentID: "p1" }]]);
+		const meta = new Map([
+			["ses_1", { forkMessageId: "msg_a", parentID: "p1" }],
+		]);
 		saveForkMetadata(meta, testDir);
 		expect(existsSync(join(testDir, ".fork-metadata.json.tmp"))).toBe(false);
 		expect(existsSync(join(testDir, "fork-metadata.json"))).toBe(true);
