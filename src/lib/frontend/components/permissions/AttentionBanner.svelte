@@ -4,7 +4,7 @@
 <!-- Dismiss button hides until new remote items arrive.                       -->
 
 <script lang="ts">
-	import { getRemotePermissions, getRemoteQuestionSessions } from "../../stores/permissions.svelte.js";
+	import { getRemotePermissions, getRemoteQuestionSessions, removeRemoteQuestion } from "../../stores/permissions.svelte.js";
 	import { findSession, sessionState, switchToSession } from "../../stores/session.svelte.js";
 	import { wsSend } from "../../stores/ws.svelte.js";
 
@@ -60,6 +60,8 @@
 	}
 
 	function goToSession(sessionId: string) {
+		// Remove from remote set — this session is now "local" once we switch.
+		removeRemoteQuestion(sessionId);
 		switchToSession(sessionId, wsSend);
 	}
 

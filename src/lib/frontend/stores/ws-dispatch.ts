@@ -271,6 +271,7 @@ export function handleMessage(msg: RelayMessage): void {
 			updateContextPercent(0);
 			clearTodoState();
 			clearSessionLocal(previousSessionId); // Keep remote permissions
+			if (msg.id) removeRemoteQuestion(msg.id); // Now viewing this session — no longer remote
 
 			if (msg.events) {
 				// Cache hit: replay raw events through existing chat handlers
