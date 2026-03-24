@@ -553,6 +553,216 @@ describe("keep awake toggle", () => {
 		expect(setKeepAwake).toHaveBeenLastCalledWith(true);
 	});
 
+	// ─── Keep-awake custom command parsing edge cases ───────────────────────
+
+	it("parses command with multiple arguments", async () => {
+		const setKeepAwake = vi
+			.fn()
+			.mockResolvedValue({ ok: true, supported: false, active: false });
+		const setKeepAwakeCommand = vi.fn().mockResolvedValue({ ok: true });
+		const io = createMockIO();
+		let renderCount = 0;
+
+		void showSettingsMenu(
+			io.opts({
+				setKeepAwake,
+				setKeepAwakeCommand,
+				isMacOS: false,
+				getSettingsInfo: () => {
+					renderCount++;
+					if (renderCount > 1) {
+						setTimeout(() => io.stdin.emit("data", "\x03"), 30);
+					}
+					return defaultSettingsInfo({
+						pinEnabled: false,
+						keepAwake: false,
+					});
+				},
+			}),
+		);
+		await tick();
+
+		// Navigate to "Enable keep awake" (index 2)
+		await sendKeys(io.stdin, ["\x1b[B", "\x1b[B", "\r"]);
+		await tick(50);
+
+		// Type: systemd-inhibit --what=idle sleep infinity
+		const cmd = "systemd-inhibit --what=idle sleep infinity";
+		await sendKeys(io.stdin, [...cmd].concat(["\r"]));
+		await tick(100);
+
+		expect(setKeepAwakeCommand).toHaveBeenCalledWith("systemd-inhibit", [
+			"--what=idle",
+			"sleep",
+			"infinity",
+		]);
+	});
+
+	it("parses command with no arguments", async () => {
+		const setKeepAwake = vi
+			.fn()
+			.mockResolvedValue({ ok: true, supported: false, active: false });
+		const setKeepAwakeCommand = vi.fn().mockResolvedValue({ ok: true });
+		const io = createMockIO();
+		let renderCount = 0;
+
+		void showSettingsMenu(
+			io.opts({
+				setKeepAwake,
+				setKeepAwakeCommand,
+				isMacOS: false,
+				getSettingsInfo: () => {
+					renderCount++;
+					if (renderCount > 1) {
+						setTimeout(() => io.stdin.emit("data", "\x03"), 30);
+					}
+					return defaultSettingsInfo({
+						pinEnabled: false,
+						keepAwake: false,
+					});
+				},
+			}),
+		);
+		await tick();
+
+		// Navigate to "Enable keep awake" (index 2)
+		await sendKeys(io.stdin, ["\x1b[B", "\x1b[B", "\r"]);
+		await tick(50);
+
+		// Type just: caffeinate (no args)
+		const cmd = "caffeinate";
+		await sendKeys(io.stdin, [...cmd].concat(["\r"]));
+		await tick(100);
+
+		expect(setKeepAwakeCommand).toHaveBeenCalledWith("caffeinate", []);
+	});
+
+	it("handles extra whitespace between arguments", async () => {
+		const setKeepAwake = vi
+			.fn()
+			.mockResolvedValue({ ok: true, supported: false, active: false });
+		const setKeepAwakeCommand = vi.fn().mockResolvedValue({ ok: true });
+		const io = createMockIO();
+		let renderCount = 0;
+
+		void showSettingsMenu(
+			io.opts({
+				setKeepAwake,
+				setKeepAwakeCommand,
+				isMacOS: false,
+				getSettingsInfo: () => {
+					renderCount++;
+					if (renderCount > 1) {
+						setTimeout(() => io.stdin.emit("data", "\x03"), 30);
+					}
+					return defaultSettingsInfo({
+						pinEnabled: false,
+						keepAwake: false,
+					});
+				},
+			}),
+		);
+		await tick();
+
+		// Navigate to "Enable keep awake" (index 2)
+		await sendKeys(io.stdin, ["\x1b[B", "\x1b[B", "\r"]);
+		await tick(50);
+
+		// Type: "  caffeinate   -d   -i  " (extra whitespace everywhere)
+		const cmd = "  caffeinate   -d   -i  ";
+		await sendKeys(io.stdin, [...cmd].concat(["\r"]));
+		await tick(100);
+
+		// trim() + split(/\s+/) should normalize all whitespace
+		expect(setKeepAwakeCommand).toHaveBeenCalledWith("caffeinate", [
+			"-d",
+			"-i",
+		]);
+	});
+
+	it("handles command with equals-sign arguments", async () => {
+		const setKeepAwake = vi
+			.fn()
+			.mockResolvedValue({ ok: true, supported: false, active: false });
+		const setKeepAwakeCommand = vi.fn().mockResolvedValue({ ok: true });
+		const io = createMockIO();
+		let renderCount = 0;
+
+		void showSettingsMenu(
+			io.opts({
+				setKeepAwake,
+				setKeepAwakeCommand,
+				isMacOS: false,
+				getSettingsInfo: () => {
+					renderCount++;
+					if (renderCount > 1) {
+						setTimeout(() => io.stdin.emit("data", "\x03"), 30);
+					}
+					return defaultSettingsInfo({
+						pinEnabled: false,
+						keepAwake: false,
+					});
+				},
+			}),
+		);
+		await tick();
+
+		// Navigate to "Enable keep awake" (index 2)
+		await sendKeys(io.stdin, ["\x1b[B", "\x1b[B", "\r"]);
+		await tick(50);
+
+		// Type: systemd-inhibit --what=idle --who=conduit
+		const cmd = "systemd-inhibit --what=idle --who=conduit";
+		await sendKeys(io.stdin, [...cmd].concat(["\r"]));
+		await tick(100);
+
+		expect(setKeepAwakeCommand).toHaveBeenCalledWith("systemd-inhibit", [
+			"--what=idle",
+			"--who=conduit",
+		]);
+	});
+
+	it("handles paths as commands", async () => {
+		const setKeepAwake = vi
+			.fn()
+			.mockResolvedValue({ ok: true, supported: false, active: false });
+		const setKeepAwakeCommand = vi.fn().mockResolvedValue({ ok: true });
+		const io = createMockIO();
+		let renderCount = 0;
+
+		void showSettingsMenu(
+			io.opts({
+				setKeepAwake,
+				setKeepAwakeCommand,
+				isMacOS: false,
+				getSettingsInfo: () => {
+					renderCount++;
+					if (renderCount > 1) {
+						setTimeout(() => io.stdin.emit("data", "\x03"), 30);
+					}
+					return defaultSettingsInfo({
+						pinEnabled: false,
+						keepAwake: false,
+					});
+				},
+			}),
+		);
+		await tick();
+
+		// Navigate to "Enable keep awake" (index 2)
+		await sendKeys(io.stdin, ["\x1b[B", "\x1b[B", "\r"]);
+		await tick(50);
+
+		// Type: /usr/bin/caffeinate -di
+		const cmd = "/usr/bin/caffeinate -di";
+		await sendKeys(io.stdin, [...cmd].concat(["\r"]));
+		await tick(100);
+
+		expect(setKeepAwakeCommand).toHaveBeenCalledWith("/usr/bin/caffeinate", [
+			"-di",
+		]);
+	});
+
 	it("disables keep-awake when custom command prompt is skipped", async () => {
 		const setKeepAwake = vi
 			.fn()
