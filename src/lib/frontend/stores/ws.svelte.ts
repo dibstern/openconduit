@@ -5,7 +5,7 @@
 
 import type { ConnectionStatus, RelayMessage } from "../types.js";
 import { createFrontendLogger } from "../utils/logger.js";
-import { chatState } from "./chat.svelte.js";
+import { phaseToIdle } from "./chat.svelte.js";
 import { clearInstanceState } from "./instance.svelte.js";
 import { getCurrentSessionId } from "./router.svelte.js";
 import {
@@ -243,8 +243,7 @@ function doConnect(slug: string | undefined): void {
 		_ws = null;
 
 		// Reset chat streaming/processing state so UI isn't stuck
-		chatState.streaming = false;
-		chatState.processing = false;
+		phaseToIdle();
 
 		// Clear instance state — will be re-populated on reconnect
 		clearInstanceState();

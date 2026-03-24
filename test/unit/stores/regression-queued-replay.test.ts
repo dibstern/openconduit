@@ -3,10 +3,10 @@
 // because `status: "processing"` events are NEVER cached by the server.
 // The prompt handler (prompt.ts:71-74) sends status:processing via
 // wsHandler.sendToSession() directly — it never calls recordEvent().
-// So during replayEvents(), chatState.processing stays false, and
-// addUserMessage(text, undefined, chatState.processing) never sets queued.
+// So during replayEvents(), isProcessing stays false, and
+// addUserMessage(text, undefined, isProcessing) never sets queued.
 //
-// Root cause: replayEvents relied on chatState.processing (set by status
+// Root cause: replayEvents relied on isProcessing (set by status
 // events) to decide if a user_message is queued. But status events aren't
 // in the message cache, so processing is always false during replay.
 //
@@ -57,6 +57,7 @@ import {
 	chatState,
 	clearMessages,
 	clearQueuedFlags,
+	phaseToProcessing,
 } from "../../../src/lib/frontend/stores/chat.svelte.js";
 import { sessionState } from "../../../src/lib/frontend/stores/session.svelte.js";
 import {
@@ -282,7 +283,7 @@ describe("Regression: queued flag preserved during replayEvents", () => {
 describe("Multi-tab: live user_message queued flag", () => {
 	it("marks live user_message as queued when session is processing", () => {
 		// Another tab sent a message; this client's session is already processing
-		chatState.processing = true;
+		phaseToProcessing();
 		handleMessage({ type: "user_message", text: "from other tab" });
 
 		const users = userMessages();
@@ -308,7 +309,7 @@ describe("chatState.queuedFlagsCleared tracking", () => {
 	});
 
 	it("becomes true when clearQueuedFlags is called", () => {
-		chatState.processing = true;
+		phaseToProcessing();
 		clearQueuedFlags();
 		expect(chatState.queuedFlagsCleared).toBe(true);
 	});

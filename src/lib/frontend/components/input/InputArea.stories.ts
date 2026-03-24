@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/svelte-vite";
-import { chatState } from "../../stores/chat.svelte.js";
+import { phaseToIdle, phaseToProcessing } from "../../stores/chat.svelte.js";
 import { discoveryState } from "../../stores/discovery.svelte.js";
 import { uiState } from "../../stores/ui.svelte.js";
 import InputArea from "./InputArea.svelte";
@@ -36,8 +36,7 @@ const meta = {
 	tags: ["autodocs"],
 	parameters: { layout: "fullscreen" },
 	beforeEach: () => {
-		chatState.processing = false;
-		chatState.streaming = false;
+		phaseToIdle();
 		uiState.contextPercent = 0;
 		setupDiscovery();
 	},
@@ -50,7 +49,7 @@ export const Empty: Story = {};
 
 export const Processing: Story = {
 	beforeEach: () => {
-		chatState.processing = true;
+		phaseToProcessing();
 		// Ensure discovery state persists through processing state change
 		discoveryState.currentVariant = "high";
 	},

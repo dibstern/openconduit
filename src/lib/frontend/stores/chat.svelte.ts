@@ -39,21 +39,114 @@ export function findMessage<T extends ChatMessage["type"]>(
 
 // ─── State ──────────────────────────────────────────────────────────────────
 
+/** Valid chat pipeline phases. Single source of truth — the derived
+ *  flags (isProcessing, isStreaming, isReplaying) derive from this value.
+ *  Impossible boolean combinations are unrepresentable. */
+export type ChatPhase = "idle" | "processing" | "streaming" | "replaying";
+
 export const chatState = $state({
 	messages: [] as ChatMessage[],
 	/** Raw text of the currently streaming assistant message. */
 	currentAssistantText: "",
-	/** Whether the LLM is currently generating. */
-	processing: false,
-	/** Tracks whether we're mid-stream (assistant message not yet finalized). */
-	streaming: false,
-	/** True during event replay (session switch). Suppresses streaming animations. */
-	replaying: false,
+	/** Single source of truth for the chat pipeline phase. */
+	phase: "idle" as ChatPhase,
 	/** True after clearQueuedFlags() is called, reset when processing starts.
 	 *  Used by the unified rendering pipeline to know that the LLM has started
 	 *  responding to a previously-queued message (so the queued shimmer should be removed). */
 	queuedFlagsCleared: false,
+	/** Monotonically increasing counter, bumped on each `done` event.
+	 *  Provides an explicit, reliable turn-boundary signal for logic that
+	 *  needs to distinguish "same turn" from "new turn" (e.g. queued-flag
+	 *  clearing, future turn-aware features). Reset to 0 on clearMessages. */
+	turnEpoch: 0,
 });
+
+// ─── Derived phase flags ────────────────────────────────────────────────────
+// Svelte 5 forbids exporting $derived directly from .svelte.ts modules.
+// We expose the derived values as exported functions that return the current
+// reactive value.  Call sites read them as `isProcessing()`.
+
+const _isProcessing = $derived(
+	chatState.phase === "processing" || chatState.phase === "streaming",
+);
+const _isStreaming = $derived(chatState.phase === "streaming");
+const _isReplaying = $derived(chatState.phase === "replaying");
+
+/** LLM is active (processing or streaming). */
+export function isProcessing(): boolean {
+	return _isProcessing;
+}
+/** Receiving deltas (assistant message being built). */
+export function isStreaming(): boolean {
+	return _isStreaming;
+}
+/** Event replay in progress. */
+export function isReplaying(): boolean {
+	return _isReplaying;
+}
+
+// ─── Phase Transitions ─────────────────────────────────────────────────────
+// Enforce valid combinations of processing/streaming/replaying.
+// All production code MUST use these instead of setting booleans directly.
+// Tests may still set booleans directly for arbitrary state setup.
+
+/** Session is idle — no LLM activity, no streaming. */
+export function phaseToIdle(): void {
+	chatState.phase = "idle";
+}
+
+/** LLM is active, awaiting first delta.
+ *  During replay, this is a no-op — phaseEndReplay handles reconciliation. */
+export function phaseToProcessing(): void {
+	if (chatState.phase !== "replaying") {
+		chatState.phase = "processing";
+	}
+}
+
+/** Receiving deltas — assistant message being built.
+ *  During replay, tracks inner streaming state without leaving "replaying" phase. */
+export function phaseToStreaming(): void {
+	if (chatState.phase === "replaying") {
+		_replayInnerStreaming = true;
+	} else {
+		chatState.phase = "streaming";
+	}
+}
+
+// Tracks whether we're mid-stream inside a replay (for phaseEndReplay)
+let _replayInnerStreaming = false;
+
+/** Start event replay. */
+export function phaseStartReplay(): void {
+	_replayInnerStreaming = false;
+	chatState.phase = "replaying";
+}
+
+/** End event replay, reconcile phase based on inner streaming state
+ *  and external processing signals.
+ *  @param llmActive — whether the replayed event stream ended mid-turn */
+export function phaseEndReplay(llmActive: boolean): void {
+	if (_replayInnerStreaming) {
+		// Replay ended mid-stream — session is still producing content
+		chatState.phase = "streaming";
+	} else if (
+		llmActive ||
+		chatState.phase === "processing" ||
+		chatState.phase === "streaming"
+	) {
+		// Last turn completed but LLM still active, or live status:processing
+		// arrived during a yield
+		chatState.phase = "processing";
+	} else {
+		chatState.phase = "idle";
+	}
+	_replayInnerStreaming = false;
+}
+
+/** Full reset — used by clearMessages on session switch. */
+function phaseReset(): void {
+	chatState.phase = "idle";
+}
 
 /** Pagination state for history loading (shared between HistoryLoader and dispatch). */
 export const historyState = $state({
@@ -132,6 +225,67 @@ function applyToolUpdate(uuid: string, tool: ToolMessage): void {
  */
 const doneMessageIds = new Set<string>();
 
+// ─── Pure helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Walk messages backward, find the last one matching `type` and `predicate`,
+ * apply `updater`. Returns the new array and whether a match was found.
+ * Pure — does not touch reactive state. */
+export function updateLastMessage<T extends ChatMessage["type"]>(
+	messages: readonly ChatMessage[],
+	type: T,
+	predicate: (m: Extract<ChatMessage, { type: T }>) => boolean,
+	updater: (m: Extract<ChatMessage, { type: T }>) => ChatMessage,
+): { messages: ChatMessage[]; found: boolean } {
+	const out = [...messages];
+	for (let i = out.length - 1; i >= 0; i--) {
+		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
+		const m = out[i]!;
+		if (m.type === type && predicate(m as Extract<ChatMessage, { type: T }>)) {
+			out[i] = updater(m as Extract<ChatMessage, { type: T }>);
+			return { messages: out, found: true };
+		}
+	}
+	return { messages: out, found: false };
+}
+
+/** Flush the debounced render timer, render pending markdown, finalize the
+ *  last unfinalized assistant message, and reset streaming state.
+ *  Returns the finalized message's `messageId` (if any) for dedup tracking.
+ *
+ *  Consolidates the pattern previously duplicated in handleDone,
+ *  handleToolStart, and addUserMessage. */
+function flushAndFinalizeAssistant(): string | undefined {
+	// Check both the public getter AND the replay-internal flag
+	if (chatState.phase !== "streaming" && !_replayInnerStreaming)
+		return undefined;
+
+	if (renderTimer !== null) {
+		clearTimeout(renderTimer);
+		renderTimer = null;
+	}
+	if (chatState.currentAssistantText) {
+		flushAssistantRender();
+	}
+
+	let finalizedMessageId: string | undefined;
+	const { messages, found } = updateLastMessage(
+		getMessages(),
+		"assistant",
+		(m) => !m.finalized,
+		(m) => {
+			finalizedMessageId = m.messageId;
+			return { ...m, finalized: true };
+		},
+	);
+	if (found) setMessages(messages);
+
+	// Clear assistant text. Phase transition is the caller's responsibility
+	// (handleDone → phaseToIdle, handleToolStart → phaseToProcessing, etc.)
+	chatState.currentAssistantText = "";
+	return finalizedMessageId;
+}
+
 // ─── Abort hook ─────────────────────────────────────────────────────────────
 // Used by ws-dispatch.ts to abort in-flight async replays when clearMessages
 // is called. Avoids circular imports (ws-dispatch → chat.svelte, not vice versa).
@@ -187,8 +341,12 @@ export function handleDelta(
 		return;
 	}
 
-	// If no current assistant message, create one
-	if (!chatState.streaming) {
+	// If no current assistant message, create one.
+	// During replay, phase is "replaying" (not "streaming"),
+	// so also check the replay-internal flag.
+	const isCurrentlyStreaming =
+		chatState.phase === "streaming" || _replayInnerStreaming;
+	if (!isCurrentlyStreaming) {
 		const uuid = generateUuid();
 		const assistantMsg: AssistantMessage = {
 			type: "assistant",
@@ -199,7 +357,7 @@ export function handleDelta(
 			...(messageId != null && { messageId }),
 		};
 		setMessages([...getMessages(), assistantMsg]);
-		chatState.streaming = true;
+		phaseToStreaming();
 		chatState.currentAssistantText = "";
 	}
 
@@ -230,22 +388,13 @@ export function handleThinkingStart(
 export function handleThinkingDelta(
 	msg: Extract<RelayMessage, { type: "thinking_delta" }>,
 ): void {
-	const { text } = msg;
-
-	// Find the last thinking message and append
-	const messages = [...getMessages()];
-	for (let i = messages.length - 1; i >= 0; i--) {
-		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-		const m = messages[i]!;
-		if (m.type === "thinking" && !m.done) {
-			messages[i] = {
-				...m,
-				text: m.text + text,
-			};
-			setMessages(messages);
-			return;
-		}
-	}
+	const { messages, found } = updateLastMessage(
+		getMessages(),
+		"thinking",
+		(m) => !m.done,
+		(m) => ({ ...m, text: m.text + msg.text }),
+	);
+	if (found) setMessages(messages);
 }
 
 export function handleThinkingStop(
@@ -254,20 +403,13 @@ export function handleThinkingStop(
 	const duration = thinkingStartTime > 0 ? Date.now() - thinkingStartTime : 0;
 	thinkingStartTime = 0;
 
-	const messages = [...getMessages()];
-	for (let i = messages.length - 1; i >= 0; i--) {
-		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-		const m = messages[i]!;
-		if (m.type === "thinking" && !m.done) {
-			messages[i] = {
-				...m,
-				done: true,
-				duration,
-			};
-			setMessages(messages);
-			return;
-		}
-	}
+	const { messages, found } = updateLastMessage(
+		getMessages(),
+		"thinking",
+		(m) => !m.done,
+		(m) => ({ ...m, done: true, duration }),
+	);
+	if (found) setMessages(messages);
 }
 
 export function handleToolStart(
@@ -285,30 +427,15 @@ export function handleToolStart(
 		return;
 	}
 
-	// ── Finalize current assistant text before inserting tool ──────────
-	if (chatState.streaming && chatState.currentAssistantText) {
-		if (renderTimer !== null) {
-			clearTimeout(renderTimer);
-			renderTimer = null;
+	// Finalize current assistant text before inserting tool.
+	// Transition to processing — LLM is still active, just not streaming text.
+	if (chatState.phase === "streaming" || _replayInnerStreaming) {
+		flushAndFinalizeAssistant();
+		if (chatState.phase !== "replaying") {
+			phaseToProcessing();
+		} else {
+			_replayInnerStreaming = false;
 		}
-		flushAssistantRender();
-
-		const messages = [...getMessages()];
-		for (let i = messages.length - 1; i >= 0; i--) {
-			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-			const m = messages[i]!;
-			if (m.type === "assistant" && !m.finalized) {
-				messages[i] = {
-					...m,
-					finalized: true,
-				};
-				setMessages(messages);
-				break;
-			}
-		}
-
-		chatState.streaming = false;
-		chatState.currentAssistantText = "";
 	}
 
 	applyToolCreate(result.tool);
@@ -419,33 +546,10 @@ function updateContextFromTokens(
 export function handleDone(
 	_msg: Extract<RelayMessage, { type: "done" }>,
 ): void {
-	// Flush any pending render
-	if (renderTimer !== null) {
-		clearTimeout(renderTimer);
-		renderTimer = null;
-	}
-
-	// Finalize the assistant message
-	if (chatState.streaming) {
-		flushAssistantRender();
-		const messages = [...getMessages()];
-		for (let i = messages.length - 1; i >= 0; i--) {
-			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-			const m = messages[i]!;
-			if (m.type === "assistant" && !m.finalized) {
-				messages[i] = {
-					...m,
-					finalized: true,
-				};
-				setMessages(messages);
-				// Record messageId so duplicate deltas from the message poller
-				// are suppressed (see handleDelta dedup guard).
-				if (m.messageId) {
-					doneMessageIds.add(m.messageId);
-				}
-				break;
-			}
-		}
+	// Finalize the assistant message and record messageId for dedup
+	const finalizedId = flushAndFinalizeAssistant();
+	if (finalizedId) {
+		doneMessageIds.add(finalizedId);
 	}
 
 	// Finalize any tools still in non-terminal states (pending/running).
@@ -462,23 +566,21 @@ export function handleDone(
 		setMessages(messages);
 	}
 
-	chatState.streaming = false;
-	// Don't clear processing during event replay — replayed `done` events
-	// are historical (previous assistant turns) and must not overwrite the
-	// live processing flag set by the server's status:processing message.
-	// Without this guard, a replayed `done` from an earlier turn clears
-	// processing AFTER the server re-asserted it, hiding the Stop button.
-	if (!chatState.replaying) {
-		chatState.processing = false;
+	chatState.turnEpoch++;
+	if (chatState.phase === "replaying") {
+		// Replayed `done` — clear inner streaming but stay in "replaying" phase.
+		// phaseEndReplay handles the final phase reconciliation.
+		_replayInnerStreaming = false;
+	} else {
+		phaseToIdle();
 	}
-	chatState.currentAssistantText = "";
 }
 
 export function handleStatus(
 	msg: Extract<RelayMessage, { type: "status" }>,
 ): void {
 	if (msg.status === "processing") {
-		chatState.processing = true;
+		phaseToProcessing();
 		// Reset so queued styling can be applied for new processing turns
 		chatState.queuedFlagsCleared = false;
 		// Apply queued flag to the last unresponded user message.
@@ -530,12 +632,34 @@ export function handleError(
 		// Prominent error
 		addSystemMessage(message, "error", errorMeta);
 		// Same guard as handleDone — historical errors from replay must not
-		// clear live processing state.
-		if (!chatState.replaying) {
-			chatState.processing = false;
+		// clear live processing state. During replay, phase is already
+		// "replaying" so streaming getter is already false.
+		if (chatState.phase !== "replaying") {
+			phaseToIdle();
 		}
-		chatState.streaming = false;
 	}
+}
+
+// ─── Turn-boundary tracking for queued-flag clearing ────────────────────────
+// When a user message is queued (sent while the LLM is working), its "Queued"
+// shimmer must persist until the LLM starts a NEW turn — not be stripped by
+// continuation deltas from the current turn.  We record the turnEpoch at
+// which the message was queued and only allow clearing once the epoch advances.
+
+let queuedAtEpoch = -1; // -1 → no queued message pending
+
+/** Should ws-dispatch call clearQueuedFlags() on this content-start event?
+ *  Returns true when:
+ *  - No queued message is pending (safe default), OR
+ *  - turnEpoch has advanced past the epoch when the message was queued
+ *    (a `done` event completed the previous turn). */
+export function shouldClearQueuedOnContent(): boolean {
+	if (queuedAtEpoch < 0) return true;
+	if (chatState.turnEpoch > queuedAtEpoch) {
+		queuedAtEpoch = -1; // consumed
+		return true;
+	}
+	return false;
 }
 
 // ─── Actions ────────────────────────────────────────────────────────────────
@@ -554,30 +678,19 @@ export function addUserMessage(
 	images?: string[],
 	queued?: boolean,
 ): void {
+	if (queued) queuedAtEpoch = chatState.turnEpoch;
 	// Finalize the in-progress assistant message only during replay,
 	// where user_message events can appear between delta events without
 	// an intervening done event.  During live streaming (queued=true),
 	// keep the assistant message unfinalized so subsequent deltas
 	// continue updating it and the queued user message stays at the end.
-	if (!queued && chatState.streaming && chatState.currentAssistantText) {
-		if (renderTimer !== null) {
-			clearTimeout(renderTimer);
-			renderTimer = null;
+	if (!queued && chatState.currentAssistantText) {
+		flushAndFinalizeAssistant();
+		if (chatState.phase === "replaying") {
+			_replayInnerStreaming = false;
+		} else {
+			phaseToIdle();
 		}
-		flushAssistantRender();
-
-		const messages = [...getMessages()];
-		for (let i = messages.length - 1; i >= 0; i--) {
-			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-			const m = messages[i]!;
-			if (m.type === "assistant" && !m.finalized) {
-				messages[i] = { ...m, finalized: true };
-				setMessages(messages);
-				break;
-			}
-		}
-		chatState.streaming = false;
-		chatState.currentAssistantText = "";
 	}
 
 	const uuid = generateUuid();
@@ -676,14 +789,14 @@ export function seedRegistryFromMessages(
 
 export function clearMessages(): void {
 	replayBatch = null;
-	chatState.replaying = false; // safety: clear stale flag on session switch
+	phaseReset(); // must be cleared before abort hook — stops replay generation check
 	onClearMessages?.(); // abort in-flight async replays
 	cancelDeferredMarkdown(); // abort in-flight deferred renders
 	chatState.messages = [];
 	chatState.currentAssistantText = "";
-	chatState.streaming = false;
-	chatState.processing = false;
 	chatState.queuedFlagsCleared = false;
+	chatState.turnEpoch = 0;
+	queuedAtEpoch = -1;
 	registry.clear();
 	doneMessageIds.clear();
 	if (renderTimer !== null) {
@@ -784,34 +897,23 @@ export function handleMessageRemoved(
 function flushAssistantRender(): void {
 	if (!chatState.currentAssistantText) return;
 
-	const html = chatState.replaying
-		? chatState.currentAssistantText // raw text fallback during replay
-		: renderMarkdown(chatState.currentAssistantText);
+	const rawText = chatState.currentAssistantText;
+	const html =
+		chatState.phase === "replaying" ? rawText : renderMarkdown(rawText);
+	const isReplay = chatState.phase === "replaying";
 
-	const messages = [...getMessages()];
-
-	for (let i = messages.length - 1; i >= 0; i--) {
-		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-		const m = messages[i]!;
-		if (m.type === "assistant" && !m.finalized) {
-			if (chatState.replaying) {
-				messages[i] = {
-					...m,
-					rawText: chatState.currentAssistantText,
-					html,
-					needsRender: true,
-				};
-			} else {
-				messages[i] = {
-					...m,
-					rawText: chatState.currentAssistantText,
-					html,
-				};
-			}
-			setMessages(messages);
-			return;
-		}
-	}
+	const { messages, found } = updateLastMessage(
+		getMessages(),
+		"assistant",
+		(m) => !m.finalized,
+		(m) => ({
+			...m,
+			rawText,
+			html,
+			...(isReplay ? { needsRender: true as const } : {}),
+		}),
+	);
+	if (found) setMessages(messages);
 }
 
 // ─── Deferred Markdown Rendering ────────────────────────────────────────────

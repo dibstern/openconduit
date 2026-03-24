@@ -315,9 +315,13 @@ export function setCurrentSession(id: string | null): void {
  */
 let _switchingFromId: string | null = null;
 
-/** Read-only accessor used by ws-dispatch for `clearSessionLocal`. */
-export function getSwitchingFromId(): string | null {
-	return _switchingFromId;
+/** Read and clear the switching-from ID. Used by ws-dispatch to pass the
+ *  correct previous session to `clearSessionLocal`. Consuming (clearing)
+ *  prevents stale IDs from leaking into future server-initiated switches. */
+export function consumeSwitchingFromId(): string | null {
+	const id = _switchingFromId;
+	_switchingFromId = null;
+	return id;
 }
 
 /**

@@ -16,7 +16,7 @@
 	// biome-ignore lint/style/useImportType: SubagentBackBar is used as a value for bind:this
 	import SubagentBackBar from "../chat/SubagentBackBar.svelte";
 	import PastePreview from "../chat/PastePreview.svelte";
-	import { chatState, addUserMessage, inputSyncState } from "../../stores/chat.svelte.js";
+	import { addUserMessage, inputSyncState, isProcessing } from "../../stores/chat.svelte.js";
 	import { discoveryState } from "../../stores/discovery.svelte.js";
 	import { extractAtQuery, fileTreeState, filterFiles } from "../../stores/file-tree.svelte.js";
 	import { fetchFileContent, fetchDirectoryListing, resizeImageIfNeeded } from "./input-utils.js";
@@ -87,7 +87,7 @@
 	// ─── Command menu state ────────────────────────────────────────────────────
 
 	const commandMenuVisible = $derived(
-		inputText.startsWith("/") && !inputText.includes(" ") && !chatState.processing,
+		inputText.startsWith("/") && !inputText.includes(" ") && !isProcessing(),
 	);
 	const commandQuery = $derived(
 		commandMenuVisible ? inputText.slice(1) : "",
@@ -97,7 +97,7 @@
 
 	const atQuery = $derived(extractAtQuery(inputText, cursorPos));
 	const fileMenuVisible = $derived(
-		!commandMenuVisible && atQuery !== null && !chatState.processing,
+		!commandMenuVisible && atQuery !== null && !isProcessing(),
 	);
 	const fileQuery = $derived(atQuery?.query ?? "");
 	const filteredFiles = $derived(
@@ -106,7 +106,6 @@
 
 	// ─── Derived ───────────────────────────────────────────────────────────────
 
-	const isProcessing = $derived(chatState.processing);
 	const canSend = $derived(inputText.trim().length > 0 || pendingImages.length > 0);
 	const showContextMini = $derived(uiState.contextPercent > 0);
 
@@ -213,7 +212,7 @@
 
 		// Always send immediately — OpenCode queues server-side when busy.
 		// Mark the message as "queued" visually when the LLM is processing.
-		addUserMessage(messageText, imageUrls, isProcessing);
+		addUserMessage(messageText, imageUrls, isProcessing());
 		wsSend({ type: "message", text: messageText, ...(imageUrls && { images: imageUrls }) });
 
 		// Clear pending images
@@ -438,7 +437,7 @@
 		{/if}
 
 		<!-- Processing indicator: animated bounce bar aligned with context mini bar -->
-		{#if isProcessing}
+		{#if isProcessing()}
 			<div class="flex items-center gap-2 pb-1.5 px-2">
 				<div class="min-w-6"></div>
 				<div
@@ -505,24 +504,24 @@
 					class="flex items-center gap-1 shrink-0"
 				>
 					<!-- Send / Stop buttons -->
-				<button
-					id="send"
-					type="button"
-					class="send-btn shrink-0 w-8 h-8 rounded-[10px] border-none bg-brand-a text-white cursor-pointer flex items-center justify-center transition-[background,opacity] duration-150 touch-manipulation hover:not-disabled:opacity-90 disabled:opacity-25 disabled:cursor-default active:not-disabled:opacity-70"
-					disabled={!canSend}
-					title={isProcessing ? "Queue message" : "Send message"}
-					onclick={handleSendClick}
-				>
+					<button
+						id="send"
+						type="button"
+						class="send-btn shrink-0 w-8 h-8 rounded-[10px] border-none bg-brand-a text-white cursor-pointer flex items-center justify-center transition-[background,opacity] duration-150 touch-manipulation hover:not-disabled:opacity-90 disabled:opacity-25 disabled:cursor-default active:not-disabled:opacity-70"
+						disabled={!canSend}
+						title={isProcessing() ? "Queue message" : "Send message"}
+						onclick={handleSendClick}
+					>
 						<Icon name="arrow-up" size={18} />
 					</button>
-					{#if isProcessing}
-					<button
-						id="stop"
-						type="button"
-						class="shrink-0 w-8 h-8 rounded-[10px] bg-transparent border border-border text-text-muted cursor-pointer flex items-center justify-center transition-[background,color,opacity] duration-150 touch-manipulation hover:bg-bg-alt hover:text-text active:opacity-70"
-						title="Stop generating"
-						onclick={handleStop}
-					>
+					{#if isProcessing()}
+						<button
+							id="stop"
+							type="button"
+							class="shrink-0 w-8 h-8 rounded-[10px] bg-transparent border border-border text-text-muted cursor-pointer flex items-center justify-center transition-[background,color,opacity] duration-150 touch-manipulation hover:bg-bg-alt hover:text-text active:opacity-70"
+							title="Stop generating"
+							onclick={handleStop}
+						>
 							<Icon name="square" size={18} />
 						</button>
 					{/if}

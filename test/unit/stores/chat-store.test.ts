@@ -25,6 +25,10 @@ import {
 	handleToolResult,
 	handleToolStart,
 	historyState,
+	isProcessing,
+	isStreaming,
+	phaseToProcessing,
+	phaseToStreaming,
 	prependMessages,
 } from "../../../src/lib/frontend/stores/chat.svelte.js";
 import { sessionState } from "../../../src/lib/frontend/stores/session.svelte.js";
@@ -66,7 +70,7 @@ describe("handleDelta", () => {
 		expect(chatState.messages).toHaveLength(1);
 		// biome-ignore lint/style/noNonNullAssertion: safe — index within bounds
 		expect(chatState.messages[0]!.type).toBe("assistant");
-		expect(chatState.streaming).toBe(true);
+		expect(isStreaming()).toBe(true);
 	});
 
 	it("accumulates text in currentAssistantText", () => {
@@ -238,7 +242,7 @@ describe("tool lifecycle", () => {
 		handleDelta({ type: "delta", text: "Before tool" });
 		vi.advanceTimersByTime(100); // flush render
 		expect(chatState.messages).toHaveLength(1);
-		expect(chatState.streaming).toBe(true);
+		expect(isStreaming()).toBe(true);
 
 		handleToolStart({ type: "tool_start", id: "t1", name: "Read" });
 
@@ -249,7 +253,7 @@ describe("tool lifecycle", () => {
 		expect(firstAssistant.rawText).toBe("Before tool");
 
 		// streaming should be reset so next delta creates a new message
-		expect(chatState.streaming).toBe(false);
+		expect(isStreaming()).toBe(false);
 		expect(chatState.currentAssistantText).toBe("");
 	});
 
@@ -438,11 +442,11 @@ describe("handleResult", () => {
 describe("handleDone", () => {
 	it("clears streaming state", () => {
 		handleDelta({ type: "delta", text: "hi" });
-		expect(chatState.streaming).toBe(true);
+		expect(isStreaming()).toBe(true);
 
 		handleDone({ type: "done", code: 0 });
-		expect(chatState.streaming).toBe(false);
-		expect(chatState.processing).toBe(false);
+		expect(isStreaming()).toBe(false);
+		expect(isProcessing()).toBe(false);
 		expect(chatState.currentAssistantText).toBe("");
 	});
 
@@ -479,17 +483,16 @@ describe("handleError", () => {
 	});
 
 	it("stops processing on non-RETRY error", () => {
-		chatState.processing = true;
-		chatState.streaming = true;
+		phaseToStreaming();
 		handleError({ type: "error", code: "FATAL", message: "fail" });
-		expect(chatState.processing).toBe(false);
-		expect(chatState.streaming).toBe(false);
+		expect(isProcessing()).toBe(false);
+		expect(isStreaming()).toBe(false);
 	});
 
 	it("does NOT stop processing on RETRY", () => {
-		chatState.processing = true;
+		phaseToProcessing();
 		handleError({ type: "error", code: "RETRY", message: "retry" });
-		expect(chatState.processing).toBe(true);
+		expect(isProcessing()).toBe(true);
 	});
 
 	it("uses fallback text when message is empty", () => {
@@ -532,7 +535,7 @@ describe("addUserMessage", () => {
 		handleDelta(msg({ type: "delta", text: "Shall I proceed?" }));
 		vi.advanceTimersByTime(100);
 
-		expect(chatState.streaming).toBe(true);
+		expect(isStreaming()).toBe(true);
 		expect(chatState.currentAssistantText).toBe("Shall I proceed?");
 
 		// Now a user message arrives (e.g. during event replay without
@@ -540,7 +543,7 @@ describe("addUserMessage", () => {
 		addUserMessage("Yes");
 
 		// The streaming state should be reset
-		expect(chatState.streaming).toBe(false);
+		expect(isStreaming()).toBe(false);
 		expect(chatState.currentAssistantText).toBe("");
 
 		// The assistant message should be finalized
@@ -600,8 +603,8 @@ describe("clearMessages", () => {
 		clearMessages();
 		expect(chatState.messages).toHaveLength(0);
 		expect(chatState.currentAssistantText).toBe("");
-		expect(chatState.streaming).toBe(false);
-		expect(chatState.processing).toBe(false);
+		expect(isStreaming()).toBe(false);
+		expect(isProcessing()).toBe(false);
 	});
 });
 
@@ -648,8 +651,8 @@ describe("queued user message flag", () => {
 		addUserMessage("test", undefined, true);
 		clearMessages();
 		expect(chatState.messages).toHaveLength(0);
-		expect(chatState.processing).toBe(false);
-		expect(chatState.streaming).toBe(false);
+		expect(isProcessing()).toBe(false);
+		expect(isStreaming()).toBe(false);
 	});
 });
 
@@ -673,7 +676,7 @@ describe("duplicate message deduplication", () => {
 
 		// Should still be just 1 message — the duplicate was silently dropped
 		expect(chatState.messages).toHaveLength(1);
-		expect(chatState.streaming).toBe(false);
+		expect(isStreaming()).toBe(false);
 	});
 
 	it("does NOT suppress deltas after tool_start finalization (tool-split)", () => {

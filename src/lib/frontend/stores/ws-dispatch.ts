@@ -38,10 +38,14 @@ import {
 	handleToolResult,
 	handleToolStart,
 	historyState,
+	isProcessing,
+	phaseEndReplay,
+	phaseStartReplay,
 	prependMessages,
 	registerClearMessagesHook,
 	renderDeferredMarkdown,
 	seedRegistryFromMessages,
+	shouldClearQueuedOnContent,
 } from "./chat.svelte.js";
 import {
 	handleAgentList,
@@ -72,8 +76,8 @@ import {
 import { handleProjectList } from "./project.svelte.js";
 import { getCurrentSlug, replaceRoute } from "./router.svelte.js";
 import {
+	consumeSwitchingFromId,
 	findSession,
-	getSwitchingFromId,
 	handleSessionForked,
 	handleSessionList,
 	handleSessionSwitched,
@@ -186,12 +190,6 @@ async function convertHistoryAsync(
  * Replaces the vanilla handler registry pattern.
  */
 export function handleMessage(msg: RelayMessage): void {
-	// Snapshot streaming state BEFORE the handler runs so we can detect
-	// a genuine new-turn start (streaming was off → content event turns it on).
-	// Used below to gate clearQueuedFlags() — continuation deltas from the
-	// current turn must NOT strip the "Queued" shimmer early.
-	const wasStreaming = chatState.streaming;
-
 	switch (msg.type) {
 		// ─── Chat / Streaming ────────────────────────────────────────────
 		case "delta":
@@ -250,7 +248,7 @@ export function handleMessage(msg: RelayMessage): void {
 			break;
 		case "user_message":
 			// From another tab/client — mark as queued if the session is processing
-			addUserMessage(msg.text, undefined, chatState.processing);
+			addUserMessage(msg.text, undefined, isProcessing());
 			break;
 
 		// ─── Sessions ────────────────────────────────────────────────────
@@ -267,7 +265,10 @@ export function handleMessage(msg: RelayMessage): void {
 			// Use the ID captured by switchToSession() before it changed currentId.
 			// Falls back to sessionState.currentId for server-initiated switches
 			// (e.g. new_session flow) where switchToSession() wasn't called.
-			const previousSessionId = getSwitchingFromId() ?? sessionState.currentId;
+			// consumeSwitchingFromId() reads and clears the value in one call to
+			// prevent stale IDs from leaking into future server-initiated switches.
+			const previousSessionId =
+				consumeSwitchingFromId() ?? sessionState.currentId;
 			handleSessionSwitched(msg);
 
 			// Update URL to reflect the new session
@@ -537,12 +538,12 @@ export function handleMessage(msg: RelayMessage): void {
 			break;
 	}
 
-	// ── Queued-flag clearing (single source of truth) ────────────────
-	// Only clear when a genuinely NEW turn starts (streaming was off before
-	// this event).  Continuation deltas from the current turn must not
-	// strip the "Queued" shimmer — the queued message is waiting for the
-	// NEXT turn, not the current one.
-	if (isLlmContentStart(msg.type) && !wasStreaming) clearQueuedFlags();
+	// ── Queued-flag clearing ─────────────────────────────────────────
+	// Gated by shouldClearQueuedOnContent(): only clears when turnEpoch
+	// has advanced past the epoch when the queued message was added
+	// (i.e. a `done` event completed the previous turn).
+	if (isLlmContentStart(msg.type) && shouldClearQueuedOnContent())
+		clearQueuedFlags();
 }
 
 // ─── Event Replay (session switch with cached events) ────────────────────────
@@ -556,7 +557,7 @@ export function handleMessage(msg: RelayMessage): void {
 // that appears while llmActive is true was queued behind an in-progress turn.
 
 export async function replayEvents(events: RelayMessage[]): Promise<void> {
-	chatState.replaying = true;
+	phaseStartReplay();
 	const generation = ++replayGeneration;
 
 	beginReplayBatch();
@@ -581,9 +582,6 @@ export async function replayEvents(events: RelayMessage[]): Promise<void> {
 		else if (event.type === "done") llmActive = false;
 		else if (event.type === "error" && event.code !== "RETRY")
 			llmActive = false;
-
-		// Snapshot streaming state before handler (same logic as handleMessage)
-		const wasStreaming = chatState.streaming;
 
 		switch (event.type) {
 			case "user_message":
@@ -640,10 +638,10 @@ export async function replayEvents(events: RelayMessage[]): Promise<void> {
 			// These are not part of the chat message stream.
 		}
 
-		// ── Queued-flag clearing (single source of truth) ────────────────
-		// Same new-turn gate as handleMessage(): only clear when streaming
-		// was off before this event (genuine new turn, not continuation).
-		if (isLlmContentStart(event.type) && !wasStreaming) clearQueuedFlags();
+		// ── Queued-flag clearing ─────────────────────────────────────────
+		// Same turnEpoch gate as handleMessage().
+		if (isLlmContentStart(event.type) && shouldClearQueuedOnContent())
+			clearQueuedFlags();
 
 		// Yield between chunks to keep the main thread responsive
 		if ((i + 1) % REPLAY_CHUNK_SIZE === 0) {
@@ -660,17 +658,13 @@ export async function replayEvents(events: RelayMessage[]): Promise<void> {
 	commitReplayBatch();
 
 	// Reconcile processing state: during replay, handleDone is guarded
-	// from clearing chatState.processing (to avoid overwriting a live
+	// from clearing isProcessing (to avoid overwriting a live
 	// status:processing message from the server that arrived during a
-	// yield). Now that replay is complete, derive the correct state:
-	// - llmActive: true if the last replayed turn is still in-flight
-	// - chatState.processing: may have been set to true by a live
-	//   status:processing WS message during a yield (status events are
-	//   NOT cacheable, so this can only come from a live server message)
-	// Either signal means the session is active.
-	chatState.processing = llmActive || chatState.processing;
-
-	chatState.replaying = false;
+	// yield). Now that replay is complete, reconcile the processing state.
+	// phaseEndReplay merges two signals: llmActive (last replayed turn
+	// still in-flight) and isProcessing (live status:processing
+	// arrived during a yield — status events are NOT cacheable).
+	phaseEndReplay(llmActive);
 	renderDeferredMarkdown();
 }
 
