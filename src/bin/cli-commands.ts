@@ -284,7 +284,11 @@ async function launchMainMenu(
 			openUrl(info.url);
 		},
 		onShutdown: async () => {
-			await ipcSend({ cmd: "shutdown" });
+			try {
+				await ipcSend({ cmd: "shutdown" });
+			} catch {
+				// Daemon already stopped or socket removed — treat as success
+			}
 			exit(0);
 		},
 		onKeepAliveExit: () => {

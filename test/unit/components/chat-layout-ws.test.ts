@@ -98,6 +98,10 @@ vi.mock(
 	"../../../src/lib/frontend/components/permissions/PermissionNotification.svelte",
 	emptyComponent,
 );
+vi.mock(
+	"../../../src/lib/frontend/components/permissions/AttentionBanner.svelte",
+	emptyComponent,
+);
 
 // ─── Mock stores ────────────────────────────────────────────────────────────
 // Mock all stores EXCEPT router.svelte.ts (which must be real to test
