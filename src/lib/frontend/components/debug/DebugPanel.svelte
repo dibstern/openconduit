@@ -24,7 +24,11 @@
 	async function copyLog() {
 		const lines = getDebugEvents().map((e) => {
 			const t = fmtTime(e.time);
-			return e.detail ? `${t} ${e.event} ${e.detail}` : `${t} ${e.event}`;
+			let line = e.detail ? `${t} ${e.event} ${e.detail}` : `${t} ${e.event}`;
+			if (e.payload) {
+				line += `\n  ${JSON.stringify(e.payload)}`;
+			}
+			return line;
 		});
 		try {
 			await navigator.clipboard.writeText(lines.join("\n"));
@@ -104,6 +108,39 @@
 				return "text-red-400";
 			default:
 				return "text-gray-400";
+		}
+	}
+
+	/**
+	 * Extract a short inline summary from message payloads for debugging.
+	 * Only shown in verbose mode. Returns empty string for uninteresting types.
+	 */
+	function payloadSummary(payload: unknown): string {
+		if (!payload || typeof payload !== "object") return "";
+		const p = payload as Record<string, unknown>;
+		switch (p.type) {
+			case "error":
+				return `[${p.code}] ${p.message}`;
+			case "tool_start":
+				return `tool=${p.tool ?? p.name ?? "?"}`;
+			case "tool_executing":
+				return `tool=${p.tool ?? p.name ?? "?"}`;
+			case "tool_result":
+				return p.isError ? `ERR tool=${p.tool ?? "?"}` : `ok tool=${p.tool ?? "?"}`;
+			case "connection_status":
+				return String(p.status ?? "");
+			case "delta":
+				return typeof p.content === "string" ? `${p.content.length}ch` : "";
+			case "done":
+				return p.messageId ? `msg=${String(p.messageId).slice(0, 8)}` : "";
+			case "status":
+				return String(p.status ?? "");
+			case "notification_event":
+				return `${p.eventType ?? "?"}${p.message ? `: ${p.message}` : ""}`;
+			case "session_list":
+				return Array.isArray(p.sessions) ? `${p.sessions.length} sessions` : "";
+			default:
+				return "";
 		}
 	}
 
@@ -331,12 +368,16 @@
 				<div class="text-gray-600 py-2 text-center">No events yet</div>
 			{:else}
 				{#each events as evt}
+					{@const summary = verboseMessages && evt.payload ? payloadSummary(evt.payload) : ""}
 					<div>
 						<div class="flex gap-1.5 py-px items-start">
 							<span class="text-gray-600 shrink-0 w-[84px] text-right">{fmtTime(evt.time)}</span>
 							<span class="{eventColor(evt.event)} shrink-0">{evt.event}</span>
 							{#if evt.detail}
 								<span class="text-gray-500 truncate">{evt.detail}</span>
+							{/if}
+							{#if summary}
+								<span class="text-cyan-600 truncate text-[11px]">{summary}</span>
 							{/if}
 							{#if evt.payload}
 								<button
