@@ -137,6 +137,64 @@ function applyToolUpdate(uuid: string, tool: ToolMessage): void {
  */
 const doneMessageIds = new Set<string>();
 
+// ─── Pure helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Walk messages backward, find the last one matching `type` and `predicate`,
+ * apply `updater`. Returns the new array and whether a match was found.
+ * Pure — does not touch reactive state. */
+export function updateLastMessage<T extends ChatMessage["type"]>(
+	messages: readonly ChatMessage[],
+	type: T,
+	predicate: (m: Extract<ChatMessage, { type: T }>) => boolean,
+	updater: (m: Extract<ChatMessage, { type: T }>) => ChatMessage,
+): { messages: ChatMessage[]; found: boolean } {
+	const out = [...messages];
+	for (let i = out.length - 1; i >= 0; i--) {
+		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
+		const m = out[i]!;
+		if (m.type === type && predicate(m as Extract<ChatMessage, { type: T }>)) {
+			out[i] = updater(m as Extract<ChatMessage, { type: T }>);
+			return { messages: out, found: true };
+		}
+	}
+	return { messages: out, found: false };
+}
+
+/** Flush the debounced render timer, render pending markdown, finalize the
+ *  last unfinalized assistant message, and reset streaming state.
+ *  Returns the finalized message's `messageId` (if any) for dedup tracking.
+ *
+ *  Consolidates the pattern previously duplicated in handleDone,
+ *  handleToolStart, and addUserMessage. */
+function flushAndFinalizeAssistant(): string | undefined {
+	if (!chatState.streaming) return undefined;
+
+	if (renderTimer !== null) {
+		clearTimeout(renderTimer);
+		renderTimer = null;
+	}
+	if (chatState.currentAssistantText) {
+		flushAssistantRender();
+	}
+
+	let finalizedMessageId: string | undefined;
+	const { messages, found } = updateLastMessage(
+		getMessages(),
+		"assistant",
+		(m) => !m.finalized,
+		(m) => {
+			finalizedMessageId = m.messageId;
+			return { ...m, finalized: true };
+		},
+	);
+	if (found) setMessages(messages);
+
+	chatState.streaming = false;
+	chatState.currentAssistantText = "";
+	return finalizedMessageId;
+}
+
 // ─── Abort hook ─────────────────────────────────────────────────────────────
 // Used by ws-dispatch.ts to abort in-flight async replays when clearMessages
 // is called. Avoids circular imports (ws-dispatch → chat.svelte, not vice versa).
@@ -235,22 +293,13 @@ export function handleThinkingStart(
 export function handleThinkingDelta(
 	msg: Extract<RelayMessage, { type: "thinking_delta" }>,
 ): void {
-	const { text } = msg;
-
-	// Find the last thinking message and append
-	const messages = [...getMessages()];
-	for (let i = messages.length - 1; i >= 0; i--) {
-		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-		const m = messages[i]!;
-		if (m.type === "thinking" && !m.done) {
-			messages[i] = {
-				...m,
-				text: m.text + text,
-			};
-			setMessages(messages);
-			return;
-		}
-	}
+	const { messages, found } = updateLastMessage(
+		getMessages(),
+		"thinking",
+		(m) => !m.done,
+		(m) => ({ ...m, text: m.text + msg.text }),
+	);
+	if (found) setMessages(messages);
 }
 
 export function handleThinkingStop(
@@ -259,20 +308,13 @@ export function handleThinkingStop(
 	const duration = thinkingStartTime > 0 ? Date.now() - thinkingStartTime : 0;
 	thinkingStartTime = 0;
 
-	const messages = [...getMessages()];
-	for (let i = messages.length - 1; i >= 0; i--) {
-		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-		const m = messages[i]!;
-		if (m.type === "thinking" && !m.done) {
-			messages[i] = {
-				...m,
-				done: true,
-				duration,
-			};
-			setMessages(messages);
-			return;
-		}
-	}
+	const { messages, found } = updateLastMessage(
+		getMessages(),
+		"thinking",
+		(m) => !m.done,
+		(m) => ({ ...m, done: true, duration }),
+	);
+	if (found) setMessages(messages);
 }
 
 export function handleToolStart(
@@ -290,30 +332,9 @@ export function handleToolStart(
 		return;
 	}
 
-	// ── Finalize current assistant text before inserting tool ──────────
-	if (chatState.streaming && chatState.currentAssistantText) {
-		if (renderTimer !== null) {
-			clearTimeout(renderTimer);
-			renderTimer = null;
-		}
-		flushAssistantRender();
-
-		const messages = [...getMessages()];
-		for (let i = messages.length - 1; i >= 0; i--) {
-			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-			const m = messages[i]!;
-			if (m.type === "assistant" && !m.finalized) {
-				messages[i] = {
-					...m,
-					finalized: true,
-				};
-				setMessages(messages);
-				break;
-			}
-		}
-
-		chatState.streaming = false;
-		chatState.currentAssistantText = "";
+	// Finalize current assistant text before inserting tool
+	if (chatState.currentAssistantText) {
+		flushAndFinalizeAssistant();
 	}
 
 	applyToolCreate(result.tool);
@@ -424,33 +445,10 @@ function updateContextFromTokens(
 export function handleDone(
 	_msg: Extract<RelayMessage, { type: "done" }>,
 ): void {
-	// Flush any pending render
-	if (renderTimer !== null) {
-		clearTimeout(renderTimer);
-		renderTimer = null;
-	}
-
-	// Finalize the assistant message
-	if (chatState.streaming) {
-		flushAssistantRender();
-		const messages = [...getMessages()];
-		for (let i = messages.length - 1; i >= 0; i--) {
-			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-			const m = messages[i]!;
-			if (m.type === "assistant" && !m.finalized) {
-				messages[i] = {
-					...m,
-					finalized: true,
-				};
-				setMessages(messages);
-				// Record messageId so duplicate deltas from the message poller
-				// are suppressed (see handleDelta dedup guard).
-				if (m.messageId) {
-					doneMessageIds.add(m.messageId);
-				}
-				break;
-			}
-		}
+	// Finalize the assistant message and record messageId for dedup
+	const finalizedId = flushAndFinalizeAssistant();
+	if (finalizedId) {
+		doneMessageIds.add(finalizedId);
 	}
 
 	// Finalize any tools still in non-terminal states (pending/running).
@@ -467,7 +465,6 @@ export function handleDone(
 		setMessages(messages);
 	}
 
-	chatState.streaming = false;
 	chatState.turnEpoch++;
 	// Don't clear processing during event replay — replayed `done` events
 	// are historical (previous assistant turns) and must not overwrite the
@@ -477,7 +474,6 @@ export function handleDone(
 	if (!chatState.replaying) {
 		chatState.processing = false;
 	}
-	chatState.currentAssistantText = "";
 }
 
 export function handleStatus(
@@ -588,25 +584,8 @@ export function addUserMessage(
 	// an intervening done event.  During live streaming (queued=true),
 	// keep the assistant message unfinalized so subsequent deltas
 	// continue updating it and the queued user message stays at the end.
-	if (!queued && chatState.streaming && chatState.currentAssistantText) {
-		if (renderTimer !== null) {
-			clearTimeout(renderTimer);
-			renderTimer = null;
-		}
-		flushAssistantRender();
-
-		const messages = [...getMessages()];
-		for (let i = messages.length - 1; i >= 0; i--) {
-			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-			const m = messages[i]!;
-			if (m.type === "assistant" && !m.finalized) {
-				messages[i] = { ...m, finalized: true };
-				setMessages(messages);
-				break;
-			}
-		}
-		chatState.streaming = false;
-		chatState.currentAssistantText = "";
+	if (!queued && chatState.currentAssistantText) {
+		flushAndFinalizeAssistant();
 	}
 
 	const uuid = generateUuid();
@@ -815,34 +794,22 @@ export function handleMessageRemoved(
 function flushAssistantRender(): void {
 	if (!chatState.currentAssistantText) return;
 
-	const html = chatState.replaying
-		? chatState.currentAssistantText // raw text fallback during replay
-		: renderMarkdown(chatState.currentAssistantText);
+	const rawText = chatState.currentAssistantText;
+	const html = chatState.replaying ? rawText : renderMarkdown(rawText);
+	const isReplay = chatState.replaying;
 
-	const messages = [...getMessages()];
-
-	for (let i = messages.length - 1; i >= 0; i--) {
-		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-		const m = messages[i]!;
-		if (m.type === "assistant" && !m.finalized) {
-			if (chatState.replaying) {
-				messages[i] = {
-					...m,
-					rawText: chatState.currentAssistantText,
-					html,
-					needsRender: true,
-				};
-			} else {
-				messages[i] = {
-					...m,
-					rawText: chatState.currentAssistantText,
-					html,
-				};
-			}
-			setMessages(messages);
-			return;
-		}
-	}
+	const { messages, found } = updateLastMessage(
+		getMessages(),
+		"assistant",
+		(m) => !m.finalized,
+		(m) => ({
+			...m,
+			rawText,
+			html,
+			...(isReplay ? { needsRender: true as const } : {}),
+		}),
+	);
+	if (found) setMessages(messages);
 }
 
 // ─── Deferred Markdown Rendering ────────────────────────────────────────────

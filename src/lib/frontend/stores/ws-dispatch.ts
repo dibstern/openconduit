@@ -73,8 +73,8 @@ import {
 import { handleProjectList } from "./project.svelte.js";
 import { getCurrentSlug, replaceRoute } from "./router.svelte.js";
 import {
+	consumeSwitchingFromId,
 	findSession,
-	getSwitchingFromId,
 	handleSessionForked,
 	handleSessionList,
 	handleSessionSwitched,
@@ -262,7 +262,10 @@ export function handleMessage(msg: RelayMessage): void {
 			// Use the ID captured by switchToSession() before it changed currentId.
 			// Falls back to sessionState.currentId for server-initiated switches
 			// (e.g. new_session flow) where switchToSession() wasn't called.
-			const previousSessionId = getSwitchingFromId() ?? sessionState.currentId;
+			// consumeSwitchingFromId() reads and clears the value in one call to
+			// prevent stale IDs from leaking into future server-initiated switches.
+			const previousSessionId =
+				consumeSwitchingFromId() ?? sessionState.currentId;
 			handleSessionSwitched(msg);
 
 			// Update URL to reflect the new session
