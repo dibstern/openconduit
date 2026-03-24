@@ -65,6 +65,12 @@ export const mainUiScene: SceneDefinition = {
 			);
 		});
 
+		await phase("hide-overlay", async () => {
+			await page.addStyleTag({
+				content: "#connect-overlay { display: none !important; }",
+			});
+		});
+
 		await phase("freeze-animations", async () => {
 			await freezeAnimations(page);
 			await page.waitForTimeout(200);

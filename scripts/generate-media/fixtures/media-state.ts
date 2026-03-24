@@ -31,6 +31,7 @@ const modelList: RelayMessage = {
 					id: "claude-sonnet-4",
 					name: "claude-sonnet-4",
 					provider: "anthropic",
+					variants: ["low", "medium", "high"],
 				},
 				{
 					id: "claude-haiku-3.5",
@@ -46,6 +47,7 @@ const agentList: RelayMessage = {
 	type: "agent_list",
 	agents: [
 		{ id: "code", name: "Code", description: "General coding assistant" },
+		{ id: "plan", name: "Plan", description: "Architecture and planning" },
 	],
 };
 
@@ -55,6 +57,11 @@ export const mainUiInit: MockMessage[] = msgs(
 	{ type: "session_switched", id: "sess-media-001" },
 	{ type: "status", status: "idle" },
 	{ type: "model_info", model: "claude-sonnet-4", provider: "anthropic" },
+	{
+		type: "variant_info",
+		variant: "medium",
+		variants: ["low", "medium", "high"],
+	},
 	{ type: "client_count", count: 1 },
 	{
 		type: "session_list",
@@ -182,6 +189,11 @@ export const approvalInit: MockMessage[] = msgs(
 	{ type: "session_switched", id: "sess-media-approval" },
 	{ type: "status", status: "idle" },
 	{ type: "model_info", model: "claude-sonnet-4", provider: "anthropic" },
+	{
+		type: "variant_info",
+		variant: "medium",
+		variants: ["low", "medium", "high"],
+	},
 	{ type: "client_count", count: 1 },
 	{
 		type: "session_list",
@@ -264,6 +276,11 @@ export const splitInit: MockMessage[] = msgs(
 	{ type: "session_switched", id: "sess-media-split" },
 	{ type: "status", status: "idle" },
 	{ type: "model_info", model: "claude-sonnet-4", provider: "anthropic" },
+	{
+		type: "variant_info",
+		variant: "medium",
+		variants: ["low", "medium", "high"],
+	},
 	{ type: "client_count", count: 1 },
 	{
 		type: "session_list",
@@ -280,6 +297,93 @@ export const splitInit: MockMessage[] = msgs(
 	modelList,
 	agentList,
 );
+
+// ─── Approval Turn 2 Start ──────────────────────────────────────────────────
+// Partial second turn: processing + thinking, sent before the permission card.
+
+export const approvalTurn2Start: MockMessage[] = msgs(
+	{ type: "status", status: "processing" },
+	{ type: "thinking_start" },
+	{
+		type: "thinking_delta",
+		text: "I'll run the deployment command to push the latest changes to staging.",
+	},
+	{ type: "thinking_stop" },
+);
+
+// ─── Sidebar Scene ──────────────────────────────────────────────────────────
+
+const now = Date.now();
+
+export const sidebarInit: MockMessage[] = msgs(
+	{ type: "session_switched", id: "sess-sidebar-001" },
+	{ type: "status", status: "idle" },
+	{ type: "model_info", model: "claude-sonnet-4", provider: "anthropic" },
+	{
+		type: "variant_info",
+		variant: "medium",
+		variants: ["low", "medium", "high"],
+	},
+	{ type: "client_count", count: 1 },
+	{
+		type: "session_list",
+		roots: true,
+		sessions: [
+			{
+				id: "sess-sidebar-001",
+				title: "Build landing page",
+				updatedAt: now,
+				messageCount: 12,
+			},
+			{
+				id: "sess-sidebar-002",
+				title: "Fix WebSocket reconnect logic",
+				updatedAt: now - 1_800_000,
+				messageCount: 8,
+			},
+			{
+				id: "sess-sidebar-003",
+				title: "Add dark mode theme",
+				updatedAt: now - 3_600_000,
+				messageCount: 6,
+			},
+			{
+				id: "sess-sidebar-004",
+				title: "Refactor auth middleware",
+				updatedAt: now - 86_400_000,
+				messageCount: 15,
+			},
+			{
+				id: "sess-sidebar-005",
+				title: "Database migration scripts",
+				updatedAt: now - 86_400_000 - 7_200_000,
+				messageCount: 4,
+			},
+			{
+				id: "sess-sidebar-006",
+				title: "Set up CI/CD pipeline",
+				updatedAt: now - 172_800_000,
+				messageCount: 10,
+			},
+			{
+				id: "sess-sidebar-007",
+				title: "Mobile responsive layout",
+				updatedAt: now - 259_200_000,
+				messageCount: 7,
+			},
+			{
+				id: "sess-sidebar-008",
+				title: "API rate limiting",
+				updatedAt: now - 345_600_000,
+				messageCount: 5,
+			},
+		],
+	},
+	modelList,
+	agentList,
+);
+
+// ─── Split Scene ────────────────────────────────────────────────────────────
 
 export const splitResponse: MockMessage[] = msgs(
 	// Thinking

@@ -30,6 +30,7 @@ async function loadScenes(): Promise<SceneDefinition[]> {
 		"./scenes/dashboard.js",
 		"./scenes/setup.js",
 		"./scenes/split.js",
+		"./scenes/sidebar.js",
 	];
 
 	const scenes: SceneDefinition[] = [];

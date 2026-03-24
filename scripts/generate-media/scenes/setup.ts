@@ -28,6 +28,98 @@ export const setupScene: SceneDefinition = {
 					body: JSON.stringify(setupInfo),
 				}),
 			);
+
+			// Mock push notification APIs so "Enable Push" succeeds cleanly
+			await page.route("**/sw.js", (route) =>
+				route.fulfill({
+					status: 200,
+					contentType: "application/javascript",
+					body: "// mock service worker\nself.addEventListener('install', () => self.skipWaiting());\nself.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));",
+				}),
+			);
+
+			await page.route("**/api/push/vapid-key", (route) =>
+				route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({
+						publicKey:
+							"BEl62iUYgUivxIkv69yViEuiBIa-Ib9-SkvMeAtA3LFgDzkOs-cF0LMNKU5dmPfV0lDh3SkWa3M8dyTcIx8Fk2s",
+					}),
+				}),
+			);
+
+			await page.route("**/api/push/subscribe", (route) =>
+				route.fulfill({
+					status: 200,
+					contentType: "application/json",
+					body: JSON.stringify({ ok: true }),
+				}),
+			);
+		});
+
+		// Mock push APIs in the browser context before navigating
+		await phase("mock-push-apis", async () => {
+			await page.addInitScript(() => {
+				// Mock Notification API so requestPermission succeeds
+				const notifMock = {
+					_perm: "default" as NotificationPermission,
+				};
+				Object.defineProperty(window, "Notification", {
+					value: {
+						get permission() {
+							return notifMock._perm;
+						},
+						async requestPermission() {
+							notifMock._perm = "granted";
+							return "granted" as NotificationPermission;
+						},
+					},
+					writable: true,
+					configurable: true,
+				});
+
+				// Mock PushManager on service worker registrations
+				const originalRegister = navigator.serviceWorker?.register?.bind(
+					navigator.serviceWorker,
+				);
+				if (navigator.serviceWorker && originalRegister) {
+					navigator.serviceWorker.register = async (
+						...args: Parameters<ServiceWorkerContainer["register"]>
+					) => {
+						const reg = await originalRegister(...args);
+						// Patch pushManager.subscribe to return a mock subscription
+						const origSubscribe = reg.pushManager.subscribe.bind(
+							reg.pushManager,
+						);
+						reg.pushManager.subscribe = async () => {
+							try {
+								return await origSubscribe({
+									userVisibleOnly: true,
+									applicationServerKey: new Uint8Array(65),
+								});
+							} catch {
+								// If real subscribe fails, return a mock
+								return {
+									endpoint: "https://mock.push/endpoint",
+									expirationTime: null,
+									options: {
+										userVisibleOnly: true,
+										applicationServerKey: new ArrayBuffer(65),
+									},
+									getKey: () => new ArrayBuffer(0),
+									unsubscribe: async () => true,
+									toJSON: () => ({
+										endpoint: "https://mock.push/endpoint",
+										keys: { p256dh: "mock", auth: "mock" },
+									}),
+								} as unknown as PushSubscription;
+							}
+						};
+						return reg;
+					};
+				}
+			});
 		});
 
 		await phase("navigate", async () => {
@@ -61,26 +153,34 @@ export const setupScene: SceneDefinition = {
 					.catch(() => false);
 				if (doneVisible) break;
 
-				// Priority: skip/finish > next > enable (push — fails in headless,
-				// but surfaces "Finish anyway" after failure)
-				const skipBtn = page
-					.locator("button")
-					.filter({ hasText: /skip|finish anyway/i });
+				// Try Next first, then Enable, then Skip/Finish anyway
 				const nextBtn = page.locator("button").filter({ hasText: /^next$/i });
 				const enableBtn = page
 					.locator("button")
 					.filter({ hasText: /enable push/i });
+				const skipBtn = page
+					.locator("button")
+					.filter({ hasText: /skip|finish anyway/i });
 
-				if ((await skipBtn.count()) > 0) {
-					await skipBtn.first().click();
-				} else if ((await nextBtn.count()) > 0) {
+				if ((await nextBtn.count()) > 0) {
 					await nextBtn.first().click();
 				} else if ((await enableBtn.count()) > 0) {
-					// Click Enable — it fails in headless, surfacing "Finish anyway"
 					await enableBtn.first().click();
-					await page.waitForTimeout(2000);
-					// Don't count as a visible step — loop again to find "Finish anyway"
-					continue;
+					// Wait for the push flow to complete (mocked, should be fast)
+					await page.waitForTimeout(1500);
+					// Check if we auto-advanced to next step
+					const stillOnPush = await enableBtn.count();
+					if (stillOnPush > 0) {
+						// Didn't auto-advance — look for finish anyway
+						const finishBtn = page
+							.locator("button")
+							.filter({ hasText: /finish anyway/i });
+						if ((await finishBtn.count()) > 0) {
+							await finishBtn.first().click();
+						}
+					}
+				} else if ((await skipBtn.count()) > 0) {
+					await skipBtn.first().click();
 				} else {
 					break;
 				}
