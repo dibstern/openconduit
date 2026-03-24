@@ -2,8 +2,9 @@ import type { Meta, StoryObj } from "@storybook/svelte-vite";
 import { flushSync } from "svelte";
 import { permissionsState } from "../../stores/permissions.svelte.js";
 import { sessionState } from "../../stores/session.svelte.js";
+import { uiState } from "../../stores/ui.svelte.js";
 import type { PermissionId } from "../../types.js";
-import AttentionBanner from "./AttentionBanner.svelte";
+import NotificationStack from "../overlays/NotificationStack.svelte";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -44,9 +45,14 @@ function setupState(opts: {
 
 const meta = {
 	title: "Permissions/AttentionBanner",
-	component: AttentionBanner,
+	component: NotificationStack,
 	tags: ["autodocs"],
-} satisfies Meta<typeof AttentionBanner>;
+	beforeEach: () => {
+		uiState.toasts = [];
+		permissionsState.pendingPermissions = [];
+		permissionsState.remoteQuestionSessions = new Set();
+	},
+} satisfies Meta<typeof NotificationStack>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;

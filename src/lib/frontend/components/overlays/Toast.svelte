@@ -1,34 +1,37 @@
 <!--
-  Toast — Auto-dismissing notification toasts, always mounted.
-  Reads uiState.toasts from the ui store and renders each toast at the bottom center.
-  Auto-dismiss is handled by the store's showToast() function via setTimeout,
-  so this component only needs to render and animate.
+  Toast — Auto-dismissing notification toasts.
+  Reads uiState.toasts and renders each toast as a card inside NotificationStack.
+  Auto-dismiss is handled by the store's showToast() via setTimeout.
 -->
 <script lang="ts">
-  import { uiState } from "../../stores/ui.svelte.js";
+	import { uiState } from "../../stores/ui.svelte.js";
 </script>
 
 {#each uiState.toasts as toast (toast.id)}
-  <div
-    class="fixed bottom-20 left-1/2 -translate-x-1/2 z-[400] px-4 py-2 rounded-lg text-sm font-medium shadow-lg pointer-events-auto animate-[slideUpFadeIn_200ms_ease-out_both] {toast.variant === 'warn'
-      ? 'bg-warning-bg border border-warning text-warning'
-      : 'bg-bg-alt border border-border text-text'}"
-    role="status"
-    aria-live="polite"
-  >
-    {toast.message}
-  </div>
+	<div
+		class="pointer-events-auto w-full px-4 py-2 rounded-lg text-sm font-medium shadow-lg notification-slide-in {toast.variant === 'warn'
+			? 'bg-warning-bg border border-warning text-warning'
+			: 'bg-bg-alt border border-border text-text'}"
+		role="status"
+		aria-live="polite"
+	>
+		{toast.message}
+	</div>
 {/each}
 
 <style>
-  @keyframes slideUpFadeIn {
-    from {
-      opacity: 0;
-      transform: translate(-50%, 8px);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, 0);
-    }
-  }
+	.notification-slide-in {
+		animation: slideInRight 200ms ease-out both;
+	}
+
+	@keyframes slideInRight {
+		from {
+			opacity: 0;
+			transform: translateX(16px);
+		}
+		to {
+			opacity: 1;
+			transform: translateX(0);
+		}
+	}
 </style>

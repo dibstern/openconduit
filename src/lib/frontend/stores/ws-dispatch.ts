@@ -512,13 +512,21 @@ export function handleMessage(msg: RelayMessage): void {
 
 			triggerNotifications(syntheticMsg);
 
-			// In-app toast so cross-session events are visible even when
-			// browser Notification permission is missing or push is stale.
-			const content = notificationContent(syntheticMsg);
-			if (content) {
-				showToast(content.title + (content.body ? ` — ${content.body}` : ""), {
-					variant: msg.eventType === "error" ? "warn" : "default",
-				});
+			// In-app toast for cross-session events — skip for ask_user and
+			// ask_user_resolved since the AttentionBanner already handles those.
+			if (
+				msg.eventType !== "ask_user" &&
+				msg.eventType !== "ask_user_resolved"
+			) {
+				const content = notificationContent(syntheticMsg);
+				if (content) {
+					showToast(
+						content.title + (content.body ? ` — ${content.body}` : ""),
+						{
+							variant: msg.eventType === "error" ? "warn" : "default",
+						},
+					);
+				}
 			}
 			break;
 		}
@@ -712,7 +720,6 @@ function handleChatError(msg: Extract<RelayMessage, { type: "error" }>): void {
 		clearScanInFlight();
 		showToast(msg.message ?? "Instance operation failed", {
 			variant: "warn",
-			duration: 4000,
 		});
 		return;
 	}
