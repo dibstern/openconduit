@@ -401,7 +401,13 @@ export type RelayMessage =
 	// ── Cache / Replay ────────────────────────────────────────────────────
 	| { type: "user_message"; text: string }
 	// ── Misc ────────────────────────────────────────────────────────────────
-	| { type: "error"; code: string; message: string }
+	| {
+			type: "error";
+			code: string;
+			message: string;
+			statusCode?: number;
+			details?: Record<string, unknown>;
+	  }
 	| { type: "client_count"; count: number }
 	| { type: "input_sync"; text: string; from?: string }
 	| { type: "update_available"; version?: string }
