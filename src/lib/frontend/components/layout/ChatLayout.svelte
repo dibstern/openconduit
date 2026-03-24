@@ -11,7 +11,7 @@
 	import MessageList from "../chat/MessageList.svelte";
 	import ConnectOverlay from "../overlays/ConnectOverlay.svelte";
 	import Banners from "../overlays/Banners.svelte";
-	import Toast from "../overlays/Toast.svelte";
+	import NotificationStack from "../overlays/NotificationStack.svelte";
 	import ImageLightbox from "../overlays/ImageLightbox.svelte";
 	import QrModal from "../overlays/QrModal.svelte";
 	import SettingsPanel from "../overlays/SettingsPanel.svelte";
@@ -22,7 +22,6 @@
 	import TerminalPanel from "../terminal/TerminalPanel.svelte";
 	import PlanMode from "../chat/PlanMode.svelte";
 	import FileViewer from "../file/FileViewer.svelte";
-	import AttentionBanner from "../permissions/AttentionBanner.svelte";
 	import {
 		uiState,
 		closeFileViewer,
@@ -536,9 +535,6 @@
 		<!-- Banners (update available, skip permissions, etc.) -->
 		<Banners />
 
-		<!-- Cross-session attention banner (permissions & questions from other sessions) -->
-		<AttentionBanner />
-
 		<!-- Todo Sticky Overlay -->
 		<TodoOverlay items={todoItems} />
 
@@ -605,9 +601,9 @@
 </div>
 <!-- /#layout -->
 
-<!-- Global overlays (outside layout for proper z-index stacking) -->
+<!-- Global overlays + notification stack (outside layout for proper z-index stacking) -->
 <ImageLightbox />
-<Toast />
+<NotificationStack />
 <QrModal visible={qrVisible} onClose={handleQrClose} />
 <SettingsPanel visible={settingsVisible} initialTab={settingsInitialTab} onClose={() => (settingsVisible = false)} />
 {#if featureFlags.debug}

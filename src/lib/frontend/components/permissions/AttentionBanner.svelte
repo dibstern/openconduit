@@ -72,7 +72,7 @@
 
 {#if visible}
 	<div
-		class="fixed top-16 right-4 z-[350] max-w-[320px] permission-notification-enter"
+		class="pointer-events-auto permission-notification-enter"
 		role="status"
 		aria-live="polite"
 	>
