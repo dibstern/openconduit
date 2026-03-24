@@ -6,7 +6,7 @@
 	import type { SessionInfo } from "../../types.js";
 	import { chatState } from "../../stores/chat.svelte.js";
 	import { sessionState } from "../../stores/session.svelte.js";
-	import { formatTimeAgo, truncateTitle } from "../../utils/format.js";
+	import { formatTimeAgo } from "../../utils/format.js";
 	import Icon from "../shared/Icon.svelte";
 
 	// ─── Props ──────────────────────────────────────────────────────────────────
@@ -56,7 +56,7 @@
 
 	// ─── Derived ────────────────────────────────────────────────────────────────
 
-	const displayTitle = $derived(truncateTitle(session.title || "New Session"));
+	const displayTitle = $derived(session.title || "New Session");
 	const timeAgo = $derived(formatTimeAgo(session.updatedAt));
 
 	const metaText = $derived.by(() => {

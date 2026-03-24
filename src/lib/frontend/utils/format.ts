@@ -46,12 +46,6 @@ export function formatTimeAgo(
 	return date.toLocaleDateString();
 }
 
-/** Truncate a string to maxLen characters, adding ellipsis if needed. */
-export function truncateTitle(title: string, maxLen = 40): string {
-	if (title.length <= maxLen) return title;
-	return `${title.slice(0, maxLen - 1)}…`;
-}
-
 /**
  * Generate a unique ID for messages, tools, etc.
  * Uses crypto.randomUUID if available, falls back to timestamp + random.

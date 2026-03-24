@@ -1,5 +1,5 @@
 // ─── Svelte Format Utilities — Unit Tests ────────────────────────────────────
-// Tests escapeHtml, formatFileSize, formatTimeAgo, truncateTitle, generateUuid.
+// Tests escapeHtml, formatFileSize, formatTimeAgo, generateUuid.
 
 import { describe, expect, test } from "vitest";
 import {
@@ -7,7 +7,6 @@ import {
 	formatFileSize,
 	formatTimeAgo,
 	generateUuid,
-	truncateTitle,
 } from "../../../src/lib/frontend/utils/format.js";
 
 // ─── escapeHtml ──────────────────────────────────────────────────────────────
@@ -167,46 +166,6 @@ describe("formatTimeAgo", () => {
 		// Recent timestamp should be "just now"
 		const result = formatTimeAgo(new Date().toISOString());
 		expect(result).toBe("just now");
-	});
-});
-
-// ─── truncateTitle ───────────────────────────────────────────────────────────
-
-describe("truncateTitle", () => {
-	test("returns short titles unchanged", () => {
-		expect(truncateTitle("Hello")).toBe("Hello");
-	});
-
-	test("returns title at exactly maxLen unchanged", () => {
-		const title = "a".repeat(40);
-		expect(truncateTitle(title)).toBe(title);
-	});
-
-	test("truncates title longer than default maxLen (40)", () => {
-		const title = "a".repeat(50);
-		const result = truncateTitle(title);
-		expect(result).toHaveLength(40);
-		expect(result.endsWith("…")).toBe(true);
-		expect(result).toBe(`${"a".repeat(39)}…`);
-	});
-
-	test("uses custom maxLen", () => {
-		const result = truncateTitle("abcdefghij", 5);
-		expect(result).toBe("abcd…");
-		expect(result).toHaveLength(5);
-	});
-
-	test("returns empty string unchanged", () => {
-		expect(truncateTitle("")).toBe("");
-	});
-
-	test("handles maxLen of 1", () => {
-		const result = truncateTitle("hello", 1);
-		expect(result).toBe("…");
-	});
-
-	test("handles single character title", () => {
-		expect(truncateTitle("x", 40)).toBe("x");
 	});
 });
 

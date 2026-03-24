@@ -2,10 +2,12 @@
 // Tests groupIntoTurns, findPageBoundary, historyToChatMessages, applyHistoryQueuedFlag.
 
 import { describe, expect, test } from "vitest";
+import { splitAtForkPoint } from "../../../src/lib/frontend/utils/fork-split.js";
 import type { HistoryMessage } from "../../../src/lib/frontend/utils/history-logic.js";
 import {
 	findPageBoundary,
 	groupIntoTurns,
+	historyToChatMessages,
 } from "../../../src/lib/frontend/utils/history-logic.js";
 
 // ─── Helper factories ────────────────────────────────────────────────────────
@@ -295,11 +297,6 @@ describe("groupIntoTurns with OpenCode normalized messages", () => {
 
 // ─── messageId propagation (fork-split dependency) ───────────────────────────
 
-import {
-	historyToChatMessages,
-} from "../../../src/lib/frontend/utils/history-logic.js";
-import { splitAtForkPoint } from "../../../src/lib/frontend/utils/fork-split.js";
-
 describe("historyToChatMessages — messageId propagation", () => {
 	test("assistant messages carry the HistoryMessage id as messageId", () => {
 		const history: HistoryMessage[] = [
@@ -317,8 +314,10 @@ describe("historyToChatMessages — messageId propagation", () => {
 		const chatMsgs = historyToChatMessages(history);
 		const assistantMsg = chatMsgs.find((m) => m.type === "assistant");
 		expect(assistantMsg).toBeDefined();
-		expect("messageId" in assistantMsg!).toBe(true);
-		expect((assistantMsg as { messageId?: string }).messageId).toBe("msg_asst1");
+		expect(assistantMsg && "messageId" in assistantMsg).toBe(true);
+		expect((assistantMsg as { messageId?: string }).messageId).toBe(
+			"msg_asst1",
+		);
 	});
 
 	test("only first text part of an assistant message gets messageId", () => {
@@ -335,8 +334,10 @@ describe("historyToChatMessages — messageId propagation", () => {
 		const chatMsgs = historyToChatMessages(history);
 		const assistants = chatMsgs.filter((m) => m.type === "assistant");
 		expect(assistants).toHaveLength(2);
-		expect((assistants[0] as { messageId?: string }).messageId).toBe("msg_multi");
-		expect("messageId" in assistants[1]!).toBe(false);
+		expect((assistants[0] as { messageId?: string }).messageId).toBe(
+			"msg_multi",
+		);
+		expect(assistants[1] && "messageId" in assistants[1]).toBe(false);
 	});
 });
 
@@ -396,6 +397,6 @@ describe("fork split with history-loaded messages", () => {
 
 		const split = splitAtForkPoint(chatMsgs, "msg_a1");
 		expect(split.current).toHaveLength(1);
-		expect(split.current[0]!.type).toBe("user");
+		expect(split.current[0]?.type).toBe("user");
 	});
 });
