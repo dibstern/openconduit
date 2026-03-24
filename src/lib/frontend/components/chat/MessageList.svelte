@@ -57,20 +57,16 @@
 	}
 
 	// ─── Scroll to bottom on session change ───────────────────────────────
-	// When switching sessions, scroll to bottom once after messages load.
-	// This is separate from the live auto-scroll $effect so that inactive
-	// sessions (processing=false, streaming=false) still show their latest
-	// messages on initial load without continuously fighting the user's
-	// scroll position afterward.
+	// When switching sessions, scroll to bottom and keep scrolling for up
+	// to ~1s while deferred markdown rendering changes element heights.
+	// A wheel/touchmove from the user aborts settling immediately so
+	// intentional scroll-up is never overridden.
 	let lastScrolledSessionId = "";
 
 	$effect(() => {
 		const sid = sessionState.currentId ?? "";
 		const msgCount = chatState.messages.length;
 
-		// When messages are cleared (e.g. server session_switched replays after
-		// an optimistic cache restore), reset tracking so scroll-to-bottom fires
-		// again once replay/history finishes loading.
 		if (msgCount === 0) {
 			lastScrolledSessionId = "";
 			return;
@@ -78,15 +74,27 @@
 
 		if (sid && sid !== lastScrolledSessionId) {
 			lastScrolledSessionId = sid;
-			tick().then(() => {
-				if (!messagesEl) return;
+			setUserScrolledUp(false);
+
+			let frames = 0;
+			let aborted = false;
+			const abort = () => { aborted = true; };
+			messagesEl?.addEventListener("wheel", abort, { once: true, passive: true });
+			messagesEl?.addEventListener("touchmove", abort, { once: true, passive: true });
+
+			function settle() {
+				if (!messagesEl || frames++ > 60 || aborted) {
+					messagesEl?.removeEventListener("wheel", abort);
+					messagesEl?.removeEventListener("touchmove", abort);
+					return;
+				}
 				messagesEl.scrollTop = messagesEl.scrollHeight;
-				setUserScrolledUp(false);
-				requestAnimationFrame(() => {
-					if (messagesEl) {
-						messagesEl.scrollTop = messagesEl.scrollHeight;
-					}
-				});
+				requestAnimationFrame(settle);
+			}
+
+			tick().then(() => {
+				if (messagesEl) messagesEl.scrollTop = messagesEl.scrollHeight;
+				requestAnimationFrame(settle);
 			});
 		}
 	});
