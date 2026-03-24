@@ -1,12 +1,18 @@
 import type { Meta, StoryObj } from "@storybook/svelte-vite";
+import { permissionsState } from "../../stores/permissions.svelte.js";
 import { uiState } from "../../stores/ui.svelte.js";
 import type { Toast as ToastType } from "../../types.js";
-import Toast from "./Toast.svelte";
+import NotificationStack from "./NotificationStack.svelte";
 
 const meta = {
 	title: "Overlays/Toast",
-	component: Toast,
-} satisfies Meta<Toast>;
+	component: NotificationStack,
+	beforeEach: () => {
+		uiState.toasts = [];
+		permissionsState.pendingPermissions = [];
+		permissionsState.remoteQuestionSessions = new Set();
+	},
+} satisfies Meta<typeof NotificationStack>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
