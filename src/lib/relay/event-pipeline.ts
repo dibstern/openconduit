@@ -146,12 +146,12 @@ export function applyPipelineResult(
 	sessionId: string | undefined,
 	deps: PipelineDeps,
 ): void {
-	if (result.fullContent !== undefined && sessionId) {
-		deps.toolContentStore.store(
-			(result.msg as { id: string }).id,
-			result.fullContent,
-			sessionId,
-		);
+	if (
+		result.fullContent !== undefined &&
+		sessionId &&
+		result.msg.type === "tool_result"
+	) {
+		deps.toolContentStore.store(result.msg.id, result.fullContent, sessionId);
 	}
 	if (result.timeout === "clear" && sessionId) {
 		deps.overrides.clearProcessingTimeout(sessionId);
@@ -164,7 +164,7 @@ export function applyPipelineResult(
 	if (result.route.action === "send") {
 		deps.wsHandler.sendToSession(result.route.sessionId, result.msg);
 	} else {
-		deps.log.verbose(
+		deps.log.info(
 			`${result.route.reason} — ${result.msg.type} (${result.source})`,
 		);
 	}

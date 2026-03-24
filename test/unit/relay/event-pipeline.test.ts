@@ -236,10 +236,12 @@ function makeDeps(): PipelineDeps & {
 	log: ReturnType<typeof createSilentLogger> & {
 		debug: ReturnType<typeof vi.fn>;
 		verbose: ReturnType<typeof vi.fn>;
+		info: ReturnType<typeof vi.fn>;
 	};
 } {
 	const debugSpy = vi.fn();
 	const verboseSpy = vi.fn();
+	const infoSpy = vi.fn();
 	return {
 		toolContentStore: { store: vi.fn() },
 		overrides: {
@@ -248,7 +250,12 @@ function makeDeps(): PipelineDeps & {
 		},
 		messageCache: { recordEvent: vi.fn() },
 		wsHandler: { sendToSession: vi.fn() },
-		log: { ...createSilentLogger(), debug: debugSpy, verbose: verboseSpy },
+		log: {
+			...createSilentLogger(),
+			debug: debugSpy,
+			verbose: verboseSpy,
+			info: infoSpy,
+		},
 	};
 }
 
@@ -384,9 +391,23 @@ describe("applyPipelineResult", () => {
 		};
 		applyPipelineResult(result, "ses_abc", deps);
 		expect(deps.wsHandler.sendToSession).not.toHaveBeenCalled();
-		expect(deps.log.verbose).toHaveBeenCalledWith(
+		expect(deps.log.info).toHaveBeenCalledWith(
 			"no viewers for session ses_abc — delta (sse)",
 		);
+	});
+
+	it("does not store fullContent when msg is not a tool_result", () => {
+		const deps = makeDeps();
+		const result: PipelineResult = {
+			msg: { type: "delta", text: "hi" },
+			fullContent: "some content that somehow got set",
+			route: { action: "send", sessionId: "ses_abc" },
+			cache: true,
+			timeout: "reset",
+			source: "sse",
+		};
+		applyPipelineResult(result, "ses_abc", deps);
+		expect(deps.toolContentStore.store).not.toHaveBeenCalled();
 	});
 
 	it("skips timeout actions when no sessionId", () => {
