@@ -4,7 +4,7 @@
 
 **Goal:** Make every background async operation in the daemon trackable, cancellable, and awaitable — by construction, not convention — so `stop()` fully cleans up and tests never hang.
 
-**Architecture:** A `TrackedService` base class wraps `setInterval`, `setTimeout`, `fetch`, and fire-and-forget promises into tracked versions. A `ServiceRegistry` collects all `TrackedService` instances for bulk drain. The `Daemon` and its child services (PortScanner, InstanceManager, VersionChecker, StorageMonitor, KeepAwake) extend `TrackedService`. `Daemon.stop()` calls `registry.drainAll()` — one call, everything cleaned up.
+**Architecture:** A `TrackedService` base class wraps `setInterval`, `setTimeout`, `fetch`, and fire-and-forget promises into tracked versions. A `ServiceRegistry` collects all `TrackedService` instances for bulk drain. The Daemon's child services (PortScanner, InstanceManager, VersionChecker, StorageMonitor, KeepAwake) extend `TrackedService`. The Daemon itself does NOT extend TrackedService — it owns a `serviceRegistry` field (for child services) and a plain `AsyncTracker` (for its own fire-and-forget promises). `Daemon.stop()` calls `serviceRegistry.drainAll()` then `tracker.drain()` — everything cleaned up.
 
 **Tech Stack:** Node.js EventEmitter, AbortController, Vitest, fast-check
 
@@ -28,7 +28,7 @@
 ```ts
 // test/unit/daemon/async-tracker.test.ts
 import { describe, it, expect, vi } from "vitest";
-import { AsyncTracker } from "../../src/lib/daemon/async-tracker.js";
+import { AsyncTracker } from "../../../src/lib/daemon/async-tracker.js";
 
 describe("AsyncTracker", () => {
     it("track() registers and unregisters a promise", async () => {
@@ -113,6 +113,24 @@ describe("AsyncTracker", () => {
         await tracker.drain();
         expect(signal.aborted).toBe(true);
     });
+
+    it("track() throws after drain()", async () => {
+        const tracker = new AsyncTracker();
+        await tracker.drain();
+        expect(() => tracker.track(Promise.resolve())).toThrow("Cannot track after drain");
+    });
+
+    it("interval() throws after drain()", async () => {
+        const tracker = new AsyncTracker();
+        await tracker.drain();
+        expect(() => tracker.interval(() => {}, 100)).toThrow("Cannot track after drain");
+    });
+
+    it("timeout() throws after drain()", async () => {
+        const tracker = new AsyncTracker();
+        await tracker.drain();
+        expect(() => tracker.timeout(() => {}, 100)).toThrow("Cannot track after drain");
+    });
 });
 ```
 
@@ -129,6 +147,7 @@ export class AsyncTracker {
     private controller = new AbortController();
     private pending = new Set<Promise<unknown>>();
     private timers = new Set<ReturnType<typeof setInterval>>();
+    private drained = false;
 
     /** AbortSignal that is aborted on drain(). Pass to fetch() etc. */
     get signal(): AbortSignal {
@@ -147,6 +166,7 @@ export class AsyncTracker {
 
     /** Track a promise. It is removed from the set when it settles. */
     track<T>(promise: Promise<T>): Promise<T> {
+        if (this.drained) throw new Error("Cannot track after drain");
         this.pending.add(promise);
         promise.finally(() => this.pending.delete(promise));
         return promise;
@@ -154,6 +174,7 @@ export class AsyncTracker {
 
     /** Create a tracked setInterval. Cleared automatically on drain(). */
     interval(fn: () => void, ms: number): ReturnType<typeof setInterval> {
+        if (this.drained) throw new Error("Cannot track after drain");
         const id = setInterval(fn, ms);
         this.timers.add(id);
         return id;
@@ -161,6 +182,7 @@ export class AsyncTracker {
 
     /** Create a tracked setTimeout. Self-removes when it fires. Cleared on drain(). */
     timeout(fn: () => void, ms: number): ReturnType<typeof setTimeout> {
+        if (this.drained) throw new Error("Cannot track after drain");
         const id = setTimeout(() => {
             this.timers.delete(id);
             fn();
@@ -178,6 +200,7 @@ export class AsyncTracker {
 
     /** Abort the signal, clear all timers, and await all pending promises. */
     async drain(): Promise<void> {
+        this.drained = true;
         this.controller.abort();
         for (const id of this.timers) {
             clearInterval(id);
@@ -195,8 +218,8 @@ export class AsyncTracker {
 ```ts
 // test/unit/daemon/tracked-service.test.ts
 import { describe, it, expect, vi } from "vitest";
-import { TrackedService } from "../../src/lib/daemon/tracked-service.js";
-import { ServiceRegistry } from "../../src/lib/daemon/service-registry.js";
+import { TrackedService } from "../../../src/lib/daemon/tracked-service.js";
+import { ServiceRegistry } from "../../../src/lib/daemon/service-registry.js";
 
 // Concrete implementation for testing
 class TestService extends TrackedService<{ tick: [count: number] }> {
@@ -251,6 +274,15 @@ describe("TrackedService", () => {
         const svc = new TestService(registry);
         await svc.drain();
         await expect(svc.doFetch("http://localhost:1")).rejects.toThrow();
+    });
+
+    it("fetch() merges caller signal with tracker signal", async () => {
+        const registry = new ServiceRegistry();
+        const svc = new TestService(registry);
+        const callerController = new AbortController();
+        callerController.abort();
+        // Caller signal is already aborted — fetch should reject even though tracker is still active
+        await expect(svc.doFetch("http://localhost:1")).rejects.toThrow(); // baseline
     });
 
     it("preserves EventEmitter functionality", () => {
@@ -315,10 +347,13 @@ export abstract class TrackedService<
         registry.register(this);
     }
 
-    /** fetch() with automatic abort signal and promise tracking. */
+    /** fetch() with automatic abort signal and promise tracking. Merges caller signal with tracker signal. */
     protected fetch(url: string, init?: RequestInit): Promise<Response> {
+        const signal = init?.signal
+            ? AbortSignal.any([this._tracker.signal, init.signal])
+            : this._tracker.signal;
         return this._tracker.track(
-            fetch(url, { ...init, signal: this._tracker.signal }),
+            fetch(url, { ...init, signal }),
         );
     }
 
@@ -394,8 +429,9 @@ git commit -m "feat: add AsyncTracker, TrackedService, and ServiceRegistry for l
 
 **Files:**
 - Modify: `src/lib/daemon/port-scanner.ts`
-- Modify: `src/lib/daemon/daemon.ts` (pass registry to PortScanner)
+- Modify: `src/lib/daemon/daemon.ts` (pass serviceRegistry to PortScanner)
 - Modify: `test/unit/daemon/port-scanner.test.ts`
+- Modify: `test/unit/daemon/daemon-scanner.test.ts`
 
 **Changes:**
 
@@ -403,9 +439,11 @@ git commit -m "feat: add AsyncTracker, TrackedService, and ServiceRegistry for l
 2. Constructor adds `registry: ServiceRegistry` as first parameter, calls `super(registry)`
 3. `start()` replaces `this.timer = setInterval(...)` with `this.timer = this.repeating(...)`
 4. `stop()` replaces `clearInterval(this.timer)` with `this.clearTrackedTimer(this.timer)` (keeps the manual stop for API compat)
-5. In `daemon.ts`, pass `this.registry` to `new PortScanner(this.registry, config, probeFn)`
+5. In `daemon.ts`, pass `this.serviceRegistry` to `new PortScanner(this.serviceRegistry, config, probeFn)`
 
-**Tests to update:**
+**Test files to update:**
+- `test/unit/daemon/port-scanner.test.ts`
+- `test/unit/daemon/daemon-scanner.test.ts`
 - All tests that construct `new PortScanner(config, probeFn)` now need a registry: `new PortScanner(new ServiceRegistry(), config, probeFn)`
 - Add test: after `drain()`, interval no longer fires
 - Add test: in-flight `scan()` fetch is aborted by drain
@@ -451,9 +489,9 @@ Remove `import { EventEmitter } from "node:events"`.
 
 **Step 4: Update daemon.ts**
 
-In `start()`, where `PortScanner` is constructed, pass `this.registry`:
+In `start()`, where `PortScanner` is constructed, pass `this.serviceRegistry`:
 ```ts
-this.scanner = new PortScanner(this.registry, scannerConfig, probeFn);
+this.scanner = new PortScanner(this.serviceRegistry, scannerConfig, probeFn);
 ```
 
 **Step 5: Run tests, verify, commit**
@@ -470,8 +508,9 @@ git commit -m "refactor: PortScanner extends TrackedService"
 
 **Files:**
 - Modify: `src/lib/daemon/version-check.ts`
-- Modify: `src/lib/daemon/daemon.ts` (pass registry)
-- Modify: `test/unit/daemon/version-check.test.ts`
+- Modify: `src/lib/daemon/tracked-service.ts` (add `protected get abortSignal()` getter)
+- Modify: `src/lib/daemon/daemon.ts` (pass serviceRegistry)
+- Modify: `test/unit/daemon/version-check.test.ts` (22 constructor calls)
 
 **Changes:**
 
@@ -495,7 +534,9 @@ Then in `check()`:
 const latest = await fetchLatestVersion(this.packageName, this.registryUrl, this.fetchFn, this.abortSignal);
 ```
 
-**Tests:** Update all `new VersionChecker(options)` to `new VersionChecker(new ServiceRegistry(), options)`.
+**Test files to update:**
+- `test/unit/daemon/version-check.test.ts` (22 constructor calls)
+- All `new VersionChecker(options)` → `new VersionChecker(new ServiceRegistry(), options)`
 
 **Step 1-5: Same TDD pattern as Task 2.**
 
@@ -509,8 +550,9 @@ git commit -m "refactor: VersionChecker extends TrackedService with abort signal
 
 **Files:**
 - Modify: `src/lib/daemon/storage-monitor.ts`
-- Modify: `src/lib/daemon/daemon.ts` (pass registry)
+- Modify: `src/lib/daemon/daemon.ts` (pass serviceRegistry)
 - Modify: `test/unit/daemon/storage-monitor.test.ts`
+- Modify: `test/unit/daemon/daemon-eviction-chain.test.ts`
 
 **Changes:**
 
@@ -520,7 +562,10 @@ git commit -m "refactor: VersionChecker extends TrackedService with abort signal
 4. `stop()` uses `this.clearTrackedTimer(this.timer)`
 5. Remove `.unref()` call — drain handles cleanup now (unref was a workaround for the exact problem we're fixing)
 
-**Tests:** Update constructors, add drain test.
+**Test files to update:**
+- `test/unit/daemon/storage-monitor.test.ts`
+- `test/unit/daemon/daemon-eviction-chain.test.ts`
+- Update constructors, add drain test.
 
 ```bash
 git commit -m "refactor: StorageMonitor extends TrackedService"
@@ -532,8 +577,13 @@ git commit -m "refactor: StorageMonitor extends TrackedService"
 
 **Files:**
 - Modify: `src/lib/instance/instance-manager.ts`
-- Modify: `src/lib/daemon/daemon.ts` (pass registry)
+- Modify: `src/lib/daemon/daemon.ts` (pass serviceRegistry)
 - Modify: `test/unit/instance/instance-manager.test.ts`
+- Modify: `test/unit/instance/instance-lifecycle.test.ts`
+- Modify: `test/unit/instance/instance-types.test.ts`
+- Modify: `test/unit/instance/instance-performance.test.ts`
+- Modify: `test/unit/instance/instance-state-machine.test.ts`
+- Modify: `test/unit/instance/instance-concurrency.test.ts`
 
 **Changes:**
 
@@ -568,7 +618,14 @@ This ensures unmanaged instances (which start as "stopped" but have health polli
 
 Option (b) is cleaner. Move the health check logic from the lambda in `daemon.ts:302-320` into `InstanceManager` and use `this.fetch()`.
 
-**Tests:** Update all constructors. Add test that `stopAll()` clears health polling for instances with status "stopped". Add test that health check fetch is aborted on drain.
+**Test files to update (~22 constructor calls across these files):**
+- `test/unit/instance/instance-manager.test.ts`
+- `test/unit/instance/instance-lifecycle.test.ts`
+- `test/unit/instance/instance-types.test.ts`
+- `test/unit/instance/instance-performance.test.ts`
+- `test/unit/instance/instance-state-machine.test.ts`
+- `test/unit/instance/instance-concurrency.test.ts`
+- Add test that `stopAll()` clears health polling for instances with status "stopped". Add test that health check fetch is aborted on drain.
 
 ```bash
 git commit -m "refactor: InstanceManager extends TrackedService; fix stopAll() to clear all intervals"
@@ -580,8 +637,8 @@ git commit -m "refactor: InstanceManager extends TrackedService; fix stopAll() t
 
 **Files:**
 - Modify: `src/lib/daemon/keep-awake.ts`
-- Modify: `src/lib/daemon/daemon.ts` (pass registry)
-- Modify: `test/unit/daemon/keep-awake.test.ts`
+- Modify: `src/lib/daemon/daemon.ts` (pass serviceRegistry — TWO construction sites)
+- Modify: `test/unit/daemon/keep-awake.test.ts` (54 constructor calls)
 
 **Changes:**
 
@@ -589,8 +646,13 @@ git commit -m "refactor: InstanceManager extends TrackedService; fix stopAll() t
 2. Constructor adds `registry: ServiceRegistry` as first parameter
 3. The child process spawn is not a timer/fetch — it stays as-is (process.kill for cleanup is already correct)
 4. `drain()` override: call `this.deactivate()` then `super.drain()` — ensure the child process is killed during drain
+5. **Two construction sites in daemon.ts:**
+   - The main construction in `start()` — pass `this.serviceRegistry`
+   - `daemon.ts:1475` in the `setKeepAwakeCommand` IPC handler also constructs `new KeepAwake(...)` — must pass `this.serviceRegistry`
 
-**Tests:** Update all constructors. This is the most test-heavy file — all T1-T19 tests need `new ServiceRegistry()` passed.
+**Test files to update:**
+- `test/unit/daemon/keep-awake.test.ts` (54 constructor calls)
+- All T1-T19 tests need `new ServiceRegistry()` passed.
 
 ```bash
 git commit -m "refactor: KeepAwake extends TrackedService"
@@ -598,7 +660,38 @@ git commit -m "refactor: KeepAwake extends TrackedService"
 
 ---
 
-### Task 7: SessionStatusPoller extends TrackedService
+### Task 7: Wire ServiceRegistry through relay-stack
+
+**Files:**
+- Modify: `src/lib/relay/relay-stack.ts` (accept registry in config, pass to all services)
+- Modify: `src/lib/daemon/daemon.ts` (pass serviceRegistry to createProjectRelay)
+- Modify: `src/bin/cli-core.ts` (standalone `createRelayStack()` path)
+- Modify: relevant tests
+
+**Changes:**
+
+1. Add `registry: ServiceRegistry` to `ProjectRelayConfig`
+2. In `createProjectRelay()`, pass `config.registry` to all TrackedService constructors:
+   - `new SSEConsumer(config.registry, ...)`
+   - `new SessionStatusPoller(config.registry, ...)`
+   - `new MessagePollerManager(config.registry, ...)`
+   - `new WebSocketHandler(config.registry, ...)`
+   - `new SessionOverrides(config.registry)`
+   - `new RelayTimers(config.registry, ...)`
+3. In `daemon.ts`, where `createRelay` lambda is defined for `ProjectRegistry.add()`, include `registry: this.serviceRegistry` in the relay config
+4. **Standalone path:** `createRelayStack()` in `cli-core.ts` also calls `createProjectRelay()`. It needs a ServiceRegistry too. Either create one locally for standalone mode, or make the registry parameter optional with a fallback that creates a local one.
+
+**Why this must come first:** This task establishes the registry parameter plumbing in relay-stack.ts. Each subsequent relay service task (8-15) then changes the constructor signature and the relay-stack construction site together in one commit.
+
+**Tests:** Update relay-stack integration tests. Verify that `registry.drainAll()` drains relay services.
+
+```bash
+git commit -m "feat: wire ServiceRegistry through relay-stack to all relay services"
+```
+
+---
+
+### Task 8: SessionStatusPoller extends TrackedService
 
 **Files:**
 - Modify: `src/lib/session/session-status-poller.ts`
@@ -621,7 +714,7 @@ git commit -m "refactor: SessionStatusPoller extends TrackedService"
 
 ---
 
-### Task 8: MessagePoller extends TrackedService
+### Task 9: MessagePoller extends TrackedService
 
 **Files:**
 - Modify: `src/lib/relay/message-poller.ts`
@@ -644,7 +737,7 @@ git commit -m "refactor: MessagePoller extends TrackedService"
 
 ---
 
-### Task 9: MessagePollerManager extends TrackedService
+### Task 10: MessagePollerManager extends TrackedService
 
 **Files:**
 - Modify: `src/lib/relay/message-poller-manager.ts`
@@ -653,8 +746,8 @@ git commit -m "refactor: MessagePoller extends TrackedService"
 **Changes:**
 
 1. `extends EventEmitter<MessagePollerManagerEvents>` → `extends TrackedService<MessagePollerManagerEvents>`
-2. Constructor adds `registry: ServiceRegistry` as first parameter, stores it
-3. `startPolling()` passes the registry to `new MessagePoller(this.registry, options)` when creating child pollers
+2. Constructor adds `registry: ServiceRegistry` as first parameter, stores it as `this.serviceRegistry` (use this field name to avoid collision with the parent's private `_tracker` or any inherited fields)
+3. `startPolling()` passes the registry to `new MessagePoller(this.serviceRegistry, options)` when creating child pollers
 4. `stopAll()` calls `poller.stopPolling()` + `poller.removeAllListeners()` as before — individual poller cleanup is still needed for per-session teardown. The registry is the safety net.
 5. Override `drain()`: call `this.stopAll()` then `super.drain()` — ensures all child pollers are stopped before the manager drains.
 
@@ -666,7 +759,7 @@ git commit -m "refactor: MessagePollerManager extends TrackedService"
 
 ---
 
-### Task 10: SSEConsumer extends TrackedService
+### Task 11: SSEConsumer extends TrackedService
 
 **Files:**
 - Modify: `src/lib/relay/sse-consumer.ts`
@@ -677,7 +770,13 @@ git commit -m "refactor: MessagePollerManager extends TrackedService"
 1. `extends EventEmitter<SSEConsumerEvents>` → `extends TrackedService<SSEConsumerEvents>`
 2. Constructor adds `registry: ServiceRegistry` as first parameter
 3. `connect()`: `this.startStream().catch(...)` → `this.tracked(this.startStream().catch(...))`
-4. `scheduleReconnect()`: `this.reconnectTimer = setTimeout(...)` → `this.reconnectTimer = this.delayed(...)`
+4. `scheduleReconnect()`: `this.reconnectTimer = setTimeout(...)` → `this.reconnectTimer = this.delayed(...)`. The delayed callback calls `this.startStream()` — wrap it to track the resulting promise:
+   ```ts
+   this.reconnectTimer = this.delayed(() => {
+       this.reconnectTimer = null;
+       this.tracked(this.startStream().catch(/* existing error handler */));
+   }, delay);
+   ```
 5. `disconnect()`: `clearTimeout(this.reconnectTimer)` → `this.clearTrackedTimer(this.reconnectTimer)`
 6. **SSE fetch already has its own AbortController** (`this.abortController`). Keep it — the consumer manages its own stream lifecycle. The TrackedService's abort signal is a separate concern (daemon shutdown). Override `drain()`: call `this.disconnect()` then `super.drain()`.
 7. `startStream()`: The `fetch()` call already uses `this.abortController.signal`. No change needed — `disconnect()` aborts it, and `drain()` calls `disconnect()`.
@@ -690,7 +789,7 @@ git commit -m "refactor: SSEConsumer extends TrackedService"
 
 ---
 
-### Task 11: WebSocketHandler extends TrackedService
+### Task 12: WebSocketHandler extends TrackedService
 
 **Files:**
 - Modify: `src/lib/server/ws-handler.ts`
@@ -714,7 +813,7 @@ git commit -m "refactor: WebSocketHandler extends TrackedService"
 
 ---
 
-### Task 12: SessionOverrides extends TrackedService
+### Task 13: SessionOverrides extends TrackedService
 
 **Files:**
 - Modify: `src/lib/session/session-overrides.ts`
@@ -739,22 +838,34 @@ git commit -m "refactor: SessionOverrides extends TrackedService"
 
 ---
 
-### Task 13: ProjectRegistry extends TrackedService
+### Task 14: ProjectRegistry extends TrackedService
 
 **Files:**
 - Modify: `src/lib/daemon/project-registry.ts`
-- Modify: `test/unit/daemon/project-registry.test.ts` (or equivalent)
+- Modify: `test/unit/daemon/project-registry.test.ts` (~48 constructor calls)
+- Modify: `src/lib/daemon/daemon.ts` (1 production construction site — handled in Task 16)
 
 **Changes:**
 
 1. `extends EventEmitter<ProjectRegistryEvents>` → `extends TrackedService<ProjectRegistryEvents>`
 2. Add constructor that takes `registry: ServiceRegistry`, calls `super(registry)`
 3. `add()` and `startRelay()`: The `createRelay(ac.signal).then(...)` fire-and-forget promises → wrap with `this.tracked(...)`
-4. `waitForRelay()`: The `setTimeout(timeoutMs)` inside the promise → `this.delayed(...)`
+4. `waitForRelay()`: Keep the raw `setTimeout` inside the Promise constructor unchanged — it needs to reject the promise. Instead, wrap the outer Promise with `this.tracked()` so drain awaits it:
+   ```ts
+   waitForRelay(...): Promise<ProjectRelay> {
+       return this.tracked(new Promise((resolve, reject) => {
+           // ... existing implementation with raw setTimeout unchanged ...
+       }));
+   }
+   ```
 5. The existing `AbortController` pattern for relay creation stays — it's per-operation lifecycle, separate from drain.
 6. Override `drain()`: call `this.stopAll()` then `super.drain()` — abort all pending relay creations, stop all running relays, then drain tracked promises.
 
-**Tests:** Update constructors. Add test that drain stops all relays and aborts pending creations.
+**Note:** The constructor must accept `ServiceRegistry`. The current `readonly registry = new ProjectRegistry()` inline initializer in `daemon.ts` must be changed to initialize in the constructor body AFTER `this.serviceRegistry` is created — this is handled in Task 16.
+
+**Test files to update:**
+- `test/unit/daemon/project-registry.test.ts` (~48 constructor calls)
+- Update constructors. Add test that drain stops all relays and aborts pending creations.
 
 ```bash
 git commit -m "refactor: ProjectRegistry extends TrackedService"
@@ -762,7 +873,7 @@ git commit -m "refactor: ProjectRegistry extends TrackedService"
 
 ---
 
-### Task 14: Relay-stack timers wrapped in RelayTimers TrackedService
+### Task 15: Relay-stack timers wrapped in RelayTimers TrackedService
 
 **Files:**
 - Create: `src/lib/relay/relay-timers.ts`
@@ -825,34 +936,7 @@ git commit -m "refactor: relay-stack timers wrapped in RelayTimers TrackedServic
 
 ---
 
-### Task 15: Wire ServiceRegistry through relay-stack
-
-**Files:**
-- Modify: `src/lib/relay/relay-stack.ts` (accept registry in config, pass to all services)
-- Modify: `src/lib/daemon/daemon.ts` (pass registry to createProjectRelay)
-- Modify: relevant tests
-
-**Changes:**
-
-1. Add `registry: ServiceRegistry` to `ProjectRelayConfig`
-2. In `createProjectRelay()`, pass `config.registry` to all TrackedService constructors:
-   - `new SSEConsumer(config.registry, ...)`
-   - `new SessionStatusPoller(config.registry, ...)`
-   - `new MessagePollerManager(config.registry, ...)`
-   - `new WebSocketHandler(config.registry, ...)`
-   - `new SessionOverrides(config.registry)`
-   - `new RelayTimers(config.registry, ...)`
-3. In `daemon.ts`, where `createRelay` lambda is defined for `ProjectRegistry.add()`, include `registry: this.registry` in the relay config
-
-**Tests:** Update relay-stack integration tests. Verify that `registry.drainAll()` drains relay services.
-
-```bash
-git commit -m "feat: wire ServiceRegistry through relay-stack to all relay services"
-```
-
----
-
-### Task 16: Daemon extends TrackedService + uses ServiceRegistry
+### Task 16: Daemon uses ServiceRegistry + AsyncTracker (does NOT extend TrackedService)
 
 **Files:**
 - Modify: `src/lib/daemon/daemon.ts`
@@ -860,35 +944,58 @@ git commit -m "feat: wire ServiceRegistry through relay-stack to all relay servi
 
 **Changes:**
 
-1. `class Daemon` → `class Daemon extends TrackedService`
-2. Constructor creates `ServiceRegistry`, passes to `super(registry)`, stores `this.registry = registry`
+Daemon does **NOT** extend TrackedService. It is a plain class that owns two lifecycle primitives directly:
 
-```ts
-export class Daemon extends TrackedService {
-    private registry: ServiceRegistry;
+1. Add fields:
+   ```ts
+   private serviceRegistry = new ServiceRegistry();
+   private tracker = new AsyncTracker();
+   private shutdownTimer: ReturnType<typeof setTimeout> | null = null;
+   ```
 
-    constructor(options?: DaemonOptions) {
-        const registry = new ServiceRegistry();
-        super(registry);
-        this.registry = registry;
-        // ... rest of existing constructor
-    }
-}
-```
+2. **Initialize ProjectRegistry in constructor body** (not as an inline initializer):
+   The current `readonly registry = new ProjectRegistry()` inline initializer must move into the constructor body, AFTER `this.serviceRegistry` is created:
+   ```ts
+   constructor(options?: DaemonOptions) {
+       // ... existing setup ...
+       this.serviceRegistry = new ServiceRegistry();
+       this.tracker = new AsyncTracker();
+       this.registry = new ProjectRegistry(this.serviceRegistry);
+       // ... rest of existing constructor
+   }
+   ```
+   Note: `this.registry` (ProjectRegistry) keeps its name. `this.serviceRegistry` (ServiceRegistry) is the new field.
 
 3. In `start()`, replace fire-and-forget patterns:
-   - `void this.discoverProjects().catch(...)` → `this.tracked(this.discoverProjects().catch(...))`
-   - `void this.scanner.scan()` → `this.tracked(this.scanner.scan())`
+   - `void this.discoverProjects().catch(...)` → `this.tracker.track(this.discoverProjects().catch(...))`
+   - `void this.scanner.scan()` → `this.tracker.track(this.scanner.scan())`
 
-4. Replace the untracked shutdown timeout:
-   - `setTimeout(() => this.stop(), DAEMON_SHUTDOWN_DELAY_MS)` → `this.delayed(() => this.stop(), DAEMON_SHUTDOWN_DELAY_MS)` and store the timer ID so it can be cleared if `stop()` is called through another path
+4. Pass `this.serviceRegistry` to all child service constructors:
+   - `new PortScanner(this.serviceRegistry, ...)`
+   - `new VersionChecker(this.serviceRegistry, ...)`
+   - `new StorageMonitor(this.serviceRegistry, ...)`
+   - `new InstanceManager(this.serviceRegistry, ...)`
+   - `new KeepAwake(this.serviceRegistry, ...)` (both construction sites — see Task 6)
+   - `new ProjectRegistry(this.serviceRegistry)` (moved to constructor body — see above)
 
-5. **Rewrite `stop()`:**
+5. **Track the shutdown timeout** (daemon.ts:1487):
+   The `scheduleShutdown` in the IPC handler uses raw `setTimeout`. Since Daemon does not extend TrackedService, use raw `setTimeout` with manual tracking:
+   ```ts
+   // In the IPC handler:
+   this.shutdownTimer = setTimeout(() => this.stop(), DAEMON_SHUTDOWN_DELAY_MS);
+   // In stop():
+   if (this.shutdownTimer) { clearTimeout(this.shutdownTimer); this.shutdownTimer = null; }
+   ```
+
+6. **Rewrite `stop()`:**
 
 ```ts
 async stop(): Promise<void> {
     if (this.shuttingDown) return;
     this.shuttingDown = true;
+
+    // Clear shutdown timer if stop() called through another path
+    if (this.shutdownTimer) { clearTimeout(this.shutdownTimer); this.shutdownTimer = null; }
 
     // Remove signal handlers
     removeSignalHandlers();
@@ -897,10 +1004,20 @@ async stop(): Promise<void> {
     saveDaemonConfig(this.buildConfig(), this.configDir);
 
     // Drain ALL tracked services (PortScanner, InstanceManager, VersionChecker,
-    // StorageMonitor, KeepAwake, and Daemon's own tracked promises).
+    // StorageMonitor, KeepAwake, ProjectRegistry, and all relay services).
     // This aborts all in-flight fetch, clears all intervals/timeouts,
     // and waits for pending promises to settle.
-    await this.registry.drainAll();
+    await this.serviceRegistry.drainAll();
+
+    // Drain Daemon's own tracked promises (discoverProjects, scanner.scan, etc.)
+    await this.tracker.drain();
+
+    // Null out service references to prevent zombie usage after drain
+    this.scanner = null;
+    this.versionChecker = null;
+    this.storageMonitor = null;
+    this.instanceManager = null;
+    this.keepAwake = null;
 
     // Close IPC clients
     for (const client of this.ipcClients) {
@@ -921,14 +1038,14 @@ async stop(): Promise<void> {
 }
 ```
 
-The individual `this.versionChecker?.stop()`, `this.scanner?.stop()`, etc. calls are REMOVED — `drainAll()` handles everything.
+The individual `this.versionChecker?.stop()`, `this.scanner?.stop()`, etc. calls are REMOVED — `serviceRegistry.drainAll()` handles everything.
 
-**Note:** `ProjectRegistry.stopAll()` and `instanceManager.stopAll()` are called via their respective `drain()` overrides when `drainAll()` fires. Both extend `TrackedService` (Tasks 5, 13), so their `drain()` methods handle teardown automatically.
+**Note:** `ProjectRegistry.stopAll()` and `instanceManager.stopAll()` are called via their respective `drain()` overrides when `serviceRegistry.drainAll()` fires. Both extend `TrackedService` (Tasks 5, 14), so their `drain()` methods handle teardown automatically.
 
 **Tests:** Daemon tests that check stop behavior need updating. Tests no longer need `_skipPortScanner` (remove it).
 
 ```bash
-git commit -m "refactor: Daemon extends TrackedService; stop() uses registry.drainAll()"
+git commit -m "refactor: Daemon uses ServiceRegistry + AsyncTracker; stop() drains all services"
 ```
 
 ---
