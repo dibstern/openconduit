@@ -2,7 +2,7 @@
 
 <p align="center">
   <img src="media/GENERATE-MAIN-UI.png"
-       alt="Conduit — OpenCode web UI open in a mobile browser" width="520">
+       alt="Conduit — OpenCode web UI open in a mobile browser" width="320">
 </p>
 
 > Web UI relay for [OpenCode](https://opencode.ai). Browser access from any
@@ -78,7 +78,7 @@ npx conduit-code
 
 <p align="center">
   <img src="media/GENERATE-SETUP.gif"
-       alt="Conduit first-run setup wizard with QR code" width="440">
+       alt="Conduit first-run setup wizard with QR code" width="280">
 </p>
 
 First run opens a setup wizard: set a port and PIN, optionally enable HTTPS,
@@ -199,7 +199,7 @@ Environment variables: `OPENCODE_URL`, `HOST`, `CONDUIT_CONFIG_DIR`,
 
 ```
 ┌──────────┐  WebSocket  ┌──────────────────────┐  HTTP/SSE  ┌────────────────┐
-│ Browser  │◄───────────►│ Conduit daemon   │◄──────────►│ opencode serve │
+│ Browser  │◄───────────►│ Conduit daemon       │◄──────────►│ opencode serve │
 │          │             │ :2633                │            │ :4096          │
 └──────────┘             └──────────────────────┘            └────────────────┘
 ```
