@@ -85,28 +85,35 @@ export function promptToggle(
 		return `${yes}${a.dim} / ${a.reset}${no}`;
 	}
 
-	let lines = 2;
+	let lines = 3;
 	log(`${sym.pointer}  ${a.bold}${title}${a.reset}`, stdout);
 	if (description) {
 		log(`${sym.bar}  ${a.dim}${description}${a.reset}`, stdout);
-		lines = 3;
+		lines = 4;
 	}
-	stdout.write(`  ${sym.bar}  ${renderToggle()}`);
+	stdout.write(`  ${sym.bar}  ${renderToggle()}\n`);
+	stdout.write(
+		`  ${sym.bar}  ${a.dim}\u2190\u2192: toggle \u00B7 y/n: yes/no \u00B7 enter: confirm${a.reset}`,
+	);
 
 	if (stdin.setRawMode) stdin.setRawMode(true);
 	stdin.resume();
 	stdin.setEncoding("utf8");
 
+	function redrawToggle(): void {
+		stdout.write(`\x1b[1A\x1b[2K\r  ${sym.bar}  ${renderToggle()}\x1b[1B`);
+	}
+
 	function onToggle(ch: string): void {
 		if (ch === "\x1b[D" || ch === "\x1b[C" || ch === "\t") {
 			value = !value;
-			stdout.write(`\x1b[2K\r  ${sym.bar}  ${renderToggle()}`);
+			redrawToggle();
 		} else if (ch === "y" || ch === "Y") {
 			value = true;
-			stdout.write(`\x1b[2K\r  ${sym.bar}  ${renderToggle()}`);
+			redrawToggle();
 		} else if (ch === "n" || ch === "N") {
 			value = false;
-			stdout.write(`\x1b[2K\r  ${sym.bar}  ${renderToggle()}`);
+			redrawToggle();
 		} else if (ch === "\r" || ch === "\n") {
 			if (stdin.setRawMode) stdin.setRawMode(false);
 			stdin.pause();
@@ -149,6 +156,10 @@ export function promptPin(
 		`${sym.bar}  ${a.dim}Require a PIN (4-8 digits) to access the web UI. Enter to skip.${a.reset}`,
 		stdout,
 	);
+	log(
+		`${sym.bar}  ${a.dim}0-9: digits \u00B7 backspace: delete \u00B7 enter: confirm/skip${a.reset}`,
+		stdout,
+	);
 	stdout.write(`  ${sym.bar}  `);
 
 	let pin = "";
@@ -165,7 +176,7 @@ export function promptPin(
 			stdout.write("\n");
 
 			if (pin !== "" && !/^\d{4,8}$/.test(pin)) {
-				clearUp(3, stdout);
+				clearUp(4, stdout);
 				log(
 					`${sym.done}  PIN protection ${a.red}Must be 4-8 digits${a.reset}`,
 					stdout,
@@ -175,7 +186,7 @@ export function promptPin(
 				return;
 			}
 
-			clearUp(3, stdout);
+			clearUp(4, stdout);
 			if (pin) {
 				log(
 					`${sym.done}  PIN protection ${a.dim}\u00B7${a.reset} ${a.green}Enabled${a.reset}`,
@@ -194,7 +205,7 @@ export function promptPin(
 			stdin.pause();
 			stdin.removeListener("data", onPin);
 			stdout.write("\n");
-			clearUp(3, stdout);
+			clearUp(4, stdout);
 			log(`${sym.end}  ${a.dim}Cancelled${a.reset}`, stdout);
 			exit(0);
 		} else if (ch === "\x7f" || ch === "\b") {
@@ -228,18 +239,20 @@ export function promptText(
 	const { stdin, stdout, exit } = opts;
 	const prefix = `  ${sym.bar}  `;
 	let hintLine = "";
-	let lineCount = 2;
+	let lineCount = 3;
 
-	log(
-		`${sym.pointer}  ${a.bold}${title}${a.reset}  ${a.dim}(esc to go back)${a.reset}`,
-		stdout,
-	);
+	log(`${sym.pointer}  ${a.bold}${title}${a.reset}`, stdout);
 
 	// Show hint if provided
 	if (opts.hint) {
 		log(`${sym.bar}  ${a.dim}${opts.hint}${a.reset}`, stdout);
-		lineCount = 3;
+		lineCount = 4;
 	}
+
+	log(
+		`${sym.bar}  ${a.dim}tab: complete \u00B7 enter: confirm \u00B7 esc: back${a.reset}`,
+		stdout,
+	);
 
 	stdout.write(`${prefix}${a.dim}${placeholder}${a.reset}`);
 	// Move cursor to start of placeholder
@@ -262,14 +275,14 @@ export function promptText(
 			stdout.write("\n\x1b[2K\x1b[1A");
 			hintLine = "";
 			// Restore lineCount to base (without tab-completion hint line)
-			lineCount = opts.hint ? 3 : 2;
+			lineCount = opts.hint ? 4 : 3;
 		}
 	}
 
 	function showTabHint(msg: string): void {
 		clearHint();
 		hintLine = msg;
-		lineCount = (opts.hint ? 3 : 2) + 1;
+		lineCount = (opts.hint ? 4 : 3) + 1;
 		// Print hint below, then move cursor back up
 		stdout.write(`\n${prefix}${a.dim}${msg}${a.reset}\x1b[1A`);
 		redrawInput();
@@ -467,6 +480,10 @@ export function promptSelect<T = string>(
 			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
 			out += `  ${sym.bar}${pfx}${items[i]!.label}\n`;
 		}
+		const keyHint = opts.backItem
+			? `\u2191\u2193: navigate \u00B7 enter: select \u00B7 esc: back`
+			: `\u2191\u2193: navigate \u00B7 enter: select`;
+		out += `  ${sym.bar}  ${a.dim}${keyHint}${a.reset}\n`;
 		return out;
 	}
 
@@ -484,7 +501,7 @@ export function promptSelect<T = string>(
 		hintBoxLines = 1 + opts.hint.length;
 	}
 
-	const lineCount = items.length + 1 + hintBoxLines;
+	const lineCount = items.length + 2 + hintBoxLines;
 
 	if (stdin.setRawMode) stdin.setRawMode(true);
 	stdin.resume();
@@ -557,7 +574,7 @@ export function promptSelect<T = string>(
 		}
 
 		// Redraw
-		clearUp(items.length + hintBoxLines, stdout);
+		clearUp(items.length + 1 + hintBoxLines, stdout);
 		stdout.write(render());
 		// Re-render hint lines
 		if (opts.hint && opts.hint.length > 0) {
@@ -605,7 +622,7 @@ export function promptMultiSelect<T = string>(
 			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
 			out += `  ${sym.bar} ${cursor} ${check} ${items[i]!.label}\n`;
 		}
-		out += `  ${sym.bar}  ${a.dim}space: toggle \u00B7 enter: confirm${a.reset}\n`;
+		out += `  ${sym.bar}  ${a.dim}\u2191\u2193: navigate \u00B7 space: toggle \u00B7 a: all \u00B7 enter: confirm \u00B7 esc: skip${a.reset}\n`;
 		return out;
 	}
 

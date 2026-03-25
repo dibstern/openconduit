@@ -100,6 +100,18 @@ function tick(): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, 5));
 }
 
+/**
+ * Count how many lines clearUp erased after a specific point in the output.
+ * clearUp emits "\x1b[1A\x1b[2K" per line. We match that pattern using
+ * the ESC character code to avoid control-char-in-regex lint errors.
+ */
+function countClearUpLines(output: string[], afterIndex: number): number {
+	const tail = output.slice(afterIndex).join("");
+	const esc = String.fromCharCode(0x1b);
+	const pattern = new RegExp(`${esc}\\[1A${esc}\\[2K`, "g");
+	return (tail.match(pattern) || []).length;
+}
+
 // ─── promptToggle ────────────────────────────────────────────────────────────
 
 describe("promptToggle", () => {
@@ -128,21 +140,21 @@ describe("promptToggle", () => {
 	it("defaults to false (No highlighted)", () => {
 		const io = createMockIO();
 		promptToggle("Test", null, false, () => {}, io.opts());
-		// The last output write contains the toggle render
+		// The toggle render is the second-to-last output (key hints line is last)
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by prior assertion
-		const last = io.output[io.output.length - 1]!;
+		const toggleLine = io.output[io.output.length - 2]!;
 		// No should be active (green+bold)
-		expect(last).toContain(`${a.green}${a.bold}`);
-		expect(stripAnsi(last)).toContain("No");
+		expect(toggleLine).toContain(`${a.green}${a.bold}`);
+		expect(stripAnsi(toggleLine)).toContain("No");
 	});
 
 	it("defaults to true when defaultValue is true", () => {
 		const io = createMockIO();
 		promptToggle("Test", null, true, () => {}, io.opts());
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by prior assertion
-		const last = io.output[io.output.length - 1]!;
-		expect(last).toContain(`${a.green}${a.bold}`);
-		expect(stripAnsi(last)).toContain("Yes");
+		const toggleLine = io.output[io.output.length - 2]!;
+		expect(toggleLine).toContain(`${a.green}${a.bold}`);
+		expect(stripAnsi(toggleLine)).toContain("Yes");
 	});
 
 	it("toggles value on left arrow", async () => {
@@ -263,6 +275,47 @@ describe("promptToggle", () => {
 		sendKey(io.stdin, "\x03");
 		await tick();
 		expect(io.getExitCode()).toBe(0);
+	});
+
+	it("renders key hints", () => {
+		const io = createMockIO();
+		promptToggle("Test", null, false, () => {}, io.opts());
+		const all = stripAnsi(io.output.join(""));
+		expect(all).toContain("\u2190\u2192: toggle");
+		expect(all).toContain("y/n: yes/no");
+		expect(all).toContain("enter: confirm");
+	});
+
+	it("clearUp erases exactly 3 lines on confirm (no description)", async () => {
+		const io = createMockIO();
+		promptToggle("Test", null, false, () => {}, io.opts());
+		const beforeConfirm = io.output.length;
+		sendKey(io.stdin, "\r");
+		await tick();
+		expect(countClearUpLines(io.output, beforeConfirm)).toBe(3);
+	});
+
+	it("clearUp erases exactly 4 lines on confirm (with description)", async () => {
+		const io = createMockIO();
+		promptToggle("Test", "A description", false, () => {}, io.opts());
+		const beforeConfirm = io.output.length;
+		sendKey(io.stdin, "\r");
+		await tick();
+		expect(countClearUpLines(io.output, beforeConfirm)).toBe(4);
+	});
+
+	it("redraws toggle without corrupting hint line on key press", async () => {
+		const io = createMockIO();
+		promptToggle("Test", null, false, () => {}, io.opts());
+		const beforeKey = io.output.length;
+		sendKey(io.stdin, "\x1b[C"); // right arrow
+		await tick();
+		// Redraw should move up 1, clear, redraw, move down 1
+		const redrawOutput = io.output.slice(beforeKey).join("");
+		const esc = String.fromCharCode(0x1b);
+		expect(redrawOutput).toContain(`${esc}[1A`); // move up
+		expect(redrawOutput).toContain(`${esc}[2K`); // clear line
+		expect(redrawOutput).toContain(`${esc}[1B`); // move down
 	});
 });
 
@@ -419,18 +472,61 @@ describe("promptPin", () => {
 		await tick();
 		expect(io.getExitCode()).toBe(0);
 	});
+
+	it("renders key hints", () => {
+		const io = createMockIO();
+		promptPin(() => {}, io.opts());
+		const all = stripAnsi(io.output.join(""));
+		expect(all).toContain("0-9: digits");
+		expect(all).toContain("backspace: delete");
+		expect(all).toContain("enter: confirm/skip");
+	});
+
+	it("clearUp erases exactly 4 lines on confirm (skip)", async () => {
+		const io = createMockIO();
+		promptPin(() => {}, io.opts());
+		const beforeConfirm = io.output.length;
+		sendKey(io.stdin, "\r");
+		await tick();
+		// 4 lines: title, description, key hints, input
+		expect(countClearUpLines(io.output, beforeConfirm)).toBe(4);
+	});
+
+	it("clearUp erases exactly 4 lines on confirm (valid PIN)", async () => {
+		const io = createMockIO();
+		promptPin(() => {}, io.opts());
+		for (const d of ["1", "2", "3", "4"]) {
+			sendKey(io.stdin, d);
+			await tick();
+		}
+		const beforeConfirm = io.output.length;
+		sendKey(io.stdin, "\r");
+		await tick();
+		expect(countClearUpLines(io.output, beforeConfirm)).toBe(4);
+	});
+
+	it("clearUp erases exactly 4 lines on Ctrl+C", async () => {
+		const io = createMockIO();
+		promptPin(() => {}, io.opts());
+		const beforeCancel = io.output.length;
+		sendKey(io.stdin, "\x03");
+		await tick();
+		expect(countClearUpLines(io.output, beforeCancel)).toBe(4);
+	});
 });
 
 // ─── promptText ──────────────────────────────────────────────────────────────
 
 describe("promptText", () => {
-	it("renders title with esc-to-go-back hint", () => {
+	it("renders title and key hints", () => {
 		const io = createMockIO();
 		const textOpts: TextPromptOptions = { ...io.opts() };
 		promptText("Working directory", "/home/user", () => {}, textOpts);
 		const all = stripAnsi(io.output.join(""));
 		expect(all).toContain("Working directory");
-		expect(all).toContain("esc to go back");
+		expect(all).toContain("tab: complete");
+		expect(all).toContain("enter: confirm");
+		expect(all).toContain("esc: back");
 	});
 
 	it("shows placeholder text initially", () => {
@@ -726,6 +822,41 @@ describe("promptText", () => {
 		// Result should contain the common prefix path
 		expect(result).toContain("/tmp/abc-");
 	});
+
+	it("clearUp erases exactly 3 lines on confirm (no content hint)", async () => {
+		const io = createMockIO();
+		const textOpts: TextPromptOptions = { ...io.opts() };
+		promptText("Dir", "/default", () => {}, textOpts);
+		const beforeConfirm = io.output.length;
+		sendKey(io.stdin, "\r");
+		await tick();
+		// 3 lines: title, key hints, input
+		expect(countClearUpLines(io.output, beforeConfirm)).toBe(3);
+	});
+
+	it("clearUp erases exactly 4 lines on confirm (with content hint)", async () => {
+		const io = createMockIO();
+		const textOpts: TextPromptOptions = {
+			...io.opts(),
+			hint: "Some hint",
+		};
+		promptText("Dir", "/default", () => {}, textOpts);
+		const beforeConfirm = io.output.length;
+		sendKey(io.stdin, "\r");
+		await tick();
+		// 4 lines: title, content hint, key hints, input
+		expect(countClearUpLines(io.output, beforeConfirm)).toBe(4);
+	});
+
+	it("clearUp erases exactly 3 lines on Escape (no content hint)", async () => {
+		const io = createMockIO();
+		const textOpts: TextPromptOptions = { ...io.opts() };
+		promptText("Dir", "/default", () => {}, textOpts);
+		const beforeEsc = io.output.length;
+		sendKey(io.stdin, "\x1b");
+		await tick();
+		expect(countClearUpLines(io.output, beforeEsc)).toBe(3);
+	});
 });
 
 // ─── promptSelect ────────────────────────────────────────────────────────────
@@ -997,6 +1128,73 @@ describe("promptSelect", () => {
 		// After confirm, summary should show selected label
 		expect(all).toContain("Option B");
 	});
+
+	it("renders key hints with navigate and select", () => {
+		const io = createMockIO();
+		const selectOpts: SelectPromptOptions = { ...io.opts() };
+		promptSelect("Pick one", items, () => {}, selectOpts);
+		const all = stripAnsi(io.output.join(""));
+		expect(all).toContain("\u2191\u2193: navigate");
+		expect(all).toContain("enter: select");
+	});
+
+	it("renders esc: back hint when backItem is set", () => {
+		const io = createMockIO();
+		const selectOpts: SelectPromptOptions = {
+			...io.opts(),
+			backItem: "\u2190 Back",
+		};
+		promptSelect("Pick one", items, () => {}, selectOpts);
+		const all = stripAnsi(io.output.join(""));
+		expect(all).toContain("esc: back");
+	});
+
+	it("does not render esc: back hint when no backItem", () => {
+		const io = createMockIO();
+		const selectOpts: SelectPromptOptions = { ...io.opts() };
+		promptSelect("Pick one", items, () => {}, selectOpts);
+		const all = stripAnsi(io.output.join(""));
+		expect(all).not.toContain("esc: back");
+	});
+
+	it("clearUp erases exactly 5 lines on confirm (3 items, no gradient hints)", async () => {
+		const io = createMockIO();
+		const selectOpts: SelectPromptOptions = { ...io.opts() };
+		promptSelect("Pick one", items, () => {}, selectOpts);
+		const beforeConfirm = io.output.length;
+		sendKey(io.stdin, "\r");
+		await tick();
+		// 5 lines: title + 3 items + key hint
+		expect(countClearUpLines(io.output, beforeConfirm)).toBe(5);
+	});
+
+	it("clearUp erases correct lines with gradient hints", async () => {
+		const io = createMockIO();
+		const selectOpts: SelectPromptOptions = {
+			...io.opts(),
+			hint: ["Tip 1", "Tip 2"],
+		};
+		promptSelect("Pick one", items, () => {}, selectOpts);
+		const beforeConfirm = io.output.length;
+		sendKey(io.stdin, "\r");
+		await tick();
+		// 5 + 3 (sym.end + 2 hints) = 8
+		expect(countClearUpLines(io.output, beforeConfirm)).toBe(8);
+	});
+
+	it("clearUp erases correct lines on back with backItem", async () => {
+		const io = createMockIO();
+		const selectOpts: SelectPromptOptions = {
+			...io.opts(),
+			backItem: "\u2190 Back",
+		};
+		promptSelect("Pick one", items, () => {}, selectOpts);
+		const beforeBack = io.output.length;
+		sendKey(io.stdin, "\x1b"); // escape
+		await tick();
+		// 5 lines: title + 3 items + key hint
+		expect(countClearUpLines(io.output, beforeBack)).toBe(5);
+	});
 });
 
 // ─── promptMultiSelect ───────────────────────────────────────────────────────
@@ -1158,5 +1356,35 @@ describe("promptMultiSelect", () => {
 		sendKey(io.stdin, "\x03");
 		await tick();
 		expect(io.getExitCode()).toBe(0);
+	});
+
+	it("renders complete key hints", () => {
+		const io = createMockIO();
+		promptMultiSelect("Select", items, () => {}, io.opts());
+		const all = stripAnsi(io.output.join(""));
+		expect(all).toContain("\u2191\u2193: navigate");
+		expect(all).toContain("space: toggle");
+		expect(all).toContain("a: all");
+		expect(all).toContain("enter: confirm");
+		expect(all).toContain("esc: skip");
+	});
+
+	it("clearUp erases exactly 5 lines on confirm (3 items)", async () => {
+		const io = createMockIO();
+		promptMultiSelect("Select", items, () => {}, io.opts());
+		const beforeConfirm = io.output.length;
+		sendKey(io.stdin, "\r");
+		await tick();
+		// 5 lines: title + 3 items + hint
+		expect(countClearUpLines(io.output, beforeConfirm)).toBe(5);
+	});
+
+	it("clearUp erases exactly 5 lines on Escape (3 items)", async () => {
+		const io = createMockIO();
+		promptMultiSelect("Select", items, () => {}, io.opts());
+		const beforeEsc = io.output.length;
+		sendKey(io.stdin, "\x1b");
+		await tick();
+		expect(countClearUpLines(io.output, beforeEsc)).toBe(5);
 	});
 });
