@@ -2,7 +2,7 @@
 // Background daemon that persists across terminal sessions. Manages the HTTP
 // server, multiple projects, and communicates with CLI via Unix socket IPC.
 
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import type { Server as HttpServer } from "node:http";
 import type { Server as NetServer, Socket } from "node:net";
 import { homedir } from "node:os";
@@ -143,6 +143,7 @@ export interface DaemonStatus {
 	/** First LAN IP (non-Tailscale routable address), for share URL construction. */
 	lanIP?: string;
 	projectCount: number;
+	sessionCount: number;
 	clientCount: number;
 	pinEnabled: boolean;
 	tlsEnabled: boolean;
@@ -185,11 +186,14 @@ export class Daemon {
 	 * dedicated getter methods for every query.
 	 */
 	readonly registry: ProjectRegistry;
+	/** Session counts persisted from previous daemon run — for instant CLI display. */
+	private readonly persistedSessionCounts = new Map<string, number>();
 	/** Directories the user explicitly removed — skipped by auto-discovery. */
 	private readonly dismissedPaths = new Set<string>();
 	private startTime: number = Date.now();
 	private clientCount = 0;
 	private shuttingDown = false;
+	private _eventLoopTimer: ReturnType<typeof setInterval> | null = null;
 
 	// Enhanced daemon fields (Ticket 8.7)
 	private pinHash: string | null;
@@ -382,7 +386,7 @@ export class Daemon {
 
 		// Write PID file
 		writePidFile(this.configDir, this.pidPath);
-		this.log.info(`[startup:${elapsed()}] PID file + crash counter done`);
+		this.log.debug(`[startup:${elapsed()}] PID file + crash counter done`);
 
 		// Rehydrate instances from persisted config (so relays can pick them up
 		// before HTTP/IPC servers start).
@@ -425,6 +429,10 @@ export class Daemon {
 		if (savedConfig?.projects) {
 			for (const proj of savedConfig.projects) {
 				if (!proj.path || !proj.slug) continue;
+				// Preserve session counts from previous run for instant display
+				if (proj.sessionCount != null && proj.sessionCount > 0) {
+					this.persistedSessionCounts.set(proj.slug, proj.sessionCount);
+				}
 				// Skip if already registered
 				if (this.registry.has(proj.slug)) continue;
 				const project: StoredProject = {
@@ -462,7 +470,7 @@ export class Daemon {
 			this.keepAwakeArgs = savedConfig.keepAwakeArgs;
 		}
 
-		this.log.info(`[startup:${elapsed()}] Rehydration complete`);
+		this.log.debug(`[startup:${elapsed()}] Rehydration complete`);
 
 		// ── Probe-and-convert: if the "default" instance was created as
 		// unmanaged (via opencodeUrl from CLI), check whether it's actually
@@ -497,7 +505,7 @@ export class Daemon {
 			}
 		}
 
-		this.log.info(`[startup:${elapsed()}] Probe-and-convert done`);
+		this.log.debug(`[startup:${elapsed()}] Probe-and-convert done`);
 
 		// Smart default: if no "default" instance exists (neither from constructor
 		// opencodeUrl nor from rehydrated config), probe localhost:4096 to decide
@@ -539,7 +547,7 @@ export class Daemon {
 			}
 		}
 
-		this.log.info(`[startup:${elapsed()}] Smart default detection done`);
+		this.log.debug(`[startup:${elapsed()}] Smart default detection done`);
 
 		// Auto-start managed default instance (if it was just created by smart
 		// detection or rehydrated from config). Non-fatal if it fails.
@@ -555,7 +563,7 @@ export class Daemon {
 			}
 		}
 
-		this.log.info(`[startup:${elapsed()}] Instance auto-start done`);
+		this.log.debug(`[startup:${elapsed()}] Instance auto-start done`);
 
 		// Start IPC server early so the CLI can send commands while the rest
 		// of the daemon initialises (TLS, HTTP, relays, port scanning).
@@ -565,7 +573,7 @@ export class Daemon {
 		// or the instance_status_changed listener).
 		await this.startIPCServer();
 
-		this.log.info(`[startup:${elapsed()}] IPC server listening`);
+		this.log.debug(`[startup:${elapsed()}] IPC server listening`);
 
 		// Initialize push notification manager (non-fatal if it fails)
 		try {
@@ -579,7 +587,7 @@ export class Daemon {
 			this.pushManager = null;
 		}
 
-		this.log.info(`[startup:${elapsed()}] Push notifications init done`);
+		this.log.debug(`[startup:${elapsed()}] Push notifications init done`);
 
 		// Load TLS certificates when TLS is enabled.
 		// ensureCerts auto-generates via mkcert if available; falls back to HTTP if not.
@@ -626,7 +634,11 @@ export class Daemon {
 						status: entry.status,
 						...(entry.status === "error" && { error: entry.error }),
 						clients: relay?.wsHandler.getClientCount() ?? 0,
-						sessions: relay?.messageCache.sessionCount() ?? 0,
+						sessions:
+							relay?.sessionMgr.getLastKnownSessionCount() ||
+							relay?.messageCache.sessionCount() ||
+							this.persistedSessionCounts.get(project.slug) ||
+							0,
 						isProcessing: relay?.isAnySessionProcessing() ?? false,
 					} satisfies import("../server/http-router.js").RouterProject;
 				});
@@ -653,7 +665,7 @@ export class Daemon {
 
 		// Start HTTP server
 		await this.startHttpServer();
-		this.log.info(`[startup:${elapsed()}] HTTP server listening`);
+		this.log.debug(`[startup:${elapsed()}] HTTP server listening`);
 
 		// Start HTTP onboarding server on port+1 when TLS is active
 		if (this.tlsEnabled) {
@@ -814,6 +826,10 @@ export class Daemon {
 			`[startup:${elapsed()}] Relay startup dispatched for ${this.registry.size} project(s)`,
 		);
 
+		// Eagerly fetch session count from OpenCode (cheap single API call)
+		// so session counts are available before slow relay initialization finishes.
+		this.prefetchSessionCounts();
+
 		// Retry relays for projects stuck in "registering" when an instance
 		// becomes available (e.g. resolveOpencodeUrl returned null above because
 		// the managed instance hadn't started yet).
@@ -842,6 +858,21 @@ export class Daemon {
 			this.stop();
 		});
 
+		// Prevent unhandled rejections and uncaught exceptions from crashing
+		// the daemon. Log the error and continue — the daemon should be resilient.
+		process.on("unhandledRejection", (err) => {
+			this.log.error(
+				{ error: err instanceof Error ? err.message : String(err) },
+				"Unhandled rejection (daemon kept alive)",
+			);
+		});
+		process.on("uncaughtException", (err) => {
+			this.log.error(
+				{ error: err.message, stack: err.stack },
+				"Uncaught exception (daemon kept alive)",
+			);
+		});
+
 		// Mark start time (resets crash window on success)
 		this.startTime = Date.now();
 
@@ -858,7 +889,7 @@ export class Daemon {
 
 		// Clear any previous crash info and save config (Ticket 8.7)
 		clearCrashInfo(this.configDir);
-		saveDaemonConfig(this.buildConfig(), this.configDir);
+		await saveDaemonConfig(this.buildConfig(), this.configDir);
 
 		// Start version checker (non-fatal if it fails)
 		this.versionChecker = new VersionChecker(this.serviceRegistry, {
@@ -910,7 +941,19 @@ export class Daemon {
 		});
 		this.storageMonitor.start();
 
-		this.log.info(`[startup:${elapsed()}] Daemon fully started`);
+		this.log.info(`Daemon fully started in ${elapsed()}`);
+
+		// Event loop blocking detector — logs when the loop is blocked >50ms
+		let lastTick = Date.now();
+		this._eventLoopTimer = setInterval(() => {
+			const now = Date.now();
+			const delta = now - lastTick;
+			if (delta > 100) {
+				this.log.debug(`[eventloop] blocked for ${delta}ms`);
+			}
+			lastTick = now;
+		}, 50);
+		this._eventLoopTimer.unref(); // Don't prevent process exit
 	}
 
 	/** Gracefully stop the daemon */
@@ -927,8 +970,13 @@ export class Daemon {
 		// Remove signal handlers
 		removeSignalHandlers();
 
-		// Persist final config so instances survive restart (Fix #11)
-		saveDaemonConfig(this.buildConfig(), this.configDir);
+		// Stop event loop monitor
+		if (this._eventLoopTimer) clearInterval(this._eventLoopTimer);
+		this._eventLoopTimer = null;
+
+		// Wait for any in-flight config save, then persist final config (Fix #11)
+		await this.flushConfigSave();
+		await saveDaemonConfig(this.buildConfig(), this.configDir);
 
 		// Drain ALL tracked services (PortScanner, VersionChecker, StorageMonitor,
 		// KeepAwake, InstanceManager, ProjectRegistry, and all relay services)
@@ -1033,6 +1081,9 @@ export class Daemon {
 			this.configDir,
 		);
 
+		// Wait for the config save triggered by project_added event
+		await this.flushConfigSave();
+
 		return project;
 	}
 
@@ -1057,6 +1108,9 @@ export class Daemon {
 			})),
 			this.configDir,
 		);
+
+		// Wait for the config save triggered by project removal events
+		await this.flushConfigSave();
 	}
 
 	/** Get all registered projects */
@@ -1158,6 +1212,20 @@ export class Daemon {
 		const tsIP = getTailscaleIP();
 		const allIPs = getAllIPs();
 		const lanIP = allIPs.find((ip) => !ip.startsWith("100.")) ?? null;
+
+		// Sum session counts across all projects
+		let sessionCount = 0;
+		for (const slug of this.registry.slugs()) {
+			const e = this.registry.get(slug);
+			if (!e) continue;
+			const relay = e.status === "ready" ? e.relay : undefined;
+			sessionCount +=
+				relay?.sessionMgr.getLastKnownSessionCount() ||
+				relay?.messageCache.sessionCount() ||
+				this.persistedSessionCounts.get(slug) ||
+				0;
+		}
+
 		return {
 			ok: true,
 			uptime: (Date.now() - this.startTime) / 1000,
@@ -1166,6 +1234,7 @@ export class Daemon {
 			...(tsIP != null && { tailscaleIP: tsIP }),
 			...(lanIP != null && { lanIP }),
 			projectCount: this.registry.size,
+			sessionCount,
 			clientCount: this.clientCount,
 			pinEnabled: this.pinHash !== null,
 			tlsEnabled: this.tlsEnabled,
@@ -1270,8 +1339,34 @@ export class Daemon {
 		};
 	}
 
+	private _pendingSave: Promise<void> | null = null;
+	private _needsResave = false;
+
+	/**
+	 * Persist config asynchronously with coalescing: rapid calls are batched
+	 * into a single write. The latest config snapshot is always used.
+	 */
 	private persistConfig(): void {
-		saveDaemonConfig(this.buildConfig(), this.configDir);
+		if (this._pendingSave) {
+			this._needsResave = true;
+			return;
+		}
+		this._pendingSave = saveDaemonConfig(this.buildConfig(), this.configDir)
+			.catch(() => {
+				// Best-effort — log but don't crash
+			})
+			.finally(() => {
+				this._pendingSave = null;
+				if (this._needsResave) {
+					this._needsResave = false;
+					this.persistConfig();
+				}
+			});
+	}
+
+	/** Wait for any in-flight config save to complete. */
+	async flushConfigSave(): Promise<void> {
+		if (this._pendingSave) await this._pendingSave;
 	}
 
 	// ─── Private: Context adapters ─────────────────────────────────────────
@@ -1357,13 +1452,22 @@ export class Daemon {
 			}),
 			...(this.keepAwakeArgs != null && { keepAwakeArgs: this.keepAwakeArgs }),
 			dangerouslySkipPermissions: false,
-			projects: this.getProjects().map((p) => ({
-				path: p.directory,
-				slug: p.slug,
-				title: p.title,
-				addedAt: p.lastUsed ?? Date.now(),
-				...(p.instanceId != null && { instanceId: p.instanceId }),
-			})),
+			projects: this.getProjects().map((p) => {
+				const e = this.registry.get(p.slug);
+				const relay = e?.status === "ready" ? e.relay : undefined;
+				const sessionCount =
+					relay?.sessionMgr.getLastKnownSessionCount() ||
+					relay?.messageCache.sessionCount() ||
+					0;
+				return {
+					path: p.directory,
+					slug: p.slug,
+					title: p.title,
+					addedAt: p.lastUsed ?? Date.now(),
+					...(p.instanceId != null && { instanceId: p.instanceId }),
+					...(sessionCount > 0 && { sessionCount }),
+				};
+			}),
 			instances: this.instanceManager.getInstances().map((inst) => {
 				const extUrl = this.instanceManager.getExternalUrl(inst.id);
 				return {
@@ -1488,7 +1592,11 @@ export class Daemon {
 						const relay = entry.status === "ready" ? entry.relay : undefined;
 						return {
 							...project,
-							sessions: relay?.messageCache.sessionCount() ?? 0,
+							sessions:
+								relay?.sessionMgr.getLastKnownSessionCount() ||
+								relay?.messageCache.sessionCount() ||
+								this.persistedSessionCounts.get(project.slug) ||
+								0,
 							clients: relay?.wsHandler.getClientCount() ?? 0,
 							isProcessing: relay?.isAnySessionProcessing() ?? false,
 						};
@@ -1560,11 +1668,63 @@ export class Daemon {
 	// ─── Crash counter (delegated to CrashCounter) ─────────────────────────
 
 	/**
-	 * Reset the crash counter (called after successful uptime).
-	 * Exposed for testing.
+	 * Eagerly fetch session counts per-project from OpenCode.
+	 * One fetch per distinct OpenCode URL, grouped by session directory.
+	 * Fire-and-forget — stores results for immediate use before relays
+	 * finish their slow initialize() (which fetches messages per session).
 	 */
-	resetCrashCounter(): void {
-		this.crashCounter.reset();
+	private prefetchSessionCounts(): void {
+		for (const slug of this.registry.slugs()) {
+			const entry = this.registry.get(slug);
+			if (!entry) continue;
+			if (this.persistedSessionCounts.has(slug)) continue;
+			const url = this.resolveOpencodeUrl(entry.project.instanceId);
+			if (!url) continue;
+
+			const instanceId = entry.project.instanceId ?? "default";
+			const instance = this.instanceManager.getInstance(instanceId);
+			const password =
+				instance?.env?.["OPENCODE_SERVER_PASSWORD"] ??
+				process.env["OPENCODE_SERVER_PASSWORD"] ??
+				"";
+			const username =
+				instance?.env?.["OPENCODE_SERVER_USERNAME"] ??
+				process.env["OPENCODE_SERVER_USERNAME"] ??
+				"opencode";
+			const headers: Record<string, string> = {
+				"x-opencode-directory": entry.project.directory,
+			};
+			if (password) {
+				headers["Authorization"] =
+					`Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+			}
+
+			fetch(`${url}/session?limit=10000`, { headers })
+				.then((res) => res.json())
+				.then((data: unknown) => {
+					if (Array.isArray(data)) {
+						this.persistedSessionCounts.set(slug, data.length);
+					}
+				})
+				.catch(() => {
+					// Best-effort — relays will provide counts when ready
+				});
+		}
+	}
+
+	/**
+	 * Session count fallback when relay isn't ready.
+	 * Priority: persisted/prefetched count → disk file count.
+	 */
+	private countCachedSessions(slug: string): number {
+		const persisted = this.persistedSessionCounts.get(slug);
+		if (persisted != null && persisted > 0) return persisted;
+		try {
+			const cacheDir = join(this.configDir, "cache", slug, "sessions");
+			return readdirSync(cacheDir).filter((f) => f.endsWith(".jsonl")).length;
+		} catch {
+			return 0;
+		}
 	}
 
 	/**
@@ -1572,5 +1732,10 @@ export class Daemon {
 	 */
 	getCrashTimestamps(): number[] {
 		return this.crashCounter.getTimestamps();
+	}
+
+	/** Reset crash counter (for testing). */
+	resetCrashCounter(): void {
+		this.crashCounter.reset();
 	}
 }

@@ -75,7 +75,7 @@ describe("instance lifecycle integration", () => {
 		expect(daemon.getInstances()).toHaveLength(0);
 	});
 
-	it("persists instances in config via saveDaemonConfig", () => {
+	it("persists instances in config via saveDaemonConfig", async () => {
 		const config: DaemonConfig = {
 			pid: 1,
 			port: 2633,
@@ -97,7 +97,7 @@ describe("instance lifecycle integration", () => {
 				{ id: "work", name: "Work", port: 4097, managed: true },
 			],
 		};
-		saveDaemonConfig(config, tmpDir);
+		await saveDaemonConfig(config, tmpDir);
 
 		const loaded = loadDaemonConfig(tmpDir);
 		expect(loaded).not.toBeNull();
@@ -127,7 +127,7 @@ describe("instance lifecycle integration", () => {
 			uptime: 0,
 			port: 3000,
 			host: "127.0.0.1",
-			projectCount: 0,
+			projectCount: 0, sessionCount: 0,
 			clientCount: 0,
 			pinEnabled: false,
 			tlsEnabled: false,
@@ -168,7 +168,7 @@ describe("instance lifecycle integration", () => {
 			uptime: 0,
 			port: 3000,
 			host: "127.0.0.1",
-			projectCount: 0,
+			projectCount: 0, sessionCount: 0,
 			clientCount: 0,
 			pinEnabled: false,
 			tlsEnabled: false,

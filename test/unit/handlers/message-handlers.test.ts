@@ -781,7 +781,7 @@ describe("handleSwitchSession", () => {
 			{ type: "user_message", text: "hi" },
 			{ type: "delta", text: "hello" },
 		];
-		vi.mocked(deps.messageCache.getEvents).mockReturnValue(cachedEvents);
+		vi.mocked(deps.messageCache.getEvents).mockResolvedValue(cachedEvents);
 		await handleSwitchSession(deps, "client-1", { sessionId: "s2" });
 		expect(deps.wsHandler.sendTo).toHaveBeenCalledWith("client-1", {
 			type: "session_switched",
@@ -793,7 +793,7 @@ describe("handleSwitchSession", () => {
 
 	it("falls back to REST history when cache is empty", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.messageCache.getEvents).mockReturnValue(null);
+		vi.mocked(deps.messageCache.getEvents).mockResolvedValue(null);
 		vi.mocked(deps.sessionMgr.loadPreRenderedHistory).mockResolvedValue({
 			messages: [{ role: "user", content: "hi" }] as unknown[],
 			hasMore: false,

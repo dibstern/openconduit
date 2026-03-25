@@ -884,6 +884,35 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			await d.stop();
 		});
 
+		it("IPC list_projects includes sessions field in response", async () => {
+			const socketPath = join(tmpDir, "relay.sock");
+			const d = new Daemon(daemonOpts(tmpDir));
+			await d.start();
+
+			await sendIPCCommand(socketPath, {
+				cmd: "add_project",
+				directory: "/home/test/session-check",
+			});
+
+			const listResp = await sendIPCCommand(socketPath, {
+				cmd: "list_projects",
+			});
+			expect(listResp["ok"]).toBe(true);
+			const projects = listResp["projects"] as Array<{
+				slug: string;
+				sessions?: number;
+				clients?: number;
+			}>;
+			expect(projects.length).toBeGreaterThan(0);
+			// Every project must have sessions and clients fields (not undefined)
+			for (const p of projects) {
+				expect(typeof p.sessions).toBe("number");
+				expect(typeof p.clients).toBe("number");
+			}
+
+			await d.stop();
+		});
+
 		it("IPC remove_project removes a previously added project", async () => {
 			const socketPath = join(tmpDir, "relay.sock");
 			const d = new Daemon(daemonOpts(tmpDir));
@@ -1638,7 +1667,8 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			// pinEnabled should now be true
 			expect(d.getStatus().pinEnabled).toBe(true);
 
-			// Config should reflect the pin hash
+			// Flush async config save before reading the file
+			await d.flushConfigSave();
 			const config = loadDaemonConfig(tmpDir);
 			expect(config).not.toBeNull();
 			// biome-ignore lint/style/noNonNullAssertion: safe — guarded by prior assertion
@@ -1671,7 +1701,8 @@ describe("Ticket 3.1 — Daemon Process", () => {
 			// keepAwake should now be true
 			expect(d.getStatus().keepAwake).toBe(true);
 
-			// Config should reflect the change
+			// Flush async config save before reading the file
+			await d.flushConfigSave();
 			const config = loadDaemonConfig(tmpDir);
 			expect(config).not.toBeNull();
 			// biome-ignore lint/style/noNonNullAssertion: safe — guarded by prior assertion
@@ -2949,6 +2980,10 @@ describe("addProject with instanceId", () => {
 		await d.start();
 		await d.addProject("/tmp/test-project-persist", undefined, "default");
 
+		// Wait for any background config saves (e.g. from discoverProjects)
+		await new Promise((r) => setTimeout(r, 50));
+		await d.flushConfigSave();
+
 		const config = loadDaemonConfig(tmpDir);
 		expect(config).not.toBeNull();
 		// discoverProjects runs async on start(), so other projects may exist
@@ -3025,7 +3060,7 @@ describe("instance rehydration on daemon restart", () => {
 		const { saveDaemonConfig } = await import(
 			"../../../src/lib/daemon/config-persistence.js"
 		);
-		saveDaemonConfig(
+		await saveDaemonConfig(
 			{
 				pid: 0,
 				port: 2633,
@@ -3077,7 +3112,7 @@ describe("instance rehydration on daemon restart", () => {
 		const { saveDaemonConfig } = await import(
 			"../../../src/lib/daemon/config-persistence.js"
 		);
-		saveDaemonConfig(
+		await saveDaemonConfig(
 			{
 				pid: 0,
 				port: 2633,
@@ -3116,7 +3151,7 @@ describe("instance rehydration on daemon restart", () => {
 		const { saveDaemonConfig } = await import(
 			"../../../src/lib/daemon/config-persistence.js"
 		);
-		saveDaemonConfig(
+		await saveDaemonConfig(
 			{
 				pid: 0,
 				port: 2633,
@@ -3160,7 +3195,7 @@ describe("instance rehydration on daemon restart", () => {
 			url: `http://host${i}:${5000 + i}`,
 		}));
 
-		saveDaemonConfig(
+		await saveDaemonConfig(
 			{
 				pid: 0,
 				port: 2633,
@@ -3193,7 +3228,7 @@ describe("instance rehydration on daemon restart", () => {
 		const { saveDaemonConfig } = await import(
 			"../../../src/lib/daemon/config-persistence.js"
 		);
-		saveDaemonConfig(
+		await saveDaemonConfig(
 			{
 				pid: 0,
 				port: 2633,
@@ -3327,7 +3362,7 @@ describe("instanceAdd handler — url threading", () => {
 			uptime: 0,
 			port: 3000,
 			host: "127.0.0.1",
-			projectCount: 0,
+			projectCount: 0, sessionCount: 0,
 			clientCount: 0,
 			pinEnabled: false,
 			tlsEnabled: false,
