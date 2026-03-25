@@ -70,6 +70,7 @@ import {
 	type PtyUpstreamDeps,
 } from "./pty-upstream.js";
 import { loadRelaySettings, parseDefaultModel } from "./relay-settings.js";
+import { RelayTimers } from "./relay-timers.js";
 import { createSessionSSETracker } from "./session-sse-tracker.js";
 import { SSEConsumer } from "./sse-consumer.js";
 import {
@@ -255,7 +256,7 @@ export async function createProjectRelay(
 
 	// ── Message poller manager (REST fallback for CLI sessions without SSE events) ──
 	// Manages multiple pollers concurrently — one per busy session.
-	const pollerManager = new MessagePollerManager({
+	const pollerManager = new MessagePollerManager(serviceRegistry, {
 		client,
 		log: pollerMgrLog,
 		hasViewers: (sid) => registry.hasViewers(sid),
@@ -784,41 +785,22 @@ export async function createProjectRelay(
 		}
 	});
 
-	// ── Permission/question timeout checks ──────────────────────────────────
+	// ── Permission/question timeout checks + rate-limiter cleanup ──────────
+	// Wrapped in a TrackedService so they are cancelled on registry drain.
 
-	const timeoutTimer = setInterval(() => {
-		const timedOutPerms = permissionBridge.checkTimeouts();
-		for (const id of timedOutPerms) {
+	const relayTimers = new RelayTimers(
+		serviceRegistry,
+		permissionBridge,
+		rateLimiter,
+		(id) => {
 			wsHandler.broadcast({
 				type: "permission_resolved",
 				requestId: id as PermissionId,
 				decision: "timeout",
 			});
-		}
-		// Question timeouts are handled by OpenCode itself — no bridge tracking needed.
-	}, 30_000);
-
-	// Don't let the timer keep the process alive
-	if (
-		timeoutTimer &&
-		typeof timeoutTimer === "object" &&
-		"unref" in timeoutTimer
-	) {
-		timeoutTimer.unref();
-	}
-
-	// Periodic cleanup of stale rate-limiter entries (every 60s)
-	const rateLimitCleanupTimer = setInterval(() => {
-		rateLimiter.cleanup();
-	}, 60_000);
-
-	if (
-		rateLimitCleanupTimer &&
-		typeof rateLimitCleanupTimer === "object" &&
-		"unref" in rateLimitCleanupTimer
-	) {
-		rateLimitCleanupTimer.unref();
-	}
+		},
+	);
+	relayTimers.start();
 
 	// ── Return project relay ────────────────────────────────────────────────
 
@@ -839,8 +821,8 @@ export async function createProjectRelay(
 		},
 
 		async stop() {
-			clearInterval(timeoutTimer);
-			clearInterval(rateLimitCleanupTimer);
+			// relayTimers are cleaned up by the service registry drain —
+			// no manual clearInterval needed.
 			statusPoller.stop();
 			pollerManager.stopAll();
 			overrides.dispose();
