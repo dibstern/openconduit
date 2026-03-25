@@ -480,6 +480,42 @@ describe("promptPin", () => {
 		expect(all).toContain("0-9: digits");
 		expect(all).toContain("backspace: delete");
 		expect(all).toContain("enter: confirm/skip");
+		expect(all).toContain("esc: back");
+	});
+
+	it("returns null on Escape (back)", async () => {
+		const io = createMockIO();
+		let result: string | null | undefined = "unset";
+		promptPin((v) => {
+			result = v;
+		}, io.opts());
+		sendKey(io.stdin, "\x1b");
+		await tick();
+		expect(result).toBeNull();
+	});
+
+	it("returns null on Escape even after typing digits", async () => {
+		const io = createMockIO();
+		let result: string | null | undefined = "unset";
+		promptPin((v) => {
+			result = v;
+		}, io.opts());
+		sendKey(io.stdin, "1");
+		await tick();
+		sendKey(io.stdin, "2");
+		await tick();
+		sendKey(io.stdin, "\x1b");
+		await tick();
+		expect(result).toBeNull();
+	});
+
+	it("clearUp erases exactly 4 lines on Escape", async () => {
+		const io = createMockIO();
+		promptPin(() => {}, io.opts());
+		const beforeEsc = io.output.length;
+		sendKey(io.stdin, "\x1b");
+		await tick();
+		expect(countClearUpLines(io.output, beforeEsc)).toBe(4);
 	});
 
 	it("clearUp erases exactly 4 lines on confirm (skip)", async () => {

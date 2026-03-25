@@ -157,7 +157,7 @@ export function promptPin(
 		stdout,
 	);
 	log(
-		`${sym.bar}  ${a.dim}0-9: digits \u00B7 backspace: delete \u00B7 enter: confirm/skip${a.reset}`,
+		`${sym.bar}  ${a.dim}0-9: digits \u00B7 backspace: delete \u00B7 enter: confirm/skip \u00B7 esc: back${a.reset}`,
 		stdout,
 	);
 	stdout.write(`  ${sym.bar}  `);
@@ -200,6 +200,19 @@ export function promptPin(
 			}
 			log(sym.bar, stdout);
 			callback(pin || null);
+		} else if (ch === "\x1b") {
+			// Escape -- go back (same as skip)
+			if (stdin.setRawMode) stdin.setRawMode(false);
+			stdin.pause();
+			stdin.removeListener("data", onPin);
+			stdout.write("\n");
+			clearUp(4, stdout);
+			log(
+				`${sym.done}  PIN protection ${a.dim}\u00B7 Skipped${a.reset}`,
+				stdout,
+			);
+			log(sym.bar, stdout);
+			callback(null);
 		} else if (ch === "\x03") {
 			if (stdin.setRawMode) stdin.setRawMode(false);
 			stdin.pause();

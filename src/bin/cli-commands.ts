@@ -2,6 +2,7 @@
 // Individual CLI command implementations: interactive menu, main menu launcher.
 
 import { spawn as cpSpawn } from "node:child_process";
+import { join } from "node:path";
 
 import { hashPin } from "../lib/auth.js";
 import { type DaemonInfo, showMainMenu } from "../lib/cli/cli-menu.js";
@@ -10,6 +11,7 @@ import { showProjectsMenu } from "../lib/cli/cli-projects.js";
 import { showSettingsMenu } from "../lib/cli/cli-settings.js";
 import { runSetup } from "../lib/cli/cli-setup.js";
 import { getTailscaleIP, hasMkcert } from "../lib/cli/tls.js";
+import { DEFAULT_CONFIG_DIR } from "../lib/env.js";
 import { formatErrorDetail } from "../lib/errors.js";
 
 import type { InteractiveContext } from "./cli-core.js";
@@ -246,6 +248,7 @@ async function launchMainMenu(
 				stdin,
 				stdout,
 				exit,
+				logPath: join(DEFAULT_CONFIG_DIR, "daemon.log"),
 				getSettingsInfo: async () => {
 					const status = await ipcSend({ cmd: "get_status" });
 					return {
