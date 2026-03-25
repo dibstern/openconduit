@@ -612,6 +612,17 @@ stopAll(): void {
 
 This ensures unmanaged instances (which start as "stopped" but have health polling) get their intervals cleared.
 
+8. **Add explicit `drain()` override:**
+
+```ts
+async drain(): Promise<void> {
+    this.stopAll();
+    await super.drain();
+}
+```
+
+This ensures all health polling intervals and pending restarts are cleared when the service registry drains.
+
 **Daemon.ts health checker injection:** The daemon injects a custom `healthChecker` function into InstanceManager. This function uses raw `fetch()` with no abort signal. Two options:
 - a) Pass the abort signal from TrackedService to the injected health checker
 - b) Make the injected health checker use the InstanceManager's `this.fetch()` by moving it into the class
@@ -665,23 +676,16 @@ git commit -m "refactor: KeepAwake extends TrackedService"
 **Files:**
 - Modify: `src/lib/relay/relay-stack.ts` (accept registry in config, pass to all services)
 - Modify: `src/lib/daemon/daemon.ts` (pass serviceRegistry to createProjectRelay)
-- Modify: `src/bin/cli-core.ts` (standalone `createRelayStack()` path)
-- Modify: relevant tests
+- Modify: relevant tests (search for files that construct `ProjectRelayConfig`)
 
 **Changes:**
 
-1. Add `registry: ServiceRegistry` to `ProjectRelayConfig`
-2. In `createProjectRelay()`, pass `config.registry` to all TrackedService constructors:
-   - `new SSEConsumer(config.registry, ...)`
-   - `new SessionStatusPoller(config.registry, ...)`
-   - `new MessagePollerManager(config.registry, ...)`
-   - `new WebSocketHandler(config.registry, ...)`
-   - `new SessionOverrides(config.registry)`
-   - `new RelayTimers(config.registry, ...)`
+1. Add `registry?: ServiceRegistry` (optional) to `ProjectRelayConfig`
+2. In `createProjectRelay()`, store `config.registry` locally for later use by Tasks 8-15. Do NOT change constructor calls yet — service constructors don't accept registry until their respective tasks.
 3. In `daemon.ts`, where `createRelay` lambda is defined for `ProjectRegistry.add()`, include `registry: this.serviceRegistry` in the relay config
-4. **Standalone path:** `createRelayStack()` in `cli-core.ts` also calls `createProjectRelay()`. It needs a ServiceRegistry too. Either create one locally for standalone mode, or make the registry parameter optional with a fallback that creates a local one.
+4. **Standalone path:** Test harnesses (`relay-harness.ts`, `e2e-harness.ts`) also call `createProjectRelay()`. Since `registry` is optional, they work without it. When a service needs a registry and none is provided, each service task (8-15) should handle this by creating a fallback `new ServiceRegistry()` in the constructor if none is passed.
 
-**Why this must come first:** This task establishes the registry parameter plumbing in relay-stack.ts. Each subsequent relay service task (8-15) then changes the constructor signature and the relay-stack construction site together in one commit.
+**Why this must come first:** This task establishes the registry parameter in the relay config type. Each subsequent relay service task (8-15) then changes the constructor to accept registry and updates the relay-stack.ts construction site in the same commit.
 
 **Tests:** Update relay-stack integration tests. Verify that `registry.drainAll()` drains relay services.
 
@@ -1012,12 +1016,15 @@ async stop(): Promise<void> {
     // Drain Daemon's own tracked promises (discoverProjects, scanner.scan, etc.)
     await this.tracker.drain();
 
-    // Null out service references to prevent zombie usage after drain
+    // Null out service references to prevent zombie usage after drain.
+    // Only null fields that are NOT readonly. For readonly fields (like instanceManager),
+    // they are drained/inert — check if the field is readonly before nulling.
+    // If a field is `readonly`, skip nulling it — drain() made it inert.
     this.scanner = null;
     this.versionChecker = null;
     this.storageMonitor = null;
-    this.instanceManager = null;
-    this.keepAwake = null;
+    this.keepAwakeManager = null;
+    // this.instanceManager is readonly — do NOT null it, it's inert after drain
 
     // Close IPC clients
     for (const client of this.ipcClients) {
