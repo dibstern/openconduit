@@ -355,12 +355,24 @@ export async function sendIPCCommand(
 	const PER_ATTEMPT_TIMEOUT = 5000;
 
 	let lastError: Error | undefined;
+	const cmdName = "cmd" in cmd ? (cmd as { cmd: string }).cmd : "unknown";
+	const t0 = Date.now();
 
 	for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
 		try {
-			return await sendIPCOnce(socketPath, cmd, PER_ATTEMPT_TIMEOUT);
+			const result = await sendIPCOnce(socketPath, cmd, PER_ATTEMPT_TIMEOUT);
+			if (attempt > 0) {
+				console.error(
+					`[ipc-client] ${cmdName} succeeded on attempt ${attempt + 1} after ${Date.now() - t0}ms`,
+				);
+			}
+			return result;
 		} catch (err) {
 			lastError = err instanceof Error ? err : new Error(String(err));
+			const code = (err as NodeJS.ErrnoException).code ?? "";
+			console.error(
+				`[ipc-client] ${cmdName} attempt ${attempt + 1} failed: ${code || lastError.message} (${Date.now() - t0}ms)`,
+			);
 			if (attempt < MAX_RETRIES && isRetryableError(err)) {
 				await new Promise<void>((r) => setTimeout(r, RETRY_DELAY));
 				continue;
