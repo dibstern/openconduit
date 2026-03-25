@@ -7,6 +7,7 @@ import {
 	buildSessionSwitchedMessage,
 	classifyHistorySource,
 	resolveSessionHistory,
+	switchClientToSession,
 } from "../../../src/lib/session/session-switch.js";
 import type { RequestId } from "../../../src/lib/shared-types.js";
 import type { RelayMessage } from "../../../src/lib/types.js";
@@ -256,5 +257,288 @@ describe("resolveSessionHistory", () => {
 		const warnCall = vi.mocked(deps.log.warn).mock.calls[0]?.[0] as string;
 		expect(warnCall).toContain("ses_5");
 		expect(warnCall).toContain("timeout");
+	});
+});
+
+// ─── switchClientToSession (orchestrator) ──────────────────────────────────
+
+function createFullDeps(
+	overrides?: Partial<SessionSwitchDeps>,
+): SessionSwitchDeps {
+	return {
+		messageCache: { getEvents: vi.fn().mockReturnValue(null) },
+		sessionMgr: {
+			loadPreRenderedHistory: vi.fn().mockResolvedValue({
+				messages: [],
+				hasMore: false,
+			}),
+		},
+		wsHandler: {
+			sendTo: vi.fn(),
+			setClientSession: vi.fn(),
+		},
+		statusPoller: { isProcessing: vi.fn().mockReturnValue(false) },
+		pollerManager: {
+			isPolling: vi.fn().mockReturnValue(true),
+			startPolling: vi.fn(),
+		},
+		client: { getMessages: vi.fn().mockResolvedValue([]) },
+		log: { info: vi.fn(), warn: vi.fn() },
+		getInputDraft: vi.fn().mockReturnValue(undefined),
+		...overrides,
+	};
+}
+
+describe("switchClientToSession", () => {
+	it("does nothing when sessionId is empty", async () => {
+		const deps = createFullDeps();
+		await switchClientToSession(deps, "c1", "");
+		expect(deps.wsHandler.setClientSession).not.toHaveBeenCalled();
+		expect(deps.wsHandler.sendTo).not.toHaveBeenCalled();
+	});
+
+	it("sets client session in registry", async () => {
+		const deps = createFullDeps();
+		await switchClientToSession(deps, "c1", "ses_1");
+		expect(deps.wsHandler.setClientSession).toHaveBeenCalledWith("c1", "ses_1");
+	});
+
+	it("sends session_switched with cache-hit events", async () => {
+		const events: RelayMessage[] = [{ type: "user_message", text: "hi" }];
+		const deps = createFullDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(events) },
+		});
+		await switchClientToSession(deps, "c1", "ses_1");
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const switchMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "session_switched",
+		);
+		expect(switchMsg).toBeDefined();
+		expect((switchMsg?.[1] as { events?: unknown }).events).toEqual(events);
+	});
+
+	it("sends session_switched with REST history on cache miss", async () => {
+		const history = {
+			messages: [{ id: "m1", role: "user" as const }],
+			hasMore: true,
+		};
+		const deps = createFullDeps({
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn().mockResolvedValue(history),
+			},
+		});
+		await switchClientToSession(deps, "c1", "ses_2");
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const switchMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "session_switched",
+		);
+		expect(switchMsg).toBeDefined();
+		expect((switchMsg?.[1] as { history?: unknown }).history).toEqual({
+			messages: history.messages,
+			hasMore: true,
+		});
+	});
+
+	it("sends session_switched with empty payload when REST fails", async () => {
+		const deps = createFullDeps({
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn().mockRejectedValue(new Error("fail")),
+			},
+		});
+		await switchClientToSession(deps, "c1", "ses_3");
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const switchMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "session_switched",
+		);
+		expect(switchMsg).toBeDefined();
+		const payload = switchMsg?.[1] as Record<string, unknown>;
+		expect(payload["id"]).toBe("ses_3");
+		expect(payload["events"]).toBeUndefined();
+		expect(payload["history"]).toBeUndefined();
+	});
+
+	it("sends status message (idle) after session_switched", async () => {
+		const deps = createFullDeps();
+		await switchClientToSession(deps, "c1", "ses_1");
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const statusMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "status",
+		);
+		expect(statusMsg).toBeDefined();
+		expect((statusMsg?.[1] as { status: string }).status).toBe("idle");
+	});
+
+	it("sends status 'processing' when session is busy", async () => {
+		const deps = createFullDeps({
+			statusPoller: { isProcessing: vi.fn().mockReturnValue(true) },
+		});
+		await switchClientToSession(deps, "c1", "ses_1");
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const statusMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "status",
+		);
+		expect((statusMsg?.[1] as { status: string }).status).toBe("processing");
+	});
+
+	it("defaults to idle when statusPoller is undefined", async () => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { statusPoller, ...rest } = createFullDeps();
+		const deps = rest as SessionSwitchDeps;
+		await switchClientToSession(deps, "c1", "ses_1");
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const statusMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "status",
+		);
+		expect((statusMsg?.[1] as { status: string }).status).toBe("idle");
+	});
+
+	it("includes inputText from draft", async () => {
+		const deps = createFullDeps({
+			getInputDraft: vi.fn().mockReturnValue("my draft"),
+		});
+		await switchClientToSession(deps, "c1", "ses_1");
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const switchMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "session_switched",
+		);
+		expect((switchMsg?.[1] as { inputText?: string }).inputText).toBe(
+			"my draft",
+		);
+	});
+
+	it("includes requestId when provided", async () => {
+		const deps = createFullDeps();
+		await switchClientToSession(deps, "c1", "ses_1", {
+			requestId: "req-abc" as RequestId,
+		});
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const switchMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "session_switched",
+		);
+		expect((switchMsg?.[1] as { requestId?: string }).requestId).toBe(
+			"req-abc",
+		);
+	});
+
+	it("skips history lookup when skipHistory is true", async () => {
+		const deps = createFullDeps();
+		await switchClientToSession(deps, "c1", "ses_1", { skipHistory: true });
+		expect(deps.messageCache.getEvents).not.toHaveBeenCalled();
+		expect(deps.sessionMgr.loadPreRenderedHistory).not.toHaveBeenCalled();
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const switchMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "session_switched",
+		);
+		expect(switchMsg).toBeDefined();
+		const payload = switchMsg?.[1] as Record<string, unknown>;
+		expect(payload["events"]).toBeUndefined();
+		expect(payload["history"]).toBeUndefined();
+	});
+
+	it("seeds poller when pollerManager is not polling", async () => {
+		const msgs = [{ id: "m1" }];
+		const deps = createFullDeps({
+			pollerManager: {
+				isPolling: vi.fn().mockReturnValue(false),
+				startPolling: vi.fn(),
+			},
+			client: { getMessages: vi.fn().mockResolvedValue(msgs) },
+		});
+		await switchClientToSession(deps, "c1", "ses_1");
+		await vi.waitFor(() => {
+			expect(deps.pollerManager?.startPolling).toHaveBeenCalled();
+		});
+		expect(deps.client.getMessages).toHaveBeenCalledWith("ses_1");
+		expect(deps.pollerManager?.startPolling).toHaveBeenCalledWith(
+			"ses_1",
+			msgs,
+		);
+	});
+
+	it("skips poller seeding when skipPollerSeed is true", async () => {
+		const deps = createFullDeps({
+			pollerManager: {
+				isPolling: vi.fn().mockReturnValue(false),
+				startPolling: vi.fn(),
+			},
+		});
+		await switchClientToSession(deps, "c1", "ses_1", {
+			skipPollerSeed: true,
+		});
+		await Promise.resolve();
+		await Promise.resolve();
+		expect(deps.client.getMessages).not.toHaveBeenCalled();
+	});
+
+	it("skips poller seeding when pollerManager is undefined", async () => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { pollerManager, ...rest } = createFullDeps();
+		const deps = rest as SessionSwitchDeps;
+		await switchClientToSession(deps, "c1", "ses_1");
+	});
+
+	it("logs but does not throw when poller seeding fails", async () => {
+		const deps = createFullDeps({
+			pollerManager: {
+				isPolling: vi.fn().mockReturnValue(false),
+				startPolling: vi.fn(),
+			},
+			client: {
+				getMessages: vi.fn().mockRejectedValue(new Error("fail")),
+			},
+		});
+		await switchClientToSession(deps, "c1", "ses_1");
+		await vi.waitFor(() => {
+			expect(deps.log.warn).toHaveBeenCalled();
+		});
+	});
+
+	// ─── Ordering and argument correctness ──────────────────────────────
+
+	it("sends session_switched before status", async () => {
+		const deps = createFullDeps();
+		await switchClientToSession(deps, "c1", "ses_1");
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const switchIdx = calls.findIndex(
+			([, m]) => (m as { type: string }).type === "session_switched",
+		);
+		const statusIdx = calls.findIndex(
+			([, m]) => (m as { type: string }).type === "status",
+		);
+		expect(switchIdx).toBeGreaterThanOrEqual(0);
+		expect(statusIdx).toBeGreaterThanOrEqual(0);
+		expect(switchIdx).toBeLessThan(statusIdx);
+	});
+
+	it("sets client session before sending any messages", async () => {
+		const callOrder: string[] = [];
+		const deps = createFullDeps({
+			wsHandler: {
+				setClientSession: vi.fn(() => callOrder.push("setClient")),
+				sendTo: vi.fn(() => callOrder.push("sendTo")),
+			},
+		});
+		await switchClientToSession(deps, "c1", "ses_1");
+		expect(callOrder[0]).toBe("setClient");
+		expect(callOrder.filter((c) => c === "sendTo").length).toBeGreaterThan(0);
+	});
+
+	it("calls getInputDraft with the target sessionId", async () => {
+		const deps = createFullDeps();
+		await switchClientToSession(deps, "c1", "ses_42");
+		expect(deps.getInputDraft).toHaveBeenCalledWith("ses_42");
+	});
+
+	it("omits inputText when getInputDraft returns empty string", async () => {
+		const deps = createFullDeps({
+			getInputDraft: vi.fn().mockReturnValue(""),
+		});
+		await switchClientToSession(deps, "c1", "ses_1");
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const switchMsg = calls.find(
+			([, m]) => (m as { type: string }).type === "session_switched",
+		);
+		expect(switchMsg).toBeDefined();
+		expect("inputText" in (switchMsg?.[1] ?? {})).toBe(false);
 	});
 });

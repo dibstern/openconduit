@@ -162,3 +162,58 @@ export async function resolveSessionHistory(
 		return { kind: "empty" };
 	}
 }
+
+// ─── Orchestrator ───────────────────────────────────────────────────────────
+
+/**
+ * Switch a client to a session: resolve history, build and send the
+ * session_switched message, send processing status, and seed the poller.
+ *
+ * This is the SINGLE entry point for all session switches. Handlers must
+ * call this instead of constructing session_switched messages manually.
+ */
+export async function switchClientToSession(
+	deps: SessionSwitchDeps,
+	clientId: string,
+	sessionId: string,
+	options?: SwitchClientOptions,
+): Promise<void> {
+	if (!sessionId) return;
+
+	deps.wsHandler.setClientSession(clientId, sessionId);
+
+	// Resolve history source
+	const source: SessionHistorySource = options?.skipHistory
+		? { kind: "empty" }
+		: await resolveSessionHistory(sessionId, deps);
+
+	// Build and send session_switched
+	const draft = deps.getInputDraft(sessionId);
+	const message = buildSessionSwitchedMessage(sessionId, source, {
+		...(draft ? { draft } : {}),
+		...(options?.requestId != null ? { requestId: options.requestId } : {}),
+	});
+	deps.wsHandler.sendTo(clientId, message);
+
+	// Send processing status
+	deps.wsHandler.sendTo(clientId, {
+		type: "status",
+		status: deps.statusPoller?.isProcessing(sessionId) ? "processing" : "idle",
+	});
+
+	// Seed poller (fire-and-forget)
+	if (
+		!options?.skipPollerSeed &&
+		deps.pollerManager &&
+		!deps.pollerManager.isPolling(sessionId)
+	) {
+		deps.client
+			.getMessages(sessionId)
+			.then((msgs) => deps.pollerManager?.startPolling(sessionId, msgs))
+			.catch((err) =>
+				deps.log.warn(
+					`Failed to seed poller for ${sessionId.slice(0, 12)}, will retry: ${err instanceof Error ? err.message : err}`,
+				),
+			);
+	}
+}
