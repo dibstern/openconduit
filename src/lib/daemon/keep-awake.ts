@@ -4,7 +4,8 @@
 
 import type { ChildProcess } from "node:child_process";
 import { spawn as defaultSpawn, execFileSync } from "node:child_process";
-import { EventEmitter } from "node:events";
+import type { ServiceRegistry } from "./service-registry.js";
+import { TrackedService } from "./tracked-service.js";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -20,12 +21,12 @@ export interface KeepAwakeOptions {
 	_whichSync?: (cmd: string) => string | null;
 }
 
-export interface KeepAwakeEvents {
+export type KeepAwakeEvents = {
 	activated: [];
 	deactivated: [];
 	error: [{ error: Error }];
 	unsupported: [{ platform: string }];
-}
+};
 
 // ─── Defaults ────────────────────────────────────────────────────────────────
 
@@ -60,7 +61,7 @@ function defaultWhichSync(cmd: string): string | null {
 /** @internal Exported for testing only */
 export { defaultWhichSync as _defaultWhichSync };
 
-export class KeepAwake extends EventEmitter<KeepAwakeEvents> {
+export class KeepAwake extends TrackedService<KeepAwakeEvents> {
 	private readonly whichSync: (cmd: string) => string | null;
 	private readonly configCommand: string | undefined;
 	private readonly configArgs: string[] | undefined;
@@ -77,8 +78,8 @@ export class KeepAwake extends EventEmitter<KeepAwakeEvents> {
 	private child: ChildProcess | null = null;
 	private active = false;
 
-	constructor(options?: KeepAwakeOptions) {
-		super();
+	constructor(registry: ServiceRegistry, options?: KeepAwakeOptions) {
+		super(registry);
 		this.enabled = options?.enabled ?? true;
 		// Treat empty string as "no command" — fall through to auto-detect
 		this.configCommand = options?.command?.trim() || undefined;
@@ -236,5 +237,11 @@ export class KeepAwake extends EventEmitter<KeepAwakeEvents> {
 	/** Is the platform supported? */
 	isSupported(): boolean {
 		return this.resolveCommand() !== null;
+	}
+
+	/** Kill the child process and drain tracked work. */
+	override async drain(): Promise<void> {
+		this.deactivate();
+		await super.drain();
 	}
 }
