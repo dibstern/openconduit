@@ -25,5 +25,5 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check        # TypeScript
       - run: pnpm lint          # Biome
+      - run: pnpm build         # tsgo + vite (needed by test/build/)
       - run: pnpm test          # Vitest
-      - run: pnpm build         # tsgo

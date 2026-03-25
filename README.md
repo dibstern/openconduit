@@ -27,7 +27,7 @@ npx conduit-code
 
 <p align="center">
   <img src="media/GENERATE-SETUP.gif"
-       alt="Conduit first-run setup wizard with QR code" width="280">
+       alt="Conduit first-run setup wizard with QR code" width="220">
 </p>
 
 First run opens a setup wizard: set a port and PIN, optionally enable HTTPS,
