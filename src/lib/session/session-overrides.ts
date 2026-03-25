@@ -3,6 +3,9 @@
 // processing timeout. Each session has independent overrides. A global
 // defaultModel provides the fallback when no per-session model is set.
 
+import type { ServiceRegistry } from "../daemon/service-registry.js";
+import { TrackedService } from "../daemon/tracked-service.js";
+
 export interface ModelOverride {
 	providerID: string;
 	modelID: string;
@@ -19,7 +22,7 @@ interface SessionState {
 	processingTimeoutCallback: (() => void) | null;
 }
 
-export class SessionOverrides {
+export class SessionOverrides extends TrackedService {
 	/**
 	 * Sentinel session ID for backward-compatible shims.
 	 * @deprecated — will be removed when all callers migrate to per-session API.
@@ -33,6 +36,10 @@ export class SessionOverrides {
 	defaultVariant: string = "";
 
 	private readonly sessions: Map<string, SessionState> = new Map();
+
+	constructor(registry: ServiceRegistry) {
+		super(registry);
+	}
 
 	// ─── Internal ──────────────────────────────────────────────────────────
 
@@ -152,7 +159,7 @@ export class SessionOverrides {
 	clearSession(sessionId: string): void {
 		const state = this.sessions.get(sessionId);
 		if (state?.processingTimer) {
-			clearTimeout(state.processingTimer);
+			this.clearTrackedTimer(state.processingTimer);
 		}
 		this.sessions.delete(sessionId);
 	}
@@ -174,10 +181,10 @@ export class SessionOverrides {
 				: [SessionOverrides.GLOBAL, sessionIdOrCb];
 		const s = this.getOrCreate(sid);
 		if (s.processingTimer) {
-			clearTimeout(s.processingTimer);
+			this.clearTrackedTimer(s.processingTimer);
 		}
 		s.processingTimeoutCallback = cb;
-		s.processingTimer = setTimeout(() => {
+		s.processingTimer = this.delayed(() => {
 			s.processingTimer = null;
 			s.processingTimeoutCallback = null;
 			cb();
@@ -194,8 +201,8 @@ export class SessionOverrides {
 		const state = this.sessions.get(sessionId);
 		if (state?.processingTimer !== null && state?.processingTimeoutCallback) {
 			const cb = state.processingTimeoutCallback;
-			clearTimeout(state.processingTimer);
-			state.processingTimer = setTimeout(() => {
+			this.clearTrackedTimer(state.processingTimer);
+			state.processingTimer = this.delayed(() => {
 				state.processingTimer = null;
 				state.processingTimeoutCallback = null;
 				cb();
@@ -211,7 +218,7 @@ export class SessionOverrides {
 		const sid = sessionId ?? SessionOverrides.GLOBAL;
 		const state = this.sessions.get(sid);
 		if (state?.processingTimer) {
-			clearTimeout(state.processingTimer);
+			this.clearTrackedTimer(state.processingTimer);
 			state.processingTimer = null;
 		}
 		if (state) {
@@ -225,10 +232,16 @@ export class SessionOverrides {
 	dispose(): void {
 		for (const [, state] of this.sessions) {
 			if (state.processingTimer) {
-				clearTimeout(state.processingTimer);
+				this.clearTrackedTimer(state.processingTimer);
 			}
 		}
 		this.sessions.clear();
+	}
+
+	/** Cancel all tracked work (timers, promises) and dispose session state. */
+	override async drain(): Promise<void> {
+		this.dispose();
+		await super.drain();
 	}
 
 	// ─── Backward-Compatible Shims ──────────────────────────────────────────
