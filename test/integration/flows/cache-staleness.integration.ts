@@ -52,9 +52,14 @@ describe("Integration: Cache Staleness Detection", () => {
 		// has, simulating messages that arrived while the daemon was down.
 		// The recording replay populates the cache with many events, so the
 		// unique message count (user_messages + distinct messageIds) can be
-		// high. Use 200 fake messages to guarantee exceeding the cache count.
+		// high. Compute the actual cached count and exceed it by a wide margin.
 		// Messages must pass normalizeMessage validation (need id, role, sessionID).
-		const fakeMessages = Array.from({ length: 200 }, (_, i) => ({
+		const { countUniqueMessages } = await import(
+			"../../../src/lib/session/session-switch.js"
+		);
+		const cachedUniqueCount = countUniqueMessages(cachedEvents!);
+		const fakeCount = cachedUniqueCount + 100;
+		const fakeMessages = Array.from({ length: fakeCount }, (_, i) => ({
 			id: `msg_fake_${i}`,
 			role: i % 2 === 0 ? "user" : "assistant",
 			sessionID: sessionA,
