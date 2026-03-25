@@ -41,7 +41,7 @@ export interface SwitchClientOptions {
 /** Narrowed deps for switchClientToSession — only what's needed, nothing more. */
 export interface SessionSwitchDeps {
 	readonly messageCache: {
-		getEvents(sessionId: string): RelayMessage[] | null;
+		getEvents(sessionId: string): Promise<RelayMessage[] | null>;
 	};
 	readonly sessionMgr: {
 		loadPreRenderedHistory(
@@ -198,7 +198,7 @@ export async function resolveSessionHistory(
 		"messageCache" | "sessionMgr" | "log" | "client"
 	>,
 ): Promise<SessionHistorySource> {
-	const events = deps.messageCache.getEvents(sessionId);
+	const events = await deps.messageCache.getEvents(sessionId);
 	const classification = classifyHistorySource(events);
 
 	if (classification === "cached-events" && events) {

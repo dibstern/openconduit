@@ -64,7 +64,7 @@ describe("handleClientConnected — session with cached events", () => {
 			{ type: "delta", text: "hello" },
 		];
 		const deps = createMockClientInitDeps();
-		vi.mocked(deps.messageCache.getEvents).mockReturnValue(cachedEvents);
+		vi.mocked(deps.messageCache.getEvents).mockResolvedValue(cachedEvents);
 
 		await handleClientConnected(deps, "client-1");
 
@@ -82,7 +82,7 @@ describe("handleClientConnected — session with cached events", () => {
 			{ type: "delta", text: "hello" },
 		];
 		const deps = createMockClientInitDeps();
-		vi.mocked(deps.messageCache.getEvents).mockReturnValue(cachedEvents);
+		vi.mocked(deps.messageCache.getEvents).mockResolvedValue(cachedEvents);
 
 		await handleClientConnected(deps, "client-1");
 
@@ -105,7 +105,7 @@ describe("handleClientConnected — REST API history fallback", () => {
 	it("sends session_switched with REST API history when cache misses", async () => {
 		const deps = applyTestDefaults(createMockClientInitDeps());
 		// Cache returns null — no events
-		vi.mocked(deps.messageCache.getEvents).mockReturnValue(null);
+		vi.mocked(deps.messageCache.getEvents).mockResolvedValue(null);
 
 		await handleClientConnected(deps, "client-1");
 
@@ -122,7 +122,7 @@ describe("handleClientConnected — REST API history fallback", () => {
 
 	it("sends session_switched without data when REST API also fails", async () => {
 		const deps = createMockClientInitDeps();
-		vi.mocked(deps.messageCache.getEvents).mockReturnValue(null);
+		vi.mocked(deps.messageCache.getEvents).mockResolvedValue(null);
 		vi.mocked(deps.sessionMgr.loadPreRenderedHistory).mockRejectedValue(
 			new Error("REST fail"),
 		);
@@ -142,7 +142,7 @@ describe("handleClientConnected — REST API history fallback", () => {
 			{ type: "status", status: "processing" },
 			{ type: "done", code: 0 },
 		];
-		vi.mocked(deps.messageCache.getEvents).mockReturnValue(nonChatEvents);
+		vi.mocked(deps.messageCache.getEvents).mockResolvedValue(nonChatEvents);
 
 		await handleClientConnected(deps, "client-1");
 

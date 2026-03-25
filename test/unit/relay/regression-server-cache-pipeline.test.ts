@@ -131,7 +131,7 @@ beforeEach(() => {
 });
 
 describe("Server cache pipeline: events survive session switch", () => {
-	it("text deltas for session A are cached after translator reset (switch to B)", () => {
+	it("text deltas for session A are cached after translator reset (switch to B)", async () => {
 		// Phase 1: Events arrive for session A while viewing session A
 		let activeSession = "session-a";
 
@@ -161,7 +161,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 		);
 
 		// Verify 2 deltas cached
-		let events = cache.getEvents("session-a");
+		let events = await cache.getEvents("session-a");
 		const deltasBeforeSwitch = events?.filter((e) => e.type === "delta") ?? [];
 		expect(deltasBeforeSwitch).toHaveLength(2);
 
@@ -186,7 +186,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 		);
 
 		// Verify: ALL 4 deltas should be in session A's cache
-		events = cache.getEvents("session-a");
+		events = await cache.getEvents("session-a");
 		const allDeltas = events?.filter((e) => e.type === "delta") ?? [];
 		expect(allDeltas).toHaveLength(4);
 		expect((allDeltas[0] as { text: string }).text).toBe("Hello ");
@@ -195,7 +195,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 		expect((allDeltas[3] as { text: string }).text).toBe("you?");
 	});
 
-	it("tool lifecycle events for session A are cached after translator reset", () => {
+	it("tool lifecycle events for session A are cached after translator reset", async () => {
 		let activeSession = "session-a";
 
 		// Phase 1: Tool starts on session A
@@ -209,7 +209,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 			extractSessionId,
 		);
 
-		let events = cache.getEvents("session-a");
+		let events = await cache.getEvents("session-a");
 		expect(events?.some((e) => e.type === "tool_start")).toBe(true);
 
 		// Phase 2: Switch to session B
@@ -239,7 +239,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 		);
 
 		// Verify: tool_start, tool_executing, and tool_result should all be cached
-		events = cache.getEvents("session-a");
+		events = await cache.getEvents("session-a");
 		const toolEvents = events?.filter((e) =>
 			["tool_start", "tool_executing", "tool_result"].includes(e.type),
 		);
@@ -314,7 +314,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 		);
 
 		// classifyHistorySource still says "cached-events" (has chat content)
-		const events = cache.getEvents("session-a");
+		const events = await cache.getEvents("session-a");
 		const hasChatContent =
 			events?.some((e) => e.type === "user_message" || e.type === "delta") ??
 			false;
@@ -355,7 +355,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 		}
 	});
 
-	it("session.status busy/idle no longer produce cached events (handled by status poller)", () => {
+	it("session.status busy/idle no longer produce cached events (handled by status poller)", async () => {
 		let activeSession = "session-a";
 
 		// Processing status — now returns null from translator
@@ -383,12 +383,12 @@ describe("Server cache pipeline: events survive session switch", () => {
 		expect(idleResult).toHaveLength(0); // idle no longer translated
 
 		// Verify: no status or done events in cache (handled by status poller now)
-		const events = cache.getEvents("session-a");
+		const events = await cache.getEvents("session-a");
 		expect(events?.some((e) => e.type === "status")).toBeFalsy();
 		expect(events?.some((e) => e.type === "done")).toBeFalsy();
 	});
 
-	it("events with missing sessionID fall back to activeSession (recorded to wrong session)", () => {
+	it("events with missing sessionID fall back to activeSession (recorded to wrong session)", async () => {
 		let activeSession = "session-a";
 
 		// Event WITH sessionID → recorded to correct session
@@ -424,8 +424,8 @@ describe("Server cache pipeline: events survive session switch", () => {
 
 		// BUG: Without sessionID, event is cached under activeSession (session-b)
 		// instead of session-a where it belongs
-		const sessionAEvents = cache.getEvents("session-a");
-		const sessionBEvents = cache.getEvents("session-b");
+		const sessionAEvents = await cache.getEvents("session-a");
+		const sessionBEvents = await cache.getEvents("session-b");
 
 		// The "orphaned" delta should be in session A, but it ends up in session B
 		const sessionADeltas =
@@ -438,7 +438,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 		expect(sessionBDeltas).toHaveLength(1); // "orphaned" ended up here (BUG)
 	});
 
-	it("full conversation pipeline: events before AND after switch are all cached", () => {
+	it("full conversation pipeline: events before AND after switch are all cached", async () => {
 		let activeSession = "session-a";
 
 		// Manually add user_message (relay does this directly, not via SSE)
@@ -540,7 +540,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 
 		// ── VERIFY: Cache should have conversation events (no status/done from translator) ──
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by prior assertion
-		const events = cache.getEvents("session-a")!;
+		const events = (await cache.getEvents("session-a"))!;
 		expect(events).not.toBeNull();
 
 		const byType = (type: string) => events.filter((e) => e.type === type);

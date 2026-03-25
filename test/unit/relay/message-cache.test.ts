@@ -45,7 +45,7 @@ afterEach(() => {
 // ─── recordEvent + getEvents roundtrip ──────────────────────────────────────
 
 describe("recordEvent + getEvents", () => {
-	it("returns events after recording them", () => {
+	it("returns events after recording them", async () => {
 		const cache = new MessageCache(testDir);
 
 		const event1: RelayMessage = { type: "delta", text: "hello " };
@@ -56,7 +56,7 @@ describe("recordEvent + getEvents", () => {
 		cache.recordEvent("session-1", event2);
 		cache.recordEvent("session-1", event3);
 
-		const events = cache.getEvents("session-1");
+		const events = await cache.getEvents("session-1");
 		expect(events).toHaveLength(3);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 		expect(events![0]).toEqual(event1);
@@ -66,12 +66,12 @@ describe("recordEvent + getEvents", () => {
 		expect(events![2]).toEqual(event3);
 	});
 
-	it("returns null for unknown sessions", () => {
+	it("returns null for unknown sessions", async () => {
 		const cache = new MessageCache(testDir);
-		expect(cache.getEvents("nonexistent")).toBeNull();
+		expect(await cache.getEvents("nonexistent")).toBeNull();
 	});
 
-	it("records different event types correctly", () => {
+	it("records different event types correctly", async () => {
 		const cache = new MessageCache(testDir);
 
 		cache.recordEvent("s1", { type: "user_message", text: "hi" });
@@ -101,7 +101,7 @@ describe("recordEvent + getEvents", () => {
 		});
 		cache.recordEvent("s1", { type: "done", code: 0 });
 
-		const events = cache.getEvents("s1");
+		const events = await cache.getEvents("s1");
 		expect(events).toHaveLength(10);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 		expect(events!.map((e) => e.type)).toEqual([
@@ -159,7 +159,7 @@ describe("JSONL file persistence", () => {
 // ─── loadFromDisk ────────────────────────────────────────────────────────────
 
 describe("loadFromDisk", () => {
-	it("recovers events from JSONL files", () => {
+	it("recovers events from JSONL files", async () => {
 		// Manually write a JSONL file
 		const filePath = join(testDir, "recovered-session.jsonl");
 		const events = [
@@ -176,7 +176,7 @@ describe("loadFromDisk", () => {
 		const cache = new MessageCache(testDir);
 		cache.loadFromDisk();
 
-		const result = cache.getEvents("recovered-session");
+		const result = await cache.getEvents("recovered-session");
 		expect(result).toHaveLength(3);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 		expect(result![0]).toEqual({ type: "user_message", text: "hello" });
@@ -184,16 +184,16 @@ describe("loadFromDisk", () => {
 		expect(result![2]).toEqual({ type: "done", code: 0 });
 	});
 
-	it("handles empty JSONL files gracefully", () => {
+	it("handles empty JSONL files gracefully", async () => {
 		writeFileSync(join(testDir, "empty.jsonl"), "");
 
 		const cache = new MessageCache(testDir);
 		cache.loadFromDisk();
 
-		expect(cache.getEvents("empty")).toBeNull();
+		expect(await cache.getEvents("empty")).toBeNull();
 	});
 
-	it("handles malformed lines gracefully (crash-safe)", () => {
+	it("handles malformed lines gracefully (crash-safe)", async () => {
 		const filePath = join(testDir, "partial.jsonl");
 		writeFileSync(
 			filePath,
@@ -203,14 +203,14 @@ describe("loadFromDisk", () => {
 		const cache = new MessageCache(testDir);
 		cache.loadFromDisk();
 
-		const events = cache.getEvents("partial");
+		const events = await cache.getEvents("partial");
 		// Should recover the two good lines, skip the malformed one
 		expect(events).toHaveLength(2);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 		expect(events![0]).toEqual({ type: "delta", text: "ok" });
 	});
 
-	it("loads multiple sessions from disk", () => {
+	it("loads multiple sessions from disk", async () => {
 		writeFileSync(
 			join(testDir, "s1.jsonl"),
 			'{"type":"delta","text":"s1"}\n{"type":"done","code":0}\n',
@@ -223,40 +223,46 @@ describe("loadFromDisk", () => {
 		const cache = new MessageCache(testDir);
 		cache.loadFromDisk();
 
-		expect(cache.getEvents("s1")).toHaveLength(2);
-		expect(cache.getEvents("s2")).toHaveLength(2);
+		expect(await cache.getEvents("s1")).toHaveLength(2);
+		expect(await cache.getEvents("s2")).toHaveLength(2);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
-		expect(cache.getEvents("s1")![0]).toEqual({ type: "delta", text: "s1" });
+		expect((await cache.getEvents("s1"))![0]).toEqual({
+			type: "delta",
+			text: "s1",
+		});
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
-		expect(cache.getEvents("s2")![0]).toEqual({ type: "delta", text: "s2" });
+		expect((await cache.getEvents("s2"))![0]).toEqual({
+			type: "delta",
+			text: "s2",
+		});
 	});
 
-	it("ignores non-.jsonl files", () => {
+	it("ignores non-.jsonl files", async () => {
 		writeFileSync(join(testDir, "readme.txt"), "not a session");
 		writeFileSync(join(testDir, "real.jsonl"), '{"type":"done","code":0}\n');
 
 		const cache = new MessageCache(testDir);
 		cache.loadFromDisk();
 
-		expect(cache.getEvents("real")).toHaveLength(1);
-		expect(cache.getEvents("readme")).toBeNull();
+		expect(await cache.getEvents("real")).toHaveLength(1);
+		expect(await cache.getEvents("readme")).toBeNull();
 	});
 });
 
 // ─── Fallback chain ─────────────────────────────────────────────────────────
 
 describe("fallback chain: memory → file → null", () => {
-	it("serves from memory when available (no disk read)", () => {
+	it("serves from memory when available (no disk read)", async () => {
 		const cache = new MessageCache(testDir);
 
 		cache.recordEvent("s1", { type: "delta", text: "in memory" });
-		const events = cache.getEvents("s1");
+		const events = await cache.getEvents("s1");
 		expect(events).toHaveLength(1);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 		expect(events![0]).toEqual({ type: "delta", text: "in memory" });
 	});
 
-	it("falls back to file when memory is empty", () => {
+	it("falls back to file when memory is empty", async () => {
 		// Write events to file
 		writeFileSync(
 			join(testDir, "file-only.jsonl"),
@@ -266,18 +272,18 @@ describe("fallback chain: memory → file → null", () => {
 		// Create fresh cache (no loadFromDisk called — simulates memory miss)
 		const cache = new MessageCache(testDir);
 		// Memory is empty, but file exists
-		const events = cache.getEvents("file-only");
+		const events = await cache.getEvents("file-only");
 		expect(events).toHaveLength(1);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 		expect(events![0]).toEqual({ type: "delta", text: "from file" });
 	});
 
-	it("returns null when neither memory nor file has data", () => {
+	it("returns null when neither memory nor file has data", async () => {
 		const cache = new MessageCache(testDir);
-		expect(cache.getEvents("completely-unknown")).toBeNull();
+		expect(await cache.getEvents("completely-unknown")).toBeNull();
 	});
 
-	it("populates memory from file on first access (subsequent reads from memory)", () => {
+	it("populates memory from file on first access (subsequent reads from memory)", async () => {
 		writeFileSync(
 			join(testDir, "cached.jsonl"),
 			'{"type":"delta","text":"loaded"}\n',
@@ -285,7 +291,7 @@ describe("fallback chain: memory → file → null", () => {
 
 		const cache = new MessageCache(testDir);
 		// First call reads from file and caches in memory
-		const first = cache.getEvents("cached");
+		const first = await cache.getEvents("cached");
 		expect(first).toHaveLength(1);
 
 		// Verify it's now in memory via has()
@@ -296,21 +302,21 @@ describe("fallback chain: memory → file → null", () => {
 // ─── Session isolation ──────────────────────────────────────────────────────
 
 describe("session isolation", () => {
-	it("events are isolated between sessions", () => {
+	it("events are isolated between sessions", async () => {
 		const cache = new MessageCache(testDir);
 
 		cache.recordEvent("session-a", { type: "delta", text: "A" });
 		cache.recordEvent("session-b", { type: "delta", text: "B" });
 
-		expect(cache.getEvents("session-a")).toHaveLength(1);
+		expect(await cache.getEvents("session-a")).toHaveLength(1);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
-		expect(cache.getEvents("session-a")![0]).toEqual({
+		expect((await cache.getEvents("session-a"))![0]).toEqual({
 			type: "delta",
 			text: "A",
 		});
-		expect(cache.getEvents("session-b")).toHaveLength(1);
+		expect(await cache.getEvents("session-b")).toHaveLength(1);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
-		expect(cache.getEvents("session-b")![0]).toEqual({
+		expect((await cache.getEvents("session-b"))![0]).toEqual({
 			type: "delta",
 			text: "B",
 		});
@@ -328,8 +334,9 @@ describe("remove", () => {
 		expect(existsSync(join(testDir, "to-delete.jsonl"))).toBe(true);
 
 		cache.remove("to-delete");
+		await cache.flush();
 
-		expect(cache.getEvents("to-delete")).toBeNull();
+		expect(await cache.getEvents("to-delete")).toBeNull();
 		expect(existsSync(join(testDir, "to-delete.jsonl"))).toBe(false);
 	});
 
@@ -338,16 +345,17 @@ describe("remove", () => {
 		expect(() => cache.remove("nonexistent")).not.toThrow();
 	});
 
-	it("does not affect other sessions", () => {
+	it("does not affect other sessions", async () => {
 		const cache = new MessageCache(testDir);
 
 		cache.recordEvent("keep", { type: "delta", text: "kept" });
 		cache.recordEvent("delete", { type: "delta", text: "gone" });
 
 		cache.remove("delete");
+		await cache.flush();
 
-		expect(cache.getEvents("keep")).toHaveLength(1);
-		expect(cache.getEvents("delete")).toBeNull();
+		expect(await cache.getEvents("keep")).toHaveLength(1);
+		expect(await cache.getEvents("delete")).toBeNull();
 	});
 });
 
@@ -369,7 +377,7 @@ describe("has", () => {
 // ─── Error resilience (file write failure) ──────────────────────────────────
 
 describe("error resilience", () => {
-	it("recordEvent does not throw when file write fails, and event is still in memory", () => {
+	it("recordEvent does not throw when file write fails, and event is still in memory", async () => {
 		const cache = new MessageCache(testDir);
 
 		// Make the cache directory read-only so file writes fail
@@ -384,7 +392,7 @@ describe("error resilience", () => {
 		chmodSync(testDir, 0o755);
 
 		// Event should still be in memory
-		const events = cache.getEvents("write-fail");
+		const events = await cache.getEvents("write-fail");
 		expect(events).toHaveLength(1);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 		expect(events![0]).toEqual(event);
@@ -446,7 +454,7 @@ describe("evictOldestSession", () => {
 		expect(cache.evictOldestSession()).toBeNull();
 	});
 
-	it("removes the oldest-accessed session", () => {
+	it("removes the oldest-accessed session", async () => {
 		const cache = new MessageCache(testDir);
 
 		cache.recordEvent("s1", { type: "delta", text: "first" });
@@ -455,9 +463,9 @@ describe("evictOldestSession", () => {
 
 		const evicted = cache.evictOldestSession();
 		expect(evicted).toBe("s1");
-		expect(cache.getEvents("s1")).toBeNull();
-		expect(cache.getEvents("s2")).not.toBeNull();
-		expect(cache.getEvents("s3")).not.toBeNull();
+		expect(await cache.getEvents("s1")).toBeNull();
+		expect(await cache.getEvents("s2")).not.toBeNull();
+		expect(await cache.getEvents("s3")).not.toBeNull();
 	});
 
 	it("uses access time, not creation time", async () => {
@@ -476,8 +484,8 @@ describe("evictOldestSession", () => {
 		// Now s2 should be evicted (older access time) even though s1 was created first
 		const evicted = cache.evictOldestSession();
 		expect(evicted).toBe("s2");
-		expect(cache.getEvents("s1")).not.toBeNull();
-		expect(cache.getEvents("s2")).toBeNull();
+		expect(await cache.getEvents("s1")).not.toBeNull();
+		expect(await cache.getEvents("s2")).toBeNull();
 	});
 
 	it("reduces approximateBytes after eviction", () => {
@@ -501,6 +509,7 @@ describe("evictOldestSession", () => {
 		expect(existsSync(join(testDir, "s1.jsonl"))).toBe(true);
 
 		cache.evictOldestSession();
+		await cache.flush();
 		expect(existsSync(join(testDir, "s1.jsonl"))).toBe(false);
 	});
 

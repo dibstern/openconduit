@@ -169,7 +169,7 @@ export async function createProjectRelay(
 		? join(config.configDir, "cache", config.slug, "sessions")
 		: join(config.projectDir ?? process.cwd(), ".conduit", "sessions");
 	const messageCache = new MessageCache(cacheDir);
-	messageCache.loadFromDisk();
+	await messageCache.loadFromDisk();
 
 	const toolContentStore = new ToolContentStore();
 

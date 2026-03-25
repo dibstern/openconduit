@@ -44,7 +44,7 @@ describe("Integration: Cache Staleness Detection", () => {
 		await new Promise((r) => setTimeout(r, 3_000));
 
 		// Verify the cache has events for this session
-		const cachedEvents = harness.stack.messageCache.getEvents(sessionA);
+		const cachedEvents = await harness.stack.messageCache.getEvents(sessionA);
 		expect(cachedEvents).toBeTruthy();
 		expect(cachedEvents?.some((e) => e.type === "user_message")).toBe(true);
 

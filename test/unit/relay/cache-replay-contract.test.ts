@@ -168,7 +168,7 @@ describe("Contract: pipeline cache contents match CACHEABLE_EVENT_TYPES", () => 
 		}
 	});
 
-	it("full conversation: cache contains only cacheable event types", () => {
+	it("full conversation: cache contains only cacheable event types", async () => {
 		// ── Simulate the full prompt handler + SSE pipeline flow ──
 
 		// 1. User sends a message (prompt handler records it directly)
@@ -213,7 +213,7 @@ describe("Contract: pipeline cache contents match CACHEABLE_EVENT_TYPES", () => 
 		recordDone();
 
 		// ── Verify the contract ──
-		const events = cache.getEvents(SESSION);
+		const events = await cache.getEvents(SESSION);
 		expect(events).not.toBeNull();
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by assertion
 		expect(events!.length).toBeGreaterThan(0);
@@ -235,7 +235,7 @@ describe("Contract: pipeline cache contents match CACHEABLE_EVENT_TYPES", () => 
 		expect(types.has("done")).toBe(true);
 	});
 
-	it("multi-turn conversation: all cache contents are cacheable", () => {
+	it("multi-turn conversation: all cache contents are cacheable", async () => {
 		// Turn 1
 		recordUserMessage("Hello");
 		broadcastProcessing();
@@ -250,7 +250,7 @@ describe("Contract: pipeline cache contents match CACHEABLE_EVENT_TYPES", () => 
 		pipelineProcess(makePartDelta("p2", "I'm Claude."));
 		recordDone();
 
-		const events = cache.getEvents(SESSION);
+		const events = await cache.getEvents(SESSION);
 		expect(events).not.toBeNull();
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by assertion
 		assertCacheRealisticEvents(events!);
@@ -265,7 +265,7 @@ describe("Contract: pipeline cache contents match CACHEABLE_EVENT_TYPES", () => 
 		expect(deltas).toHaveLength(2);
 	});
 
-	it("mid-stream cache (no done event): contents are still cacheable", () => {
+	it("mid-stream cache (no done event): contents are still cacheable", async () => {
 		// User sent a message, LLM is still responding (no done event yet)
 		recordUserMessage("Think step by step");
 		broadcastProcessing();
@@ -275,7 +275,7 @@ describe("Contract: pipeline cache contents match CACHEABLE_EVENT_TYPES", () => 
 		pipelineProcess(makePartDelta("p2", "Let me explain..."));
 		// No done event — session is still processing
 
-		const events = cache.getEvents(SESSION);
+		const events = await cache.getEvents(SESSION);
 		expect(events).not.toBeNull();
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by assertion
 		assertCacheRealisticEvents(events!);
@@ -283,7 +283,7 @@ describe("Contract: pipeline cache contents match CACHEABLE_EVENT_TYPES", () => 
 		expect(events!.some((e) => e.type === "done")).toBe(false);
 	});
 
-	it("queued message scenario: second user_message while LLM active produces cache-valid events", () => {
+	it("queued message scenario: second user_message while LLM active produces cache-valid events", async () => {
 		// First message + response starts
 		recordUserMessage("First question");
 		broadcastProcessing();
@@ -295,7 +295,7 @@ describe("Contract: pipeline cache contents match CACHEABLE_EVENT_TYPES", () => 
 		recordUserMessage("Second question");
 		broadcastProcessing(); // Also NOT cached
 
-		const events = cache.getEvents(SESSION);
+		const events = await cache.getEvents(SESSION);
 		expect(events).not.toBeNull();
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by assertion
 		assertCacheRealisticEvents(events!);

@@ -36,6 +36,8 @@ export interface DaemonConfig {
 		title?: string;
 		addedAt: number;
 		instanceId?: string;
+		/** Cached session count from last run — for instant CLI display. */
+		sessionCount?: number;
 	}>;
 	instances?: Array<{
 		id: string;
