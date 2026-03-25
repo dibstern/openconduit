@@ -37,6 +37,7 @@ import { RequestRouter } from "../server/http-router.js";
 import type { PushNotificationManager } from "../server/push.js";
 import type { OpenCodeInstance, StoredProject } from "../types.js";
 import { generateSlug } from "../utils.js";
+import { AsyncTracker } from "./async-tracker.js";
 import {
 	clearCrashInfo,
 	type DaemonConfig,
@@ -73,6 +74,7 @@ import {
 } from "./pid-manager.js";
 import { PortScanner, type ScanResult } from "./port-scanner.js";
 import { ProjectRegistry } from "./project-registry.js";
+import { ServiceRegistry } from "./service-registry.js";
 import {
 	installSignalHandlers,
 	removeSignalHandlers,
@@ -110,6 +112,10 @@ export interface DaemonOptions {
 	pinHash?: string;
 	tlsEnabled?: boolean;
 	keepAwake?: boolean;
+	/** User-provided keep-awake command (overrides auto-detection). */
+	keepAwakeCommand?: string;
+	/** Args for user-provided keep-awake command. */
+	keepAwakeArgs?: string[];
 	/** OpenCode server URL (e.g., "http://localhost:4096") */
 	opencodeUrl?: string;
 	/** Override the static file directory (default: dist/frontend relative to cwd) */
@@ -178,7 +184,7 @@ export class Daemon {
 	 * lifecycle helpers can inspect project/relay state without exposing
 	 * dedicated getter methods for every query.
 	 */
-	readonly registry = new ProjectRegistry();
+	readonly registry: ProjectRegistry;
 	/** Directories the user explicitly removed — skipped by auto-discovery. */
 	private readonly dismissedPaths = new Set<string>();
 	private startTime: number = Date.now();
@@ -205,6 +211,8 @@ export class Daemon {
 
 	// Keep-awake manager (Ticket 3.5)
 	private keepAwakeManager: KeepAwake | null = null;
+	private keepAwakeCommand: string | undefined;
+	private keepAwakeArgs: string[] | undefined;
 
 	// Storage monitor (Ticket 6.2 AC8)
 	private storageMonitor: StorageMonitor | null = null;
@@ -220,6 +228,11 @@ export class Daemon {
 
 	// Structured logger
 	private readonly log: Logger = createLogger("daemon");
+
+	// ── Async lifecycle management ──────────────────────────────────────
+	private serviceRegistry = new ServiceRegistry();
+	private tracker = new AsyncTracker();
+	private shutdownTimer: ReturnType<typeof setTimeout> | null = null;
 
 	constructor(options?: DaemonOptions) {
 		const configDir = options?.configDir ?? DEFAULT_CONFIG_DIR;
@@ -237,8 +250,11 @@ export class Daemon {
 		}
 		this.tlsEnabled = options?.tlsEnabled ?? false;
 		this.keepAwake = options?.keepAwake ?? false;
+		this.keepAwakeCommand = options?.keepAwakeCommand;
+		this.keepAwakeArgs = options?.keepAwakeArgs;
 		this.smartDefault = options?.smartDefault ?? true;
-		this.instanceManager = new InstanceManager();
+		this.instanceManager = new InstanceManager(this.serviceRegistry);
+		this.registry = new ProjectRegistry(this.serviceRegistry);
 
 		// Auto-persist config on project mutations
 		this.registry.on("project_added", () => this.persistConfig());
@@ -436,6 +452,14 @@ export class Daemon {
 			for (const p of savedConfig.dismissedPaths) {
 				if (typeof p === "string") this.dismissedPaths.add(p);
 			}
+		}
+
+		// Rehydrate keep-awake command overrides
+		if (savedConfig?.keepAwakeCommand) {
+			this.keepAwakeCommand = savedConfig.keepAwakeCommand;
+		}
+		if (savedConfig?.keepAwakeArgs) {
+			this.keepAwakeArgs = savedConfig.keepAwakeArgs;
 		}
 
 		this.log.info(`[startup:${elapsed()}] Rehydration complete`);
@@ -693,6 +717,7 @@ export class Daemon {
 		// NOTE: Scanner must be created BEFORE starting rehydrated relays so that
 		// buildRelayFactory closures see this.scanner when they evaluate lazily.
 		this.scanner = new PortScanner(
+			this.serviceRegistry,
 			{
 				portRange: [4096, 4110],
 				intervalMs: 30_000,
@@ -755,13 +780,16 @@ export class Daemon {
 			// Broadcast updated instance list to all clients
 			if (result.discovered.length > 0 || result.lost.length > 0) {
 				const instances = this.instanceManager.getInstances();
-				this.registry.broadcastToAll({ type: "instance_list", instances });
+				this.registry.broadcastToAll({
+					type: "instance_list",
+					instances,
+				});
 			}
 		});
 
 		this.scanner.start();
 		// Run initial scan immediately
-		void this.scanner.scan();
+		this.tracker.track(this.scanner.scan());
 
 		this.log.info(
 			`[startup:${elapsed()}] Port scanner + WS upgrade handler ready`,
@@ -819,19 +847,21 @@ export class Daemon {
 
 		// Discover projects from OpenCode (non-blocking) so the dashboard
 		// is populated even if daemon.json had no saved projects.
-		void this.discoverProjects().catch((err) => {
-			this.log.warn(
-				"Failed to discover projects on startup:",
-				formatErrorDetail(err),
-			);
-		});
+		this.tracker.track(
+			this.discoverProjects().catch((err) => {
+				this.log.warn(
+					"Failed to discover projects on startup:",
+					formatErrorDetail(err),
+				);
+			}),
+		);
 
 		// Clear any previous crash info and save config (Ticket 8.7)
 		clearCrashInfo(this.configDir);
 		saveDaemonConfig(this.buildConfig(), this.configDir);
 
 		// Start version checker (non-fatal if it fails)
-		this.versionChecker = new VersionChecker({
+		this.versionChecker = new VersionChecker(this.serviceRegistry, {
 			enabled: !process.argv.includes("--no-update"),
 		});
 		this.versionChecker.on("update_available", ({ latest }) => {
@@ -843,14 +873,20 @@ export class Daemon {
 		});
 		this.versionChecker.start();
 
-		// Initialize keep-awake (macOS caffeinate)
-		this.keepAwakeManager = new KeepAwake({
+		// Initialize keep-awake (macOS caffeinate, Linux systemd-inhibit, or user-configured)
+		this.keepAwakeManager = new KeepAwake(this.serviceRegistry, {
 			enabled: this.keepAwake,
+			...(this.keepAwakeCommand != null && { command: this.keepAwakeCommand }),
+			...(this.keepAwakeArgs != null && { args: this.keepAwakeArgs }),
 		});
+		this.keepAwakeManager.on("error", ({ error }) => {
+			this.log.warn("KeepAwake error:", formatErrorDetail(error));
+		});
+		this.keepAwakeManager.activate();
 
 		// Start storage monitor (Ticket 6.2 AC8)
 		const firstProject = this.getProjects()[0];
-		this.storageMonitor = new StorageMonitor({
+		this.storageMonitor = new StorageMonitor(this.serviceRegistry, {
 			path: firstProject?.directory ?? process.cwd(),
 		});
 		this.storageMonitor.on(
@@ -882,40 +918,37 @@ export class Daemon {
 		if (this.shuttingDown) return;
 		this.shuttingDown = true;
 
+		// Clear shutdown timer if stop() called through another path
+		if (this.shutdownTimer) {
+			clearTimeout(this.shutdownTimer);
+			this.shutdownTimer = null;
+		}
+
 		// Remove signal handlers
 		removeSignalHandlers();
-
-		// Stop version checker
-		this.versionChecker?.stop();
-		this.versionChecker = null;
-
-		// Stop keep-awake
-		this.keepAwakeManager?.deactivate();
-		this.keepAwakeManager = null;
-
-		// Stop storage monitor
-		this.storageMonitor?.stop();
-		this.storageMonitor = null;
-
-		// Stop port scanner
-		this.scanner?.stop();
-		this.scanner = null;
 
 		// Persist final config so instances survive restart (Fix #11)
 		saveDaemonConfig(this.buildConfig(), this.configDir);
 
-		// Stop all relay pipelines via registry
-		await this.registry.stopAll();
+		// Drain ALL tracked services (PortScanner, VersionChecker, StorageMonitor,
+		// KeepAwake, InstanceManager, ProjectRegistry, and all relay services)
+		await this.serviceRegistry.drainAll();
 
-		// Stop all managed OpenCode instances
-		this.instanceManager.stopAll();
+		// Drain Daemon's own tracked promises
+		await this.tracker.drain();
+
+		// Null out service references that are NOT readonly
+		this.scanner = null;
+		this.versionChecker = null;
+		this.storageMonitor = null;
+		this.keepAwakeManager = null;
 
 		// Close IPC clients
 		for (const client of this.ipcClients) {
 			try {
 				client.destroy();
-			} catch (err) {
-				this.log.warn(`Error destroying IPC client during shutdown: ${err}`);
+			} catch {
+				/* already closed */
 			}
 		}
 		this.ipcClients.clear();
@@ -1195,6 +1228,7 @@ export class Daemon {
 				slug: project.slug,
 				noServer: true,
 				signal,
+				registry: this.serviceRegistry,
 				log: createLogger("relay"),
 				getProjects: () => this.getProjects(),
 				addProject: async (dir: string) => {
@@ -1318,6 +1352,10 @@ export class Daemon {
 			tls: this.tlsEnabled,
 			debug: false,
 			keepAwake: this.keepAwake,
+			...(this.keepAwakeCommand != null && {
+				keepAwakeCommand: this.keepAwakeCommand,
+			}),
+			...(this.keepAwakeArgs != null && { keepAwakeArgs: this.keepAwakeArgs }),
 			dangerouslySkipPermissions: false,
 			projects: this.getProjects().map((p) => ({
 				path: p.directory,
@@ -1469,10 +1507,37 @@ export class Daemon {
 					this.keepAwake = enabled;
 					this.keepAwakeManager?.setEnabled(enabled);
 					this.persistConfig();
+					return {
+						supported: this.keepAwakeManager?.isSupported() ?? false,
+						active: this.keepAwakeManager?.isActive() ?? false,
+					};
+				},
+				setKeepAwakeCommand: (command, args) => {
+					this.keepAwakeCommand = command;
+					this.keepAwakeArgs = args;
+					// Deactivate old manager to clean up spawned processes
+					this.keepAwakeManager?.deactivate();
+					// Reconstruct with new command
+					this.keepAwakeManager = new KeepAwake(this.serviceRegistry, {
+						enabled: this.keepAwake,
+						command,
+						args,
+					});
+					this.keepAwakeManager.on("error", ({ error }) => {
+						this.log.warn("KeepAwake error:", formatErrorDetail(error));
+					});
+					// Auto-activate if currently enabled
+					if (this.keepAwake) {
+						this.keepAwakeManager.activate();
+					}
+					this.persistConfig();
 				},
 				persistConfig: () => this.persistConfig(),
 				scheduleShutdown: () => {
-					setTimeout(() => this.stop(), DAEMON_SHUTDOWN_DELAY_MS);
+					this.shutdownTimer = setTimeout(
+						() => this.stop(),
+						DAEMON_SHUTDOWN_DELAY_MS,
+					);
 				},
 				getInstances: () => this.instanceManager.getInstances(),
 				getInstance: (id) => this.instanceManager.getInstance(id),

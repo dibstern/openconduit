@@ -14,6 +14,7 @@ import {
 	handleClientConnected,
 } from "../bridges/client-init.js";
 import { PermissionBridge } from "../bridges/permission-bridge.js";
+import { ServiceRegistry } from "../daemon/service-registry.js";
 import { formatErrorDetail, RelayError } from "../errors.js";
 import { dispatchMessage, type HandlerDeps } from "../handlers/index.js";
 import { OpenCodeClient } from "../instance/opencode-client.js";
@@ -69,6 +70,7 @@ import {
 	type PtyUpstreamDeps,
 } from "./pty-upstream.js";
 import { loadRelaySettings, parseDefaultModel } from "./relay-settings.js";
+import { RelayTimers } from "./relay-timers.js";
 import { createSessionSSETracker } from "./session-sse-tracker.js";
 import { SSEConsumer } from "./sse-consumer.js";
 import {
@@ -175,6 +177,11 @@ export async function createProjectRelay(
 	const ptyLog = log.child("pty");
 	const pipelineLog = log.child("pipeline");
 
+	// ── Service registry (optional — used by daemon for coordinated drain) ──
+	// Stored locally so Tasks 8-15 can pass it to service constructors as
+	// they are migrated to TrackedService.
+	const serviceRegistry = config.registry ?? new ServiceRegistry();
+
 	// ── Components ──────────────────────────────────────────────────────────
 
 	const client = new OpenCodeClient({
@@ -212,7 +219,7 @@ export async function createProjectRelay(
 	const rateLimiter = new RateLimiter();
 
 	// Per-session overrides (agent, model, processing timeout)
-	const overrides = new SessionOverrides();
+	const overrides = new SessionOverrides(serviceRegistry);
 
 	// Load persisted default model and variant from relay settings
 	const relaySettings = loadRelaySettings(config.configDir);
@@ -233,20 +240,23 @@ export async function createProjectRelay(
 	}
 
 	// ── Session status poller (polls GET /session/status for processing indicators) ──
-	const statusPoller: SessionStatusPoller = new SessionStatusPoller({
-		client,
-		interval: config.statusPollerInterval ?? 500,
-		log: statusLog,
-		getSessionParentMap: (): Map<string, string> =>
-			sessionMgr.getSessionParentMap(),
-	});
+	const statusPoller: SessionStatusPoller = new SessionStatusPoller(
+		serviceRegistry,
+		{
+			client,
+			interval: config.statusPollerInterval ?? 500,
+			log: statusLog,
+			getSessionParentMap: (): Map<string, string> =>
+				sessionMgr.getSessionParentMap(),
+		},
+	);
 
 	// ── Shared session registry (single source of truth for client→session tracking) ──
 	const registry = new SessionRegistry();
 
 	// ── Message poller manager (REST fallback for CLI sessions without SSE events) ──
 	// Manages multiple pollers concurrently — one per busy session.
-	const pollerManager = new MessagePollerManager({
+	const pollerManager = new MessagePollerManager(serviceRegistry, {
 		client,
 		log: pollerMgrLog,
 		hasViewers: (sid) => registry.hasViewers(sid),
@@ -319,6 +329,7 @@ export async function createProjectRelay(
 	// ── WebSocket handler ───────────────────────────────────────────────────
 
 	const wsHandler = new WebSocketHandler(
+		serviceRegistry,
 		config.noServer ? null : config.httpServer,
 		{
 			registry,
@@ -377,7 +388,7 @@ export async function createProjectRelay(
 
 	// ── SSE consumer ────────────────────────────────────────────────────────
 
-	const sseConsumer = new SSEConsumer({
+	const sseConsumer = new SSEConsumer(serviceRegistry, {
 		baseUrl: config.opencodeUrl,
 		authHeaders: client.getAuthHeaders(),
 		log: sseLog,
@@ -774,41 +785,22 @@ export async function createProjectRelay(
 		}
 	});
 
-	// ── Permission/question timeout checks ──────────────────────────────────
+	// ── Permission/question timeout checks + rate-limiter cleanup ──────────
+	// Wrapped in a TrackedService so they are cancelled on registry drain.
 
-	const timeoutTimer = setInterval(() => {
-		const timedOutPerms = permissionBridge.checkTimeouts();
-		for (const id of timedOutPerms) {
+	const relayTimers = new RelayTimers(
+		serviceRegistry,
+		permissionBridge,
+		rateLimiter,
+		(id) => {
 			wsHandler.broadcast({
 				type: "permission_resolved",
 				requestId: id as PermissionId,
 				decision: "timeout",
 			});
-		}
-		// Question timeouts are handled by OpenCode itself — no bridge tracking needed.
-	}, 30_000);
-
-	// Don't let the timer keep the process alive
-	if (
-		timeoutTimer &&
-		typeof timeoutTimer === "object" &&
-		"unref" in timeoutTimer
-	) {
-		timeoutTimer.unref();
-	}
-
-	// Periodic cleanup of stale rate-limiter entries (every 60s)
-	const rateLimitCleanupTimer = setInterval(() => {
-		rateLimiter.cleanup();
-	}, 60_000);
-
-	if (
-		rateLimitCleanupTimer &&
-		typeof rateLimitCleanupTimer === "object" &&
-		"unref" in rateLimitCleanupTimer
-	) {
-		rateLimitCleanupTimer.unref();
-	}
+		},
+	);
+	relayTimers.start();
 
 	// ── Return project relay ────────────────────────────────────────────────
 
@@ -829,8 +821,7 @@ export async function createProjectRelay(
 		},
 
 		async stop() {
-			clearInterval(timeoutTimer);
-			clearInterval(rateLimitCleanupTimer);
+			await relayTimers.drain();
 			statusPoller.stop();
 			pollerManager.stopAll();
 			overrides.dispose();

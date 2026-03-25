@@ -79,6 +79,7 @@ export type IPCCommand =
 	| { cmd: "set_project_title"; slug: string; title: string }
 	| { cmd: "set_pin"; pin: string }
 	| { cmd: "set_keep_awake"; enabled: boolean }
+	| { cmd: "set_keep_awake_command"; command: string; args: string[] }
 	| { cmd: "set_agent"; slug: string; agent: string }
 	| { cmd: "set_model"; slug: string; provider: string; model: string }
 	| { cmd: "instance_list" }
@@ -281,4 +282,11 @@ export interface ProjectRelayConfig {
 	 * Default: 750ms. Tests can use a shorter interval for faster feedback.
 	 */
 	messagePollerInterval?: number;
+	/**
+	 * Optional service registry for tracking drainable services.
+	 * When provided, relay services (pollers, SSE consumer, etc.) register
+	 * themselves so the daemon can drain them all on shutdown.
+	 * Standalone/test usage works without it.
+	 */
+	registry?: import("./daemon/service-registry.js").ServiceRegistry;
 }
