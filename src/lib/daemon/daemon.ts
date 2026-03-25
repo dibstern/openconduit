@@ -2,7 +2,7 @@
 // Background daemon that persists across terminal sessions. Manages the HTTP
 // server, multiple projects, and communicates with CLI via Unix socket IPC.
 
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
 import type { Server as HttpServer } from "node:http";
 import type { Server as NetServer, Socket } from "node:net";
 import { homedir } from "node:os";
@@ -143,6 +143,7 @@ export interface DaemonStatus {
 	/** First LAN IP (non-Tailscale routable address), for share URL construction. */
 	lanIP?: string;
 	projectCount: number;
+	sessionCount: number;
 	clientCount: number;
 	pinEnabled: boolean;
 	tlsEnabled: boolean;
@@ -185,6 +186,8 @@ export class Daemon {
 	 * dedicated getter methods for every query.
 	 */
 	readonly registry: ProjectRegistry;
+	/** Session counts persisted from previous daemon run — for instant CLI display. */
+	private readonly persistedSessionCounts = new Map<string, number>();
 	/** Directories the user explicitly removed — skipped by auto-discovery. */
 	private readonly dismissedPaths = new Set<string>();
 	private startTime: number = Date.now();
@@ -426,6 +429,10 @@ export class Daemon {
 		if (savedConfig?.projects) {
 			for (const proj of savedConfig.projects) {
 				if (!proj.path || !proj.slug) continue;
+				// Preserve session counts from previous run for instant display
+				if (proj.sessionCount != null && proj.sessionCount > 0) {
+					this.persistedSessionCounts.set(proj.slug, proj.sessionCount);
+				}
 				// Skip if already registered
 				if (this.registry.has(proj.slug)) continue;
 				const project: StoredProject = {
@@ -627,7 +634,11 @@ export class Daemon {
 						status: entry.status,
 						...(entry.status === "error" && { error: entry.error }),
 						clients: relay?.wsHandler.getClientCount() ?? 0,
-						sessions: relay?.messageCache.sessionCount() ?? 0,
+						sessions:
+							relay?.sessionMgr.getLastKnownSessionCount() ||
+							relay?.messageCache.sessionCount() ||
+							this.persistedSessionCounts.get(project.slug) ||
+							0,
 						isProcessing: relay?.isAnySessionProcessing() ?? false,
 					} satisfies import("../server/http-router.js").RouterProject;
 				});
@@ -815,6 +826,10 @@ export class Daemon {
 			`[startup:${elapsed()}] Relay startup dispatched for ${this.registry.size} project(s)`,
 		);
 
+		// Eagerly fetch session count from OpenCode (cheap single API call)
+		// so session counts are available before slow relay initialization finishes.
+		this.prefetchSessionCounts();
+
 		// Retry relays for projects stuck in "registering" when an instance
 		// becomes available (e.g. resolveOpencodeUrl returned null above because
 		// the managed instance hadn't started yet).
@@ -841,6 +856,21 @@ export class Daemon {
 		// Install signal handlers
 		installSignalHandlers(() => {
 			this.stop();
+		});
+
+		// Prevent unhandled rejections and uncaught exceptions from crashing
+		// the daemon. Log the error and continue — the daemon should be resilient.
+		process.on("unhandledRejection", (err) => {
+			this.log.error(
+				{ error: err instanceof Error ? err.message : String(err) },
+				"Unhandled rejection (daemon kept alive)",
+			);
+		});
+		process.on("uncaughtException", (err) => {
+			this.log.error(
+				{ error: err.message, stack: err.stack },
+				"Uncaught exception (daemon kept alive)",
+			);
 		});
 
 		// Mark start time (resets crash window on success)
@@ -1182,6 +1212,20 @@ export class Daemon {
 		const tsIP = getTailscaleIP();
 		const allIPs = getAllIPs();
 		const lanIP = allIPs.find((ip) => !ip.startsWith("100.")) ?? null;
+
+		// Sum session counts across all projects
+		let sessionCount = 0;
+		for (const slug of this.registry.slugs()) {
+			const e = this.registry.get(slug);
+			if (!e) continue;
+			const relay = e.status === "ready" ? e.relay : undefined;
+			sessionCount +=
+				relay?.sessionMgr.getLastKnownSessionCount() ||
+				relay?.messageCache.sessionCount() ||
+				this.persistedSessionCounts.get(slug) ||
+				0;
+		}
+
 		return {
 			ok: true,
 			uptime: (Date.now() - this.startTime) / 1000,
@@ -1190,6 +1234,7 @@ export class Daemon {
 			...(tsIP != null && { tailscaleIP: tsIP }),
 			...(lanIP != null && { lanIP }),
 			projectCount: this.registry.size,
+			sessionCount,
 			clientCount: this.clientCount,
 			pinEnabled: this.pinHash !== null,
 			tlsEnabled: this.tlsEnabled,
@@ -1407,13 +1452,22 @@ export class Daemon {
 			}),
 			...(this.keepAwakeArgs != null && { keepAwakeArgs: this.keepAwakeArgs }),
 			dangerouslySkipPermissions: false,
-			projects: this.getProjects().map((p) => ({
-				path: p.directory,
-				slug: p.slug,
-				title: p.title,
-				addedAt: p.lastUsed ?? Date.now(),
-				...(p.instanceId != null && { instanceId: p.instanceId }),
-			})),
+			projects: this.getProjects().map((p) => {
+				const e = this.registry.get(p.slug);
+				const relay = e?.status === "ready" ? e.relay : undefined;
+				const sessionCount =
+					relay?.sessionMgr.getLastKnownSessionCount() ||
+					relay?.messageCache.sessionCount() ||
+					0;
+				return {
+					path: p.directory,
+					slug: p.slug,
+					title: p.title,
+					addedAt: p.lastUsed ?? Date.now(),
+					...(p.instanceId != null && { instanceId: p.instanceId }),
+					...(sessionCount > 0 && { sessionCount }),
+				};
+			}),
 			instances: this.instanceManager.getInstances().map((inst) => {
 				const extUrl = this.instanceManager.getExternalUrl(inst.id);
 				return {
@@ -1538,7 +1592,11 @@ export class Daemon {
 						const relay = entry.status === "ready" ? entry.relay : undefined;
 						return {
 							...project,
-							sessions: relay?.messageCache.sessionCount() ?? 0,
+							sessions:
+								relay?.sessionMgr.getLastKnownSessionCount() ||
+								relay?.messageCache.sessionCount() ||
+								this.persistedSessionCounts.get(project.slug) ||
+								0,
 							clients: relay?.wsHandler.getClientCount() ?? 0,
 							isProcessing: relay?.isAnySessionProcessing() ?? false,
 						};
@@ -1610,11 +1668,63 @@ export class Daemon {
 	// ─── Crash counter (delegated to CrashCounter) ─────────────────────────
 
 	/**
-	 * Reset the crash counter (called after successful uptime).
-	 * Exposed for testing.
+	 * Eagerly fetch session counts per-project from OpenCode.
+	 * One fetch per distinct OpenCode URL, grouped by session directory.
+	 * Fire-and-forget — stores results for immediate use before relays
+	 * finish their slow initialize() (which fetches messages per session).
 	 */
-	resetCrashCounter(): void {
-		this.crashCounter.reset();
+	private prefetchSessionCounts(): void {
+		for (const slug of this.registry.slugs()) {
+			const entry = this.registry.get(slug);
+			if (!entry) continue;
+			if (this.persistedSessionCounts.has(slug)) continue;
+			const url = this.resolveOpencodeUrl(entry.project.instanceId);
+			if (!url) continue;
+
+			const instanceId = entry.project.instanceId ?? "default";
+			const instance = this.instanceManager.getInstance(instanceId);
+			const password =
+				instance?.env?.["OPENCODE_SERVER_PASSWORD"] ??
+				process.env["OPENCODE_SERVER_PASSWORD"] ??
+				"";
+			const username =
+				instance?.env?.["OPENCODE_SERVER_USERNAME"] ??
+				process.env["OPENCODE_SERVER_USERNAME"] ??
+				"opencode";
+			const headers: Record<string, string> = {
+				"x-opencode-directory": entry.project.directory,
+			};
+			if (password) {
+				headers["Authorization"] =
+					`Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
+			}
+
+			fetch(`${url}/session?limit=10000`, { headers })
+				.then((res) => res.json())
+				.then((data: unknown) => {
+					if (Array.isArray(data)) {
+						this.persistedSessionCounts.set(slug, data.length);
+					}
+				})
+				.catch(() => {
+					// Best-effort — relays will provide counts when ready
+				});
+		}
+	}
+
+	/**
+	 * Session count fallback when relay isn't ready.
+	 * Priority: persisted/prefetched count → disk file count.
+	 */
+	private countCachedSessions(slug: string): number {
+		const persisted = this.persistedSessionCounts.get(slug);
+		if (persisted != null && persisted > 0) return persisted;
+		try {
+			const cacheDir = join(this.configDir, "cache", slug, "sessions");
+			return readdirSync(cacheDir).filter((f) => f.endsWith(".jsonl")).length;
+		} catch {
+			return 0;
+		}
 	}
 
 	/**
@@ -1622,5 +1732,10 @@ export class Daemon {
 	 */
 	getCrashTimestamps(): number[] {
 		return this.crashCounter.getTimestamps();
+	}
+
+	/** Reset crash counter (for testing). */
+	resetCrashCounter(): void {
+		this.crashCounter.reset();
 	}
 }
