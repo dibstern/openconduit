@@ -1,5 +1,7 @@
 # Conduit
 
+[![CI](https://github.com/dibstern/conduit/actions/workflows/ci.yml/badge.svg)](https://github.com/dibstern/conduit/actions/workflows/ci.yml)
+
 <p align="center">
   <img src="media/GENERATE-MAIN-UI.png"
        alt="Conduit — OpenCode web UI open in a mobile browser" width="320">

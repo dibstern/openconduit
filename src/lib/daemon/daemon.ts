@@ -2,7 +2,7 @@
 // Background daemon that persists across terminal sessions. Manages the HTTP
 // server, multiple projects, and communicates with CLI via Unix socket IPC.
 
-import { existsSync, mkdirSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import type { Server as HttpServer } from "node:http";
 import type { Server as NetServer, Socket } from "node:net";
 import { homedir } from "node:os";
@@ -124,7 +124,9 @@ export interface DaemonOptions {
 	 * Enable smart default detection in start().
 	 * When true (default) and no opencodeUrl is provided, probes localhost:4096
 	 * to decide whether to connect as unmanaged or spawn as managed.
-	 * Set to false in tests that don't want auto-detection.
+	 * Also controls the port scanner (auto-discovery of OpenCode instances)
+	 * and startup project discovery from running instances.
+	 * Set to false in tests that don't want network probing.
 	 */
 	smartDefault?: boolean;
 	/** Log level override (default: info). */
@@ -881,14 +883,17 @@ export class Daemon {
 
 		// Discover projects from OpenCode (non-blocking) so the dashboard
 		// is populated even if daemon.json had no saved projects.
-		this.tracker.track(
-			this.discoverProjects().catch((err) => {
-				this.log.warn(
-					"Failed to discover projects on startup:",
-					formatErrorDetail(err),
-				);
-			}),
-		);
+		// Skipped when smartDefault is false (tests that don't want network probing).
+		if (this.smartDefault) {
+			this.tracker.track(
+				this.discoverProjects().catch((err) => {
+					this.log.warn(
+						"Failed to discover projects on startup:",
+						formatErrorDetail(err),
+					);
+				}),
+			);
+		}
 
 		// Clear any previous crash info and save config (Ticket 8.7)
 		clearCrashInfo(this.configDir);
@@ -1367,9 +1372,9 @@ export class Daemon {
 			});
 	}
 
-	/** Wait for any in-flight config save to complete. */
+	/** Wait for any in-flight config save (including cascading re-saves) to complete. */
 	async flushConfigSave(): Promise<void> {
-		if (this._pendingSave) await this._pendingSave;
+		while (this._pendingSave) await this._pendingSave;
 	}
 
 	// ─── Private: Context adapters ─────────────────────────────────────────
@@ -1712,21 +1717,6 @@ export class Daemon {
 				.catch(() => {
 					// Best-effort — relays will provide counts when ready
 				});
-		}
-	}
-
-	/**
-	 * Session count fallback when relay isn't ready.
-	 * Priority: persisted/prefetched count → disk file count.
-	 */
-	private countCachedSessions(slug: string): number {
-		const persisted = this.persistedSessionCounts.get(slug);
-		if (persisted != null && persisted > 0) return persisted;
-		try {
-			const cacheDir = join(this.configDir, "cache", slug, "sessions");
-			return readdirSync(cacheDir).filter((f) => f.endsWith(".jsonl")).length;
-		} catch {
-			return 0;
 		}
 	}
 
