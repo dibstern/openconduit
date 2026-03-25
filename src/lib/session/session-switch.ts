@@ -64,6 +64,8 @@ export interface SessionSwitchDeps {
 	};
 	readonly client: {
 		getMessages(sessionId: string): Promise<unknown[]>;
+		/** Fast message count for cache validation. Implementations may use getMessages().length. */
+		getMessageCount?(sessionId: string): Promise<number>;
 	};
 	readonly log: {
 		info(...args: unknown[]): void;
@@ -86,6 +88,32 @@ export function classifyHistorySource(
 		(e) => e.type === "user_message" || e.type === "delta",
 	);
 	return hasChatContent ? "cached-events" : "needs-rest";
+}
+
+/**
+ * Count unique OpenCode messages referenced in cached events.
+ * Uses optional `messageId` fields from streaming/tool events (each unique
+ * messageId = one assistant message), plus counts `user_message` events.
+ *
+ * This is a conservative heuristic — SSE-path events may lack `messageId`,
+ * causing undercounting and unnecessary REST fallbacks. This is safe:
+ * correctness is preserved at the cost of one extra REST call on session view.
+ */
+export function countUniqueMessages(events: readonly RelayMessage[]): number {
+	const messageIds = new Set<string>();
+	let userMessageCount = 0;
+	for (const e of events) {
+		if (e.type === "user_message") {
+			userMessageCount++;
+		} else if (
+			"messageId" in e &&
+			typeof e.messageId === "string" &&
+			e.messageId
+		) {
+			messageIds.add(e.messageId);
+		}
+	}
+	return messageIds.size + userMessageCount;
 }
 
 /**
@@ -143,13 +171,35 @@ export function buildSessionSwitchedMessage(
  */
 export async function resolveSessionHistory(
 	sessionId: string,
-	deps: Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log">,
+	deps: Pick<
+		SessionSwitchDeps,
+		"messageCache" | "sessionMgr" | "log" | "client"
+	>,
 ): Promise<SessionHistorySource> {
 	const events = deps.messageCache.getEvents(sessionId);
 	const classification = classifyHistorySource(events);
 
 	if (classification === "cached-events" && events) {
-		return { kind: "cached-events", events };
+		// Validate cache completeness if getMessageCount is available
+		if (deps.client?.getMessageCount) {
+			try {
+				const actualCount = await deps.client.getMessageCount(sessionId);
+				const cachedCount = countUniqueMessages(events);
+				if (cachedCount < actualCount) {
+					deps.log.info(
+						`Cache stale for ${sessionId.slice(0, 12)}: cache covers ${cachedCount}/${actualCount} messages — falling back to REST`,
+					);
+					// Fall through to REST below
+				} else {
+					return { kind: "cached-events", events };
+				}
+			} catch {
+				// Validation failed — serve cache rather than nothing
+				return { kind: "cached-events", events };
+			}
+		} else {
+			return { kind: "cached-events", events };
+		}
 	}
 
 	try {

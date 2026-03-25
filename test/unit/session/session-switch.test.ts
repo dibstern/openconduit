@@ -6,6 +6,7 @@ import type {
 import {
 	buildSessionSwitchedMessage,
 	classifyHistorySource,
+	countUniqueMessages,
 	resolveSessionHistory,
 	switchClientToSession,
 } from "../../../src/lib/session/session-switch.js";
@@ -160,9 +161,9 @@ describe("buildSessionSwitchedMessage", () => {
 
 function createMinimalDeps(
 	overrides?: Partial<
-		Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log">
+		Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log" | "client">
 	>,
-): Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log"> {
+): Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log" | "client"> {
 	return {
 		messageCache: { getEvents: vi.fn().mockReturnValue(null) },
 		sessionMgr: {
@@ -171,10 +172,45 @@ function createMinimalDeps(
 				hasMore: false,
 			}),
 		},
+		client: { getMessages: vi.fn().mockResolvedValue([]) },
 		log: { info: vi.fn(), warn: vi.fn() },
 		...overrides,
 	};
 }
+
+describe("countUniqueMessages", () => {
+	it("counts user messages and unique assistant messageIds", () => {
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "Turn 1" },
+			{ type: "delta", text: "Response 1", messageId: "msg_asst1" },
+			{ type: "delta", text: "Response 1 cont", messageId: "msg_asst1" },
+			{ type: "user_message", text: "Turn 2" },
+			{ type: "delta", text: "Response 2", messageId: "msg_asst2" },
+		];
+		// 2 user messages + 2 unique assistant messageIds = 4
+		expect(countUniqueMessages(events)).toBe(4);
+	});
+
+	it("returns 0 for empty events", () => {
+		expect(countUniqueMessages([])).toBe(0);
+	});
+
+	it("counts only user_messages when no messageIds present", () => {
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "response without messageId" },
+		];
+		expect(countUniqueMessages(events)).toBe(1);
+	});
+
+	it("ignores non-chat events", () => {
+		const events: RelayMessage[] = [
+			{ type: "status", status: "processing" },
+			{ type: "done", code: 0 },
+		];
+		expect(countUniqueMessages(events)).toBe(0);
+	});
+});
 
 describe("resolveSessionHistory", () => {
 	it("returns cached-events when cache has chat content", async () => {
@@ -257,6 +293,116 @@ describe("resolveSessionHistory", () => {
 		const warnCall = vi.mocked(deps.log.warn).mock.calls[0]?.[0] as string;
 		expect(warnCall).toContain("ses_5");
 		expect(warnCall).toContain("timeout");
+	});
+
+	it("falls back to REST when cache has fewer messages than OpenCode", async () => {
+		// Cache has events from 3 user turns, but OpenCode has 10 messages total
+		const cachedEvents: RelayMessage[] = [
+			{ type: "user_message", text: "Turn 1" },
+			{ type: "delta", text: "Response 1", messageId: "msg_asst1" },
+			{ type: "user_message", text: "Turn 2" },
+			{ type: "delta", text: "Response 2", messageId: "msg_asst2" },
+			{ type: "user_message", text: "Turn 3" },
+			{ type: "delta", text: "Response 3", messageId: "msg_asst3" },
+		];
+		const restHistory = {
+			messages: Array.from({ length: 10 }, (_, i) => ({
+				id: `m${i}`,
+				role: (i % 2 === 0 ? "user" : "assistant") as "user" | "assistant",
+			})),
+			hasMore: false,
+			total: 10,
+		};
+		const deps = createMinimalDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(cachedEvents) },
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn().mockResolvedValue(restHistory),
+			},
+			client: {
+				getMessages: vi.fn().mockResolvedValue([]),
+				getMessageCount: vi.fn().mockResolvedValue(10),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_stale", deps);
+
+		expect(result.kind).toBe("rest-history");
+		if (result.kind === "rest-history") {
+			expect(result.history.total).toBe(10);
+		}
+	});
+
+	it("uses cache when message count matches OpenCode", async () => {
+		// Cache has 1 user_message + 1 delta with messageId = 2 unique messages
+		// OpenCode also has 2 messages (1 user + 1 assistant)
+		const cachedEvents: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "hi there", messageId: "msg_asst1" },
+		];
+		const deps = createMinimalDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(cachedEvents) },
+			client: {
+				getMessages: vi.fn().mockResolvedValue([]),
+				getMessageCount: vi.fn().mockResolvedValue(2),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_fresh", deps);
+
+		expect(result.kind).toBe("cached-events");
+		expect(deps.sessionMgr.loadPreRenderedHistory).not.toHaveBeenCalled();
+	});
+
+	it("uses cache when getMessageCount is unavailable (graceful degradation)", async () => {
+		const cachedEvents: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "hi" },
+		];
+		const deps = createMinimalDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(cachedEvents) },
+			// client has no getMessageCount — graceful degradation
+		});
+
+		const result = await resolveSessionHistory("ses_no_count", deps);
+
+		expect(result.kind).toBe("cached-events");
+	});
+
+	it("uses cache when getMessageCount rejects (network error)", async () => {
+		const cachedEvents: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "hi" },
+		];
+		const deps = createMinimalDeps({
+			client: {
+				getMessages: vi.fn().mockResolvedValue([]),
+				getMessageCount: vi.fn().mockRejectedValue(new Error("timeout")),
+			},
+			messageCache: { getEvents: vi.fn().mockReturnValue(cachedEvents) },
+		});
+
+		const result = await resolveSessionHistory("ses_err", deps);
+
+		// Graceful degradation: serve stale cache rather than nothing
+		expect(result.kind).toBe("cached-events");
+	});
+
+	it("uses cache for user-message-only session (no assistant response yet)", async () => {
+		// User just sent a message, assistant hasn't responded
+		const cachedEvents: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+		];
+		const deps = createMinimalDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(cachedEvents) },
+			client: {
+				getMessages: vi.fn().mockResolvedValue([]),
+				getMessageCount: vi.fn().mockResolvedValue(1),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_pending", deps);
+
+		expect(result.kind).toBe("cached-events");
 	});
 });
 
