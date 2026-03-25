@@ -376,7 +376,6 @@ export async function createProjectRelay(
 		wsHandler,
 		client,
 		translator,
-		messageCache,
 		pollerManager,
 		statusPoller,
 		sseTracker,

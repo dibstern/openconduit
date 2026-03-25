@@ -8,12 +8,10 @@ import type { Logger } from "../logger.js";
 import type { WebSocketHandler } from "../server/ws-handler.js";
 import type { SessionManager } from "../session/session-manager.js";
 import type { SessionStatusPoller } from "../session/session-status-poller.js";
-import type { RelayMessage } from "../shared-types.js";
 import {
 	type createTranslator,
 	rebuildTranslatorFromHistory,
 } from "./event-translator.js";
-import type { MessageCache } from "./message-cache.js";
 import type { MessagePollerManager } from "./message-poller-manager.js";
 import type { MonitoringState } from "./monitoring-types.js";
 import type { createSessionSSETracker } from "./session-sse-tracker.js";
@@ -25,7 +23,6 @@ export interface SessionLifecycleWiringDeps {
 	wsHandler: WebSocketHandler;
 	client: OpenCodeClient;
 	translator: ReturnType<typeof createTranslator>;
-	messageCache: MessageCache;
 	pollerManager: MessagePollerManager;
 	statusPoller: SessionStatusPoller;
 	sseTracker: ReturnType<typeof createSessionSSETracker>;
@@ -42,7 +39,6 @@ export function wireSessionLifecycle(deps: SessionLifecycleWiringDeps): void {
 		wsHandler,
 		client,
 		translator,
-		messageCache,
 		pollerManager,
 		statusPoller,
 		sseTracker,
@@ -54,22 +50,6 @@ export function wireSessionLifecycle(deps: SessionLifecycleWiringDeps): void {
 	// ── Wire session manager → WebSocket ────────────────────────────────────
 
 	sessionMgr.on("broadcast", (msg) => {
-		// Augment session_switched with cached events (combined protocol)
-		if (msg.type === "session_switched") {
-			const switchId = (msg as { id?: string }).id;
-			if (switchId) {
-				const events = messageCache.getEvents(switchId);
-				const hasChatContent =
-					events?.some(
-						(e: RelayMessage) =>
-							e.type === "user_message" || e.type === "delta",
-					) ?? false;
-				if (events && hasChatContent) {
-					wsHandler.broadcast({ ...msg, events });
-					return;
-				}
-			}
-		}
 		wsHandler.broadcast(msg);
 	});
 

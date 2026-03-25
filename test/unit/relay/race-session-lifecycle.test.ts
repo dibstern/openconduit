@@ -39,9 +39,6 @@ function buildDeps(overrides?: {
 			translate: vi.fn().mockReturnValue({ ok: false, reason: "test" }),
 			rebuildStateFromHistory: vi.fn(),
 		} as unknown as SessionLifecycleWiringDeps["translator"],
-		messageCache: {
-			getEvents: vi.fn().mockReturnValue(undefined),
-		} as unknown as SessionLifecycleWiringDeps["messageCache"],
 		pollerManager: {
 			startPolling: vi.fn(),
 			stopPolling: vi.fn(),
