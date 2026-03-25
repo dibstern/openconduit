@@ -210,6 +210,58 @@ describe("countUniqueMessages", () => {
 		];
 		expect(countUniqueMessages(events)).toBe(0);
 	});
+
+	// ── Conservative heuristic documentation ────────────────────────────
+	// These tests document intentional undercounting. SSE-path events may
+	// lack messageId (translator only includes it when props.messageID is
+	// non-null). Undercounting triggers a harmless REST fallback — this is
+	// the designed safety margin, NOT a bug to fix.
+
+	it("undercounts SSE-path deltas without messageId (triggers safe REST fallback)", () => {
+		// SSE-path: translator may omit messageId when props.messageID is null
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "response" }, // no messageId
+		];
+		// Only user_message counted — assistant turn invisible to heuristic
+		expect(countUniqueMessages(events)).toBe(1);
+		// If OpenCode has 2 messages (1 user + 1 assistant), 1 < 2 → REST
+		// fallback. Cache was complete but we serve from REST anyway. Safe.
+	});
+
+	it("undercounts tool-only turns where tool events lack messageId", () => {
+		// Session where LLM only used tools, no text deltas
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "run the build" },
+			{ type: "tool_start", id: "t1", name: "bash" }, // no messageId
+			{
+				type: "tool_result",
+				id: "t1",
+				content: "ok",
+				is_error: false,
+			},
+		];
+		// Only user_message counted — tool_start without messageId is invisible
+		expect(countUniqueMessages(events)).toBe(1);
+		// OpenCode has 2 messages → 1 < 2 → REST fallback on complete cache
+	});
+
+	it("correctly counts tool-only turns when tool events have messageId (poller path)", () => {
+		// Poller-synthesized events always include messageId
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "run the build" },
+			{ type: "tool_start", id: "t1", name: "bash", messageId: "msg_a1" },
+			{
+				type: "tool_result",
+				id: "t1",
+				content: "ok",
+				is_error: false,
+			},
+		];
+		// user_message (1) + unique messageId "msg_a1" (1) = 2
+		expect(countUniqueMessages(events)).toBe(2);
+		// Matches OpenCode's 2 messages → cache served, no REST fallback
+	});
 });
 
 describe("resolveSessionHistory", () => {
