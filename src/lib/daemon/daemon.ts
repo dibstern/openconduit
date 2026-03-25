@@ -73,6 +73,7 @@ import {
 } from "./pid-manager.js";
 import { PortScanner, type ScanResult } from "./port-scanner.js";
 import { ProjectRegistry } from "./project-registry.js";
+import { ServiceRegistry } from "./service-registry.js";
 import {
 	installSignalHandlers,
 	removeSignalHandlers,
@@ -694,7 +695,10 @@ export class Daemon {
 		// Skipped when _skipPortScanner is set (tests) to avoid connecting to
 		// real OpenCode instances that keep the event loop alive.
 		if (!this.skipPortScanner) {
+			// TODO(Task 16): Replace with this.serviceRegistry once Daemon owns a shared registry
+			const scannerRegistry = new ServiceRegistry();
 			this.scanner = new PortScanner(
+				scannerRegistry,
 				{
 					portRange: [4096, 4110],
 					intervalMs: 30_000,
