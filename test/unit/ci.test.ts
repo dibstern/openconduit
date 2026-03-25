@@ -69,10 +69,10 @@ describe("Ticket 0.6 — CI/CD Pipeline", () => {
 			expect(testIdx).toBeGreaterThan(-1);
 			expect(buildIdx).toBeGreaterThan(-1);
 
-			// Verify ordering
+			// Verify ordering: build before test so test/build/ tests have dist/
 			expect(checkIdx).toBeLessThan(lintIdx);
-			expect(lintIdx).toBeLessThan(testIdx);
-			expect(testIdx).toBeLessThan(buildIdx);
+			expect(lintIdx).toBeLessThan(buildIdx);
+			expect(buildIdx).toBeLessThan(testIdx);
 		});
 
 		it("ci.yml runs on ubuntu-latest", () => {
