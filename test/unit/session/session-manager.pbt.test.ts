@@ -111,7 +111,7 @@ const _arbMessage = (sessionId: string) =>
 
 describe("Ticket 2.3 — Session Manager PBT", () => {
 	describe("P1: Initialize resumes most recent session or creates one (AC8)", () => {
-		it("property: with existing sessions, resumes the one with most recent message activity (or createdAt)", async () => {
+		it("property: with existing sessions, resumes the one with most recent time.updated (or createdAt)", async () => {
 			await fc.assert(
 				fc.asyncProperty(
 					fc.array(arbSession, { minLength: 1, maxLength: 10 }),
@@ -125,16 +125,20 @@ describe("Ticket 2.3 — Session Manager PBT", () => {
 
 						const id = await mgr.initialize();
 
-						// Should reuse an existing session (no messages → falls back to createdAt)
+						// Should reuse an existing session
 						const existingIds = new Set(unique.map((s) => s.id));
 						expect(existingIds.has(id)).toBe(true);
 						// No new session created — total count unchanged
 						expect(client._sessions.length).toBe(unique.length);
-						// Returned session should be the one with the highest createdAt
-						// (since no messages exist, lastMessageAt is empty → fallback to created)
+						// Returned session should be the one with the highest time.updated
+						// (initialize seeds lastMessageAt from time.updated)
 						const sorted = unique
 							.slice()
-							.sort((a, b) => (b.time?.created ?? 0) - (a.time?.created ?? 0));
+							.sort(
+								(a, b) =>
+									(b.time?.updated ?? b.time?.created ?? 0) -
+									(a.time?.updated ?? a.time?.created ?? 0),
+							);
 						// biome-ignore lint/style/noNonNullAssertion: safe — index within bounds
 						expect(id).toBe(sorted[0]!.id);
 					},
@@ -143,9 +147,13 @@ describe("Ticket 2.3 — Session Manager PBT", () => {
 			);
 		});
 
-		it("property: with existing sessions, prefers session with most recent message", async () => {
+		it("property: with existing sessions, prefers session with most recent time.updated", async () => {
 			const sessions: MockSession[] = [
-				{ id: "ses_old", title: "Old", time: { created: 1000, updated: 1000 } },
+				{
+					id: "ses_old",
+					title: "Old",
+					time: { created: 1000, updated: 5000 },
+				},
 				{
 					id: "ses_new",
 					title: "New",
@@ -153,20 +161,11 @@ describe("Ticket 2.3 — Session Manager PBT", () => {
 				},
 			];
 			const client = createMockClient(sessions);
-			// ses_old has a more recent message than ses_new's creation time
-			client._messages.set("ses_old", [
-				{
-					id: "msg_1",
-					role: "user",
-					sessionID: "ses_old",
-					time: { created: 5000 },
-				},
-			] as Message[]);
 
 			const mgr = new SessionManager({ client });
 			const id = await mgr.initialize();
 
-			// ses_old has lastMessageAt=5000 > ses_new createdAt=2000
+			// ses_old has time.updated=5000 > ses_new time.updated=2000
 			expect(id).toBe("ses_old");
 		});
 
@@ -178,6 +177,55 @@ describe("Ticket 2.3 — Session Manager PBT", () => {
 			expect(id).toBeTruthy();
 			expect(client._sessions.length).toBe(1);
 		});
+	});
+
+	it("initialize does not fetch messages (uses session time.updated)", async () => {
+		const sessions: MockSession[] = [
+			{
+				id: "ses_a",
+				title: "A",
+				time: { created: 1000, updated: 5000 },
+			},
+			{
+				id: "ses_b",
+				title: "B",
+				time: { created: 2000, updated: 3000 },
+			},
+		];
+		const client = createMockClient(sessions);
+		// Add messages that should NOT be fetched
+		client._messages.set("ses_a", [
+			{
+				id: "msg_1",
+				role: "user",
+				sessionID: "ses_a",
+				time: { created: 9000 },
+			},
+		] as Message[]);
+
+		// Spy on getMessages to verify it is NOT called
+		let getMessagesCalled = false;
+		const origGetMessages = client.getMessages.bind(client);
+		client.getMessages = async (
+			...args: Parameters<typeof origGetMessages>
+		) => {
+			getMessagesCalled = true;
+			return origGetMessages(...args);
+		};
+
+		const mgr = new SessionManager({ client });
+		const id = await mgr.initialize();
+
+		// getMessages should NOT have been called during initialize
+		expect(getMessagesCalled).toBe(false);
+
+		// lastMessageAt should be seeded from session time.updated
+		const map = mgr.getLastMessageAtMap();
+		expect(map.get("ses_a")).toBe(5000);
+		expect(map.get("ses_b")).toBe(3000);
+
+		// Should return session with highest time.updated
+		expect(id).toBe("ses_a");
 	});
 
 	describe("P2: Create session (AC1)", () => {
@@ -291,41 +339,32 @@ describe("Ticket 2.3 — Session Manager PBT", () => {
 			);
 		});
 
-		it("sessions with message activity sort before sessions with only createdAt", async () => {
+		it("sessions with recent time.updated sort before sessions with only older timestamps", async () => {
 			const sessions: MockSession[] = [
 				{
-					id: "ses_newer",
-					title: "Newer Session",
+					id: "ses_newer_created",
+					title: "Newer Created",
 					time: { created: 5000, updated: 5000 },
 				},
 				{
-					id: "ses_older_with_msg",
-					title: "Older With Messages",
-					time: { created: 1000, updated: 1000 },
+					id: "ses_older_but_active",
+					title: "Older But Active",
+					time: { created: 1000, updated: 10000 },
 				},
 			];
 			const client = createMockClient(sessions);
-			// Older session has a recent message
-			client._messages.set("ses_older_with_msg", [
-				{
-					id: "msg_1",
-					role: "user",
-					sessionID: "ses_older_with_msg",
-					time: { created: 10000 },
-				},
-			] as Message[]);
 
 			const mgr = new SessionManager({ client });
-			// Seed lastMessageAt via initialize
+			// Seed lastMessageAt via initialize (uses time.updated)
 			await mgr.initialize();
 
 			const list = await mgr.listSessions();
 
-			// ses_older_with_msg should come first (lastMessageAt=10000 > ses_newer createdAt=5000)
+			// ses_older_but_active has time.updated=10000 > ses_newer_created time.updated=5000
 			// biome-ignore lint/style/noNonNullAssertion: safe — index within bounds
-			expect(list[0]!.id).toBe("ses_older_with_msg");
+			expect(list[0]!.id).toBe("ses_older_but_active");
 			// biome-ignore lint/style/noNonNullAssertion: safe — index within bounds
-			expect(list[1]!.id).toBe("ses_newer");
+			expect(list[1]!.id).toBe("ses_newer_created");
 		});
 
 		it("property: each session has required fields", async () => {

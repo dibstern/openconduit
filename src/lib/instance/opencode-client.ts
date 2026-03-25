@@ -31,6 +31,7 @@ export interface SessionCreateOptions {
 export interface SessionListOptions {
 	archived?: boolean;
 	roots?: boolean;
+	limit?: number;
 }
 
 export type SessionStatus =
@@ -241,6 +242,8 @@ export class OpenCodeClient {
 			params.set("archived", String(options.archived));
 		if (options?.roots !== undefined)
 			params.set("roots", String(options.roots));
+		if (options?.limit !== undefined)
+			params.set("limit", String(options.limit));
 		const query = params.toString();
 		const path = `/session${query ? `?${query}` : ""}`;
 		const res = await this.get(path);

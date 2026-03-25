@@ -84,6 +84,12 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 	 */
 	private forkMeta: Map<string, ForkEntry>;
 
+	/**
+	 * Session count from the most recent listSessions() call.
+	 * Used by the daemon to report session counts without an API call.
+	 */
+	private _lastKnownSessionCount = 0;
+
 	constructor(options: SessionManagerOptions) {
 		super();
 		this.client = options.client;
@@ -96,6 +102,14 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 	}
 
 	// ─── Queries ──────────────────────────────────────────────────────────
+
+	/**
+	 * Session count from the most recent unfiltered listSessions() call.
+	 * Synchronous — returns cached count. 0 until first fetch completes.
+	 */
+	getLastKnownSessionCount(): number {
+		return this._lastKnownSessionCount;
+	}
 
 	/**
 	 * Get a child→parent map (sessionId → parentID) for all sessions
@@ -114,6 +128,11 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 		const clientOpts =
 			options?.roots !== undefined ? { roots: options.roots } : undefined;
 		const sessions = await this.client.listSessions(clientOpts);
+
+		// Track total session count from unfiltered fetches
+		if (!options?.roots) {
+			this._lastKnownSessionCount = sessions.length;
+		}
 
 		// Only rebuild the parent map from unfiltered fetches — a roots-only
 		// fetch returns no parentIDs and would wipe the map, breaking
@@ -255,32 +274,17 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 	 * Returns the most recent session ID, or creates a new one if none exist.
 	 */
 	async initialize(title?: string): Promise<string> {
-		const existing = await this.client.listSessions();
+		// Fetch all sessions (not just the default 100) for accurate counting
+		const existing = await this.client.listSessions({ limit: 10000 });
+		this._lastKnownSessionCount = existing.length;
 		if (existing.length > 0) {
-			// Seed lastMessageAt from actual message timestamps.
-			// Fetch messages for each session in parallel.
-			await Promise.all(
-				existing.map(async (s) => {
-					try {
-						const msgs = await this.client.getMessages(s.id);
-						if (msgs.length > 0) {
-							// Find the latest message timestamp
-							let latest = 0;
-							for (const m of msgs) {
-								const ts = m.time?.completed ?? m.time?.created ?? 0;
-								if (ts > latest) latest = ts;
-							}
-							if (latest > 0) {
-								this.lastMessageAt.set(s.id, latest);
-							}
-						}
-					} catch (err) {
-						this.log.warn(
-							`Failed to fetch messages for ${s.id.slice(0, 12)} during init: ${err instanceof Error ? err.message : err}`,
-						);
-					}
-				}),
-			);
+			// Seed lastMessageAt from session metadata timestamps.
+			// time.updated reflects latest activity; SSE events refine it later.
+			// This avoids fetching messages for every session (was 500+ HTTP requests).
+			for (const s of existing) {
+				const ts = s.time?.updated ?? s.time?.created ?? 0;
+				if (ts > 0) this.lastMessageAt.set(s.id, ts);
+			}
 
 			// Sort by last message time, falling back to creation time
 			const sorted = existing.sort((a, b) => {
