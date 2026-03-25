@@ -663,10 +663,16 @@ describe("Ticket 3.4 — TrackedService drain() integration", () => {
 					});
 				}
 				// Resolve after a long delay (simulating slow network)
-				setTimeout(() => resolve(new Response(JSON.stringify({ version: "2.0.0" }), {
-					status: 200,
-					headers: { "Content-Type": "application/json" },
-				})), 60_000);
+				setTimeout(
+					() =>
+						resolve(
+							new Response(JSON.stringify({ version: "2.0.0" }), {
+								status: 200,
+								headers: { "Content-Type": "application/json" },
+							}),
+						),
+					60_000,
+				);
 			});
 		}) as unknown as typeof globalThis.fetch;
 

@@ -368,9 +368,7 @@ export class ProjectRegistry extends TrackedService<ProjectRegistryEvents> {
 					return;
 				}
 				if (entry.status === "error") {
-					reject(
-						new Error(`Project "${slug}" relay failed: ${entry.error}`),
-					);
+					reject(new Error(`Project "${slug}" relay failed: ${entry.error}`));
 					return;
 				}
 				if (signal?.aborted) {
@@ -410,15 +408,12 @@ export class ProjectRegistry extends TrackedService<ProjectRegistryEvents> {
 				this.on("project_ready", onReady);
 				this.on("project_error", onError);
 				this.on("project_removed", onRemoved);
-				if (signal)
-					signal.addEventListener("abort", onAbort, { once: true });
+				if (signal) signal.addEventListener("abort", onAbort, { once: true });
 
 				const timer = setTimeout(() => {
 					cleanup();
 					reject(
-						new Error(
-							`Timed out waiting for relay "${slug}" (${timeoutMs}ms)`,
-						),
+						new Error(`Timed out waiting for relay "${slug}" (${timeoutMs}ms)`),
 					);
 				}, timeoutMs);
 			}),

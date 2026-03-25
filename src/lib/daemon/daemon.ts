@@ -37,6 +37,7 @@ import { RequestRouter } from "../server/http-router.js";
 import type { PushNotificationManager } from "../server/push.js";
 import type { OpenCodeInstance, StoredProject } from "../types.js";
 import { generateSlug } from "../utils.js";
+import { AsyncTracker } from "./async-tracker.js";
 import {
 	clearCrashInfo,
 	type DaemonConfig,
@@ -74,7 +75,6 @@ import {
 import { PortScanner, type ScanResult } from "./port-scanner.js";
 import { ProjectRegistry } from "./project-registry.js";
 import { ServiceRegistry } from "./service-registry.js";
-import { AsyncTracker } from "./async-tracker.js";
 import {
 	installSignalHandlers,
 	removeSignalHandlers,
@@ -814,12 +814,14 @@ export class Daemon {
 
 		// Discover projects from OpenCode (non-blocking) so the dashboard
 		// is populated even if daemon.json had no saved projects.
-		this.tracker.track(this.discoverProjects().catch((err) => {
-			this.log.warn(
-				"Failed to discover projects on startup:",
-				formatErrorDetail(err),
-			);
-		}));
+		this.tracker.track(
+			this.discoverProjects().catch((err) => {
+				this.log.warn(
+					"Failed to discover projects on startup:",
+					formatErrorDetail(err),
+				);
+			}),
+		);
 
 		// Clear any previous crash info and save config (Ticket 8.7)
 		clearCrashInfo(this.configDir);
@@ -1480,7 +1482,10 @@ export class Daemon {
 				},
 				persistConfig: () => this.persistConfig(),
 				scheduleShutdown: () => {
-					this.shutdownTimer = setTimeout(() => this.stop(), DAEMON_SHUTDOWN_DELAY_MS);
+					this.shutdownTimer = setTimeout(
+						() => this.stop(),
+						DAEMON_SHUTDOWN_DELAY_MS,
+					);
 				},
 				getInstances: () => this.instanceManager.getInstances(),
 				getInstance: (id) => this.instanceManager.getInstance(id),

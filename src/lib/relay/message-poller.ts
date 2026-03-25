@@ -7,11 +7,11 @@
 // RelayMessages (delta, tool_start, tool_executing, tool_result, thinking_*,
 // result, done, etc.) that feed into the same cache + broadcast pipeline.
 
+import type { ServiceRegistry } from "../daemon/service-registry.js";
+import { TrackedService } from "../daemon/tracked-service.js";
 import type { Message, OpenCodeClient } from "../instance/opencode-client.js";
 import { createSilentLogger, type Logger } from "../logger.js";
 import type { RelayMessage } from "../types.js";
-import type { ServiceRegistry } from "../daemon/service-registry.js";
-import { TrackedService } from "../daemon/tracked-service.js";
 import { mapToolName } from "./event-translator.js";
 
 // ─── Constants ───────────────────────────────────────────────────────────────

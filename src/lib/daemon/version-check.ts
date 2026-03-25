@@ -1,9 +1,9 @@
 // ─── Version Check (Ticket 3.4) ────────────────────────────────────────────────
 // Periodically checks npm for newer versions and notifies browsers via events.
 
+import { getVersion } from "../version.js";
 import type { ServiceRegistry } from "./service-registry.js";
 import { TrackedService } from "./tracked-service.js";
-import { getVersion } from "../version.js";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 

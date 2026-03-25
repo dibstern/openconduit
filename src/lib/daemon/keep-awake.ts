@@ -201,9 +201,10 @@ export class KeepAwake extends TrackedService<KeepAwakeEvents> {
 		try {
 			if (child.pid) {
 				process.kill(-child.pid, "SIGTERM");
-			} else {
-				child.kill();
 			}
+			// When pid is undefined (spawn failed with ENOENT), the child process
+			// never started — calling child.kill() on it would create a dangling
+			// event-loop reference. Just let it be GC'd.
 		} catch {
 			// Process may already be dead
 		}

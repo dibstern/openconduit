@@ -79,7 +79,10 @@ describe("Ticket 3.5 — Keep-Awake Management", () => {
 		});
 
 		it("respects enabled: false in constructor", () => {
-			const ka = new KeepAwake(new ServiceRegistry(), { _platform: "darwin", enabled: false });
+			const ka = new KeepAwake(new ServiceRegistry(), {
+				_platform: "darwin",
+				enabled: false,
+			});
 			expect(ka.isEnabled()).toBe(false);
 		});
 	});
@@ -364,7 +367,10 @@ describe("Ticket 3.5 — Keep-Awake Management", () => {
 		});
 
 		it("does not throw on unsupported platform", () => {
-			const ka = new KeepAwake(new ServiceRegistry(), { _platform: "linux", _whichSync: () => null });
+			const ka = new KeepAwake(new ServiceRegistry(), {
+				_platform: "linux",
+				_whichSync: () => null,
+			});
 			expect(() => ka.activate()).not.toThrow();
 		});
 	});
@@ -577,12 +583,18 @@ describe("Ticket 3.5 — Keep-Awake Management", () => {
 		});
 
 		it("returns false on linux when no tool found", () => {
-			const ka = new KeepAwake(new ServiceRegistry(), { _platform: "linux", _whichSync: () => null });
+			const ka = new KeepAwake(new ServiceRegistry(), {
+				_platform: "linux",
+				_whichSync: () => null,
+			});
 			expect(ka.isSupported()).toBe(false);
 		});
 
 		it("returns false on win32", () => {
-			const ka = new KeepAwake(new ServiceRegistry(), { _platform: "win32", _whichSync: () => null });
+			const ka = new KeepAwake(new ServiceRegistry(), {
+				_platform: "win32",
+				_whichSync: () => null,
+			});
 			expect(ka.isSupported()).toBe(false);
 		});
 

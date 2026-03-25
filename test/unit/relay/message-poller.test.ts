@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { Message } from "../../../src/lib/instance/opencode-client.js";
 import { ServiceRegistry } from "../../../src/lib/daemon/service-registry.js";
+import type { Message } from "../../../src/lib/instance/opencode-client.js";
 import { createSilentLogger } from "../../../src/lib/logger.js";
 import {
 	buildSeedSnapshot,
@@ -1419,7 +1419,9 @@ describe("MessagePoller", () => {
 			expect(registry.size).toBe(0);
 
 			new MessagePoller(registry, {
-				client: createMockClient([]) as unknown as MessagePollerOptions["client"],
+				client: createMockClient(
+					[],
+				) as unknown as MessagePollerOptions["client"],
 				log: createSilentLogger(),
 			});
 

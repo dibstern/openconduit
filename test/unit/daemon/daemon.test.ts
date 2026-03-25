@@ -44,6 +44,11 @@ import {
 } from "../../../src/lib/daemon/config-persistence.js";
 import { Daemon } from "../../../src/lib/daemon/daemon.js";
 import { DEFAULT_CONFIG_DIR } from "../../../src/lib/env.js";
+import { setLogLevel } from "../../../src/lib/logger.js";
+
+// Suppress info-level pino JSON output during tests — prevents log noise from drowning
+// test results. Keep warn/error so tests that inspect pino warn output still work.
+setLogLevel("warn");
 
 const SEED = 42;
 const NUM_RUNS = 30;
