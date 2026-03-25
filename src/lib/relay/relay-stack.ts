@@ -175,6 +175,11 @@ export async function createProjectRelay(
 	const ptyLog = log.child("pty");
 	const pipelineLog = log.child("pipeline");
 
+	// ── Service registry (optional — used by daemon for coordinated drain) ──
+	// Stored locally so Tasks 8-15 can pass it to service constructors as
+	// they are migrated to TrackedService.
+	const _serviceRegistry = config.registry;
+
 	// ── Components ──────────────────────────────────────────────────────────
 
 	const client = new OpenCodeClient({
