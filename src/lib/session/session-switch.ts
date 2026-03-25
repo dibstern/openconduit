@@ -87,3 +87,78 @@ export function classifyHistorySource(
 	);
 	return hasChatContent ? "cached-events" : "needs-rest";
 }
+
+/**
+ * Build a session_switched message from resolved history source.
+ * Pure function — no side effects, no I/O.
+ *
+ * @remarks Uses conditional spreads to satisfy exactOptionalPropertyTypes.
+ * Never assigns `undefined` to optional properties.
+ */
+export function buildSessionSwitchedMessage(
+	sessionId: string,
+	source: SessionHistorySource,
+	options?: SessionSwitchMessageOptions,
+): Extract<RelayMessage, { type: "session_switched" }> {
+	const optionalFields = {
+		...(options?.draft ? { inputText: options.draft } : {}),
+		...(options?.requestId != null ? { requestId: options.requestId } : {}),
+	};
+
+	switch (source.kind) {
+		case "cached-events":
+			return {
+				type: "session_switched",
+				id: sessionId,
+				events: source.events as RelayMessage[],
+				...optionalFields,
+			};
+		case "rest-history":
+			return {
+				type: "session_switched",
+				id: sessionId,
+				history: {
+					messages: source.history.messages as HistoryMessage[],
+					hasMore: source.history.hasMore,
+					...(source.history.total != null
+						? { total: source.history.total }
+						: {}),
+				},
+				...optionalFields,
+			};
+		case "empty":
+			return {
+				type: "session_switched",
+				id: sessionId,
+				...optionalFields,
+			};
+	}
+}
+
+// ─── Async I/O functions ────────────────────────────────────────────────────
+
+/**
+ * Resolve session history from cache or REST API.
+ * Impure — reads from cache and may call REST.
+ */
+export async function resolveSessionHistory(
+	sessionId: string,
+	deps: Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log">,
+): Promise<SessionHistorySource> {
+	const events = deps.messageCache.getEvents(sessionId);
+	const classification = classifyHistorySource(events);
+
+	if (classification === "cached-events" && events) {
+		return { kind: "cached-events", events };
+	}
+
+	try {
+		const history = await deps.sessionMgr.loadPreRenderedHistory(sessionId);
+		return { kind: "rest-history", history };
+	} catch (err) {
+		deps.log.warn(
+			`Failed to load history for ${sessionId}: ${err instanceof Error ? err.message : err}`,
+		);
+		return { kind: "empty" };
+	}
+}
