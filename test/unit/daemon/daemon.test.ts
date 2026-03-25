@@ -29,7 +29,15 @@ import { connect } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import fc from "fast-check";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+	afterAll,
+	afterEach,
+	beforeEach,
+	describe,
+	expect,
+	it,
+	vi,
+} from "vitest";
 import {
 	type DaemonConfig,
 	loadDaemonConfig,
@@ -62,7 +70,6 @@ function daemonOpts(tmpDir: string, port = 0) {
 		logPath: join(tmpDir, "daemon.log"),
 		port,
 		smartDefault: false,
-		_skipPortScanner: true,
 	};
 }
 
@@ -240,6 +247,24 @@ function httpGetRaw(
 		req.end();
 	});
 }
+
+// ─── F1 Diagnostic ───────────────────────────────────────────────────────────
+
+afterAll(() => {
+	// F1 diagnostic: log active handles if any remain after all tests
+	// biome-ignore lint/suspicious/noExplicitAny: undocumented Node.js diagnostic API
+	const handles = (process as any)._getActiveHandles?.() ?? [];
+	// biome-ignore lint/suspicious/noExplicitAny: undocumented Node.js diagnostic API
+	const requests = (process as any)._getActiveRequests?.() ?? [];
+	if (handles.length > 0 || requests.length > 0) {
+		console.warn(
+			`[F1 Diagnostic] Active handles after test suite: ${handles.length} handles, ${requests.length} requests`,
+		);
+		for (const h of handles) {
+			console.warn(`  Handle: ${h.constructor?.name ?? typeof h}`);
+		}
+	}
+});
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
