@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync } from "node:fs";
-import { gunzipSync } from "node:zlib";
 import { resolve } from "node:path";
+import { gunzipSync } from "node:zlib";
 import { describe, expect, it } from "vitest";
 
 const FIXTURES_DIR = resolve(
@@ -43,15 +43,11 @@ describe("Recording session isolation", () => {
 
 		for (const file of files) {
 			const name = file.replace(".opencode.json.gz", "");
-			const sessionIds = extractPromptSessionIds(
-				resolve(FIXTURES_DIR, file),
-			);
+			const sessionIds = extractPromptSessionIds(resolve(FIXTURES_DIR, file));
 			for (const sid of sessionIds) {
 				const prior = seen.get(sid);
 				if (prior !== undefined && prior !== name) {
-					reuses.push(
-						`${sid.slice(-8)} used in "${prior}" AND "${name}"`,
-					);
+					reuses.push(`${sid.slice(-8)} used in "${prior}" AND "${name}"`);
 				}
 				seen.set(sid, name);
 			}
