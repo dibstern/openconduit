@@ -164,17 +164,18 @@ describe("phase transitions", () => {
 		expect(chatState.loadLifecycle).toBe("loading");
 	});
 
-	it("phaseEndReplay(false) → loadLifecycle='ready', phase stays idle", () => {
+	it("phaseEndReplay(false) → loadLifecycle stays 'loading' (renderDeferredMarkdown sets ready), phase stays idle", () => {
 		phaseStartReplay();
 		phaseEndReplay(false);
-		expect(chatState.loadLifecycle).toBe("ready");
+		// phaseEndReplay no longer sets loadLifecycle — that's renderDeferredMarkdown's job
+		expect(chatState.loadLifecycle).toBe("loading");
 		expect(chatState.phase).toBe("idle");
 	});
 
-	it("phaseEndReplay(true) → loadLifecycle='ready', phase='processing' when idle", () => {
+	it("phaseEndReplay(true) → phase='processing' when idle, loadLifecycle unchanged", () => {
 		phaseStartReplay();
 		phaseEndReplay(true);
-		expect(chatState.loadLifecycle).toBe("ready");
+		expect(chatState.loadLifecycle).toBe("loading");
 		expect(chatState.phase).toBe("processing");
 	});
 
@@ -250,17 +251,21 @@ describe("Phase split: replaying removed from ChatPhase", () => {
 		expect(chatState.phase).toBe("processing");
 	});
 
-	it("phaseEndReplay with streaming phase sets lifecycle to ready and preserves streaming", () => {
+	it("phaseEndReplay with streaming phase preserves streaming, loadLifecycle unchanged", () => {
 		phaseStartReplay();
 		expect(chatState.loadLifecycle).toBe("loading");
 		phaseToStreaming();
 		expect(chatState.phase).toBe("streaming");
-		expect(isStreaming()).toBe(false);
+		expect(isStreaming()).toBe(false); // gated by loading
 		phaseEndReplay(true);
-		expect(chatState.loadLifecycle).toBe("ready");
+		// phaseEndReplay does NOT set loadLifecycle (that's renderDeferredMarkdown's job).
+		// But it also doesn't change phase since it's already streaming (not idle).
+		expect(chatState.loadLifecycle).toBe("loading");
 		expect(chatState.phase).toBe("streaming");
-		expect(isStreaming()).toBe(true);
-		expect(isProcessing()).toBe(true);
+		// Still gated by loading — isStreaming/isProcessing stay false until
+		// renderDeferredMarkdown sets loadLifecycle = "ready"
+		expect(isStreaming()).toBe(false);
+		expect(isProcessing()).toBe(false);
 	});
 });
 

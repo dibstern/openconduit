@@ -668,13 +668,19 @@ export async function replayEvents(
 		const ctx: DispatchContext = { isReplay: true, isQueued: llmActive };
 		dispatchChatEvent(event, ctx);
 
-		// Yield between chunks to keep the main thread responsive
+		// ── Queued-flag clearing ─────────────────────────────────────────
+		// Same turnEpoch gate as handleMessage().
+		if (isLlmContentStart(event.type) && shouldClearQueuedOnContent())
+			clearQueuedFlags();
+
+		// Yield between chunks to keep the main thread responsive.
+		// NOTE: Do NOT call discardReplayBatch() on abort after yield.
+		// A newer replay may have already called beginReplayBatch() and
+		// started populating it — discarding here would destroy the new
+		// replay's batch. clearMessages() already sets replayBatch = null.
 		if ((i + 1) % REPLAY_CHUNK_SIZE === 0) {
 			await yieldToEventLoop();
-			if (generation !== replayGeneration) {
-				discardReplayBatch();
-				return;
-			}
+			if (generation !== replayGeneration) return;
 		}
 	}
 
@@ -690,13 +696,12 @@ export async function replayEvents(
 		commitReplayBatch();
 	}
 
-	// Reconcile processing state: during replay, handleDone is guarded
-	// from clearing isProcessing (to avoid overwriting a live
-	// status:processing message from the server that arrived during a
-	// yield). Now that replay is complete, reconcile the processing state.
-	// phaseEndReplay merges two signals: llmActive (last replayed turn
-	// still in-flight) and isProcessing (live status:processing
-	// arrived during a yield — status events are NOT cacheable).
+	// Reconcile processing state after replay completes.
+	// During replay, handler functions (handleDone, handleDelta, etc.)
+	// set chatState.phase directly (no longer guarded by "replaying").
+	// phaseEndReplay only needs to handle the edge case where llmActive
+	// is true but phase ended at "idle" (all turns completed during
+	// replay, but server says LLM is still active).
 	phaseEndReplay(llmActive);
 	renderDeferredMarkdown();
 }

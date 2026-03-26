@@ -124,9 +124,15 @@ export function phaseStartReplay(): void {
 
 /** End event replay, reconcile phase based on current phase
  *  and external processing signals.
+ *  loadLifecycle stays at "committed" — renderDeferredMarkdown will
+ *  transition to "ready" once all deferred markdown is rendered.
+ *  If there are no deferred messages, renderDeferredMarkdown sets
+ *  "ready" on its first (and only) batch.
  *  @param llmActive — whether the replayed event stream ended mid-turn */
 export function phaseEndReplay(llmActive: boolean): void {
-	chatState.loadLifecycle = "ready";
+	// Don't set loadLifecycle here — leave at "committed" so the
+	// scroll controller's settle phase can run while deferred markdown
+	// rendering completes. renderDeferredMarkdown sets "ready" when done.
 	if (llmActive && chatState.phase === "idle") {
 		chatState.phase = "processing";
 	}
@@ -296,6 +302,7 @@ export function commitReplayBatch(): void {
 	if (replayBatch !== null) {
 		chatState.messages = replayBatch;
 		replayBatch = null;
+		chatState.loadLifecycle = "committed";
 	}
 }
 

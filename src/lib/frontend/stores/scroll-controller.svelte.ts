@@ -26,7 +26,7 @@ export function createScrollController(
 	getLifecycle: () => LoadLifecycle,
 ): ScrollController {
 	let container: HTMLElement | null = null;
-	let userDetached = false;
+	let userDetached = $state(false);
 	let settleRafId: number | null = null;
 	let settleFrameCount = 0;
 

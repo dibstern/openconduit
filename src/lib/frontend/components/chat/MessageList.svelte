@@ -61,12 +61,15 @@
 		scrollCtrl.resetForSession();
 	});
 
-	// Auto-scroll when content changes (messages, permissions, questions)
+	// Auto-scroll when content changes (messages, permissions, questions).
+	// Guard: skip during prepend (scroll preservation handles that case).
 	$effect(() => {
 		const _len = chatState.messages.length;
 		const _permLen = permissionsState.pendingPermissions.length;
 		const _qLen = permissionsState.pendingQuestions.length;
-		scrollCtrl.onNewContent();
+		if (!awaitingPrepend) {
+			scrollCtrl.onNewContent();
+		}
 	});
 
 	// ─── Scroll preservation for history prepend ────────────────────────────
