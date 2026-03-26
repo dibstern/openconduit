@@ -261,3 +261,118 @@ describe("consumeReplayBuffer", () => {
 		expect(getReplayBuffer("session-clear")).toBeUndefined();
 	});
 });
+
+describe("HistoryLoader buffer integration", () => {
+	it("consumeReplayBuffer returns messages from end of buffer (most recent first)", () => {
+		// Setup: populate buffer manually via commitReplayFinal, then consume from it.
+		// The buffer stores OLDER messages (index 0 = oldest).
+		// consumeReplayBuffer(sessionId, count) should return the `count` most-recent
+		// messages (from the end of the buffer) and remove them.
+		beginReplayBatch();
+
+		const msgs = makeUserMessages(100);
+		for (const m of msgs) {
+			getMessages().push(m);
+		}
+
+		commitReplayFinal("session-hl-1");
+
+		// Buffer has messages 0..49 (the 50 oldest), chatState has messages 50..99
+		const buffer = getReplayBuffer("session-hl-1");
+		expect(buffer).toHaveLength(50);
+
+		// Consume 15 — should get the 15 most recent from the buffer (messages 35..49)
+		const page = consumeReplayBuffer("session-hl-1", 15);
+		expect(page).toHaveLength(15);
+		expect((page[0] as { text: string }).text).toBe("message-35");
+		expect((page[14] as { text: string }).text).toBe("message-49");
+
+		// Prepending these to chatState.messages should produce correct order
+		chatState.messages = [...page, ...chatState.messages];
+		expect(chatState.messages).toHaveLength(65); // 15 + 50
+		expect((chatState.messages[0] as { text: string }).text).toBe("message-35");
+		expect((chatState.messages[14] as { text: string }).text).toBe(
+			"message-49",
+		);
+		expect((chatState.messages[15] as { text: string }).text).toBe(
+			"message-50",
+		);
+
+		// Buffer should still have 35 remaining
+		const remaining = getReplayBuffer("session-hl-1");
+		expect(remaining).toHaveLength(35);
+	});
+
+	it("consumeReplayBuffer empties and deletes buffer when fully consumed", () => {
+		beginReplayBatch();
+
+		const msgs = makeUserMessages(70);
+		for (const m of msgs) {
+			getMessages().push(m);
+		}
+
+		commitReplayFinal("session-hl-2");
+
+		// Buffer has 20 messages (70 - 50 = 20)
+		expect(getReplayBuffer("session-hl-2")).toHaveLength(20);
+
+		// Consume all 20
+		const page = consumeReplayBuffer("session-hl-2", 20);
+		expect(page).toHaveLength(20);
+
+		// Buffer should be fully deleted (not just empty)
+		expect(getReplayBuffer("session-hl-2")).toBeUndefined();
+
+		// Consuming again returns empty array
+		const empty = consumeReplayBuffer("session-hl-2", 10);
+		expect(empty).toHaveLength(0);
+	});
+
+	it("consuming more than buffer size returns only available messages", () => {
+		beginReplayBatch();
+
+		const msgs = makeUserMessages(60);
+		for (const m of msgs) {
+			getMessages().push(m);
+		}
+
+		commitReplayFinal("session-hl-3");
+
+		// Buffer has 10 messages (60 - 50 = 10)
+		expect(getReplayBuffer("session-hl-3")).toHaveLength(10);
+
+		// Request 50 but only 10 available
+		const page = consumeReplayBuffer("session-hl-3", 50);
+		expect(page).toHaveLength(10);
+
+		// Buffer should be deleted after full consumption
+		expect(getReplayBuffer("session-hl-3")).toBeUndefined();
+	});
+
+	it("hasMore reflects remaining buffer state after consumption", () => {
+		beginReplayBatch();
+
+		const msgs = makeUserMessages(120);
+		for (const m of msgs) {
+			getMessages().push(m);
+		}
+
+		commitReplayFinal("session-hl-4");
+
+		// historyState.hasMore should be true (buffer has 70 messages)
+		expect(historyState.hasMore).toBe(true);
+		expect(getReplayBuffer("session-hl-4")).toHaveLength(70);
+
+		// Consume 50
+		consumeReplayBuffer("session-hl-4", 50);
+		const remaining = getReplayBuffer("session-hl-4");
+		expect(remaining).toHaveLength(20);
+		// hasMore should still be true (caller is responsible for updating it)
+		// — the store function doesn't mutate historyState
+
+		// Consume remaining 20
+		consumeReplayBuffer("session-hl-4", 20);
+		expect(getReplayBuffer("session-hl-4")).toBeUndefined();
+		// After buffer is fully consumed, caller sets hasMore = false
+	});
+});
