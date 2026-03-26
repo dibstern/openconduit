@@ -95,6 +95,12 @@ Note: `--no-verify` because fixtures are stale until re-recorded.
 
 ## Task 2: Re-record and verify
 
+**Step 0: Remove stale fixture files**
+
+Remove any `.opencode.json.gz` or `.json` files in `test/e2e/fixtures/recorded/` that don't correspond to a current scenario (e.g. `chat-code-block.opencode.json.gz` from a removed scenario). Stale files confuse the session-isolation test.
+
+Run: `ls test/e2e/fixtures/recorded/` and cross-reference against the scenario list in `record-snapshots.ts`.
+
 **Step 1: Re-record all fixtures**
 
 Run: `pnpm test:record-snapshots`
@@ -137,7 +143,7 @@ Expected: The 4 previously-passing tests pass (tool call, result bar, streaming,
 
 Run: `pnpm exec playwright test --config test/e2e/playwright-replay.config.ts --reporter=list`
 
-Expected: No new regressions vs main.
+Expected: No new regressions vs main. Pre-existing failures (unchanged): permissions x2, advanced-ui file history, chat-lifecycle multi-turn.
 
 ---
 
