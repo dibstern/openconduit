@@ -186,7 +186,12 @@ export function createScrollController(
 		onNewContent(): void {
 			const s = getState();
 			if (s === "following") {
-				requestAnimationFrame(() => scrollToBottom());
+				// Scroll synchronously — not via rAF. In Svelte 5, $effect runs
+				// after the DOM is committed but before the browser paints. Scrolling
+				// here means the browser paints with the correct scroll position.
+				// Using rAF would delay the scroll by one frame, causing visible
+				// jitter during streaming (snap-down-then-back-up on each delta).
+				scrollToBottom();
 			} else if (s === "settling") {
 				startSettle();
 			}
