@@ -633,8 +633,9 @@ async function main(): Promise<void> {
 				// Stop relay with timeout to prevent hangs from lingering keep-alive connections
 				if (relayStack) {
 					console.log("  Stopping relay...");
+					const stopPromise = relayStack.stop();
 					await Promise.race([
-						relayStack.stop(),
+						stopPromise,
 						new Promise<void>((resolve) =>
 							setTimeout(() => {
 								console.warn("  Relay stop timed out after 10s, moving on.");
@@ -642,6 +643,10 @@ async function main(): Promise<void> {
 							}, 10_000),
 						),
 					]);
+					// Prevent unhandled rejection if stop() rejects after timeout
+					stopPromise.catch((err: unknown) =>
+						console.warn("  Relay stop eventually failed:", err),
+					);
 				}
 			}
 		}
