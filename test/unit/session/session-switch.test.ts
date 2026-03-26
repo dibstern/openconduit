@@ -693,30 +693,15 @@ describe("switchClientToSession", () => {
 });
 
 describe("resolveSessionHistory — repaired cold cache regression", () => {
-	it("falls back to REST when repair removed an incomplete assistant turn", async () => {
-		// After repair: 2 complete turns + 1 user_message with no response
-		// countUniqueMessages: 3 user_messages + 2 messageIds = 5
-		// REST has: 3 user + 3 assistant = 6 messages (the 3rd assistant was truncated)
+	it("serves repaired cache with complete turns and trailing user_message", async () => {
+		// After repair: 2 complete turns + 1 user_message (incomplete turn removed).
+		// Cache has chat content → served directly. Users can paginate for older messages.
 		const repairedEvents: RelayMessage[] = [
 			{ type: "user_message", text: "q1" },
 			{ type: "delta", text: "a1", messageId: "msg_1" },
-			{
-				type: "result",
-				usage: { input: 10, output: 20, cache_read: 0, cache_creation: 0 },
-				cost: 0.01,
-				duration: 500,
-				sessionId: "s1",
-			},
 			{ type: "done", code: 0 },
 			{ type: "user_message", text: "q2" },
 			{ type: "delta", text: "a2", messageId: "msg_2" },
-			{
-				type: "result",
-				usage: { input: 15, output: 25, cache_read: 0, cache_creation: 0 },
-				cost: 0.02,
-				duration: 600,
-				sessionId: "s1",
-			},
 			{ type: "done", code: 0 },
 			{ type: "user_message", text: "q3" },
 			// repair removed: delta "partial-a3" with messageId "msg_3"
@@ -726,23 +711,20 @@ describe("resolveSessionHistory — repaired cold cache regression", () => {
 			messageCache: {
 				getEvents: vi.fn().mockReturnValue(repairedEvents),
 			},
-			// Return 6 messages — more than the 5 unique in cache
-			client: { getMessages: vi.fn().mockResolvedValue(fakeMessages(6)) },
 		});
 
 		const result = await resolveSessionHistory("ses_repaired", deps);
 
-		// countUniqueMessages: 3 user_messages + 2 messageIds (msg_1, msg_2) = 5
-		// getMessages returns 6
-		// 5 < 6 → stale → falls back to REST
-		expect(result.source.kind).toBe("rest-history");
+		// Cache has user_message + delta → classifyHistorySource → "cached-events"
+		expect(result.kind).toBe("cached-events");
+		if (result.kind === "cached-events") {
+			expect(result.events).toEqual(repairedEvents);
+		}
 	});
 
-	it("falls back to REST when repair removed ALL streaming events (only user_messages remain)", async () => {
-		// Scenario: first assistant turn was interrupted before any terminal event.
-		// Repair keeps only user_messages.
-		// countUniqueMessages: 2 user_messages + 0 messageIds = 2
-		// REST has: 2 user + 2 assistant = 4 messages
+	it("serves repaired cache even when only user_messages remain", async () => {
+		// Scenario: all assistant turns were interrupted before any terminal event.
+		// Repair keeps only user_messages — still valid chat content.
 		const repairedEvents: RelayMessage[] = [
 			{ type: "user_message", text: "q1" },
 			// repair removed: delta "partial-a1" (no terminal ever arrived)
@@ -754,49 +736,29 @@ describe("resolveSessionHistory — repaired cold cache regression", () => {
 			messageCache: {
 				getEvents: vi.fn().mockReturnValue(repairedEvents),
 			},
-			// Return 4 messages — more than the 2 unique in cache
-			client: { getMessages: vi.fn().mockResolvedValue(fakeMessages(4)) },
 		});
 
-		const result = await resolveSessionHistory("ses_all_removed", deps);
+		const result = await resolveSessionHistory("ses_user_only", deps);
 
-		// countUniqueMessages: 2, getMessages returns 4 → 2 < 4 → REST fallback
-		expect(result.source.kind).toBe("rest-history");
+		// user_message is chat content → cache is served
+		expect(result.kind).toBe("cached-events");
+		if (result.kind === "cached-events") {
+			expect(result.events).toEqual(repairedEvents);
+		}
 	});
 
-	it("serves cache when repair removed events without messageId (staleness check still passes)", async () => {
-		// Scenario: incomplete turn's deltas had no messageId. Repair removes them
-		// but the count doesn't change because they weren't counted anyway.
-		// This is the "safe" case — the removed events didn't contribute to the count.
-		const repairedEvents: RelayMessage[] = [
-			{ type: "user_message", text: "q1" },
-			{ type: "delta", text: "a1", messageId: "msg_1" },
-			{
-				type: "result",
-				usage: { input: 10, output: 20, cache_read: 0, cache_creation: 0 },
-				cost: 0.01,
-				duration: 500,
-				sessionId: "s1",
-			},
-			{ type: "done", code: 0 },
-			{ type: "user_message", text: "q2" },
-			// repair removed: delta without messageId — these don't affect countUniqueMessages
-		];
-
+	it("falls back to REST when repair empties the cache entirely", async () => {
+		// Scenario: session had only streaming events with no user_messages.
+		// repairColdSessions removes the session from the Map → getEvents returns null.
 		const deps = createMinimalDeps({
 			messageCache: {
-				getEvents: vi.fn().mockReturnValue(repairedEvents),
+				getEvents: vi.fn().mockReturnValue(null),
 			},
-			// Return 3 messages — matches the 3 unique in cache
-			// (2 user_messages + 1 messageId = 3, getMessages returns 3 → passes)
-			client: { getMessages: vi.fn().mockResolvedValue(fakeMessages(3)) },
 		});
 
-		const result = await resolveSessionHistory("ses_safe_pass", deps);
+		const result = await resolveSessionHistory("ses_empty", deps);
 
-		// countUniqueMessages: 2 user_messages + 1 messageId (msg_1) = 3
-		// getMessages returns 3
-		// 3 >= 3 → passes → serves cache (this is correct — the incomplete data was removed)
-		expect(result.source.kind).toBe("cached-events");
+		// null cache → REST fallback
+		expect(result.kind).toBe("rest-history");
 	});
 });
