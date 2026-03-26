@@ -50,10 +50,6 @@ export const chatState = $state({
 	currentAssistantText: "",
 	/** Single source of truth for the chat pipeline phase. */
 	phase: "idle" as ChatPhase,
-	/** True after clearQueuedFlags() is called, reset when processing starts.
-	 *  Used by the unified rendering pipeline to know that the LLM has started
-	 *  responding to a previously-queued message (so the queued shimmer should be removed). */
-	queuedFlagsCleared: false,
 	/** Monotonically increasing counter, bumped on each `done` event.
 	 *  Provides an explicit, reliable turn-boundary signal for logic that
 	 *  needs to distinguish "same turn" from "new turn" (e.g. queued-flag
@@ -581,15 +577,6 @@ export function handleStatus(
 ): void {
 	if (msg.status === "processing") {
 		phaseToProcessing();
-		// Reset so queued styling can be applied for new processing turns
-		chatState.queuedFlagsCleared = false;
-		// NOTE: applyQueuedFlagInPlace() was previously called here but caused
-		// two bugs: (1) it re-applied the queued flag after clearQueuedFlags()
-		// already cleared it (when status:processing arrived late from the
-		// monitoring poller), permanently sticking messages in "Queued" state;
-		// (2) it marked non-queued messages as queued when sent to idle sessions.
-		// The queued flag is now set exclusively by addUserMessage() (live sends)
-		// and replay dispatch (event replay), which have the correct context.
 	}
 }
 
@@ -618,51 +605,30 @@ export function handleError(
 	}
 }
 
-// ─── Turn-boundary tracking for queued-flag clearing ────────────────────────
-// When a user message is queued (sent while the LLM is working), its "Queued"
-// shimmer must persist until the LLM starts a NEW turn — not be stripped by
-// continuation deltas from the current turn.  We record the turnEpoch at
-// which the message was queued and only allow clearing once the epoch advances.
-
-let queuedAtEpoch = -1; // -1 → no queued message pending
-
-/** Should ws-dispatch call clearQueuedFlags() on this content-start event?
- *  Returns true when:
- *  - No queued message is pending (safe default), OR
- *  - turnEpoch has advanced past the epoch when the message was queued
- *    (a `done` event completed the previous turn). */
-export function shouldClearQueuedOnContent(): boolean {
-	if (queuedAtEpoch < 0) return true;
-	if (chatState.turnEpoch > queuedAtEpoch) {
-		queuedAtEpoch = -1; // consumed
-		return true;
-	}
-	return false;
-}
-
 // ─── Actions ────────────────────────────────────────────────────────────────
 
 /** Add a user message to the chat.
- *  When `queued` is true the message is visually dimmed with a shimmer —
- *  it has been sent to the server but is waiting for the LLM to start.
+ *  When `sentWhileProcessing` is true the message records the current
+ *  `turnEpoch` in `sentDuringEpoch` — a write-once, immutable fact.
+ *  The UI derives the "Queued" shimmer reactively from this value
+ *  and the live `turnEpoch`; no clearing/mutation is ever needed.
  *
  *  During replay, defensively finalizes any in-progress assistant message
  *  so that subsequent delta events create a new AssistantMessage block.
- *  During live streaming (queued=true), the assistant message is left
- *  unfinalized so deltas keep updating it in-place and the queued user
- *  message stays at the bottom instead of splitting the response. */
+ *  During live streaming (sentWhileProcessing=true), the assistant message
+ *  is left unfinalized so deltas keep updating it in-place and the queued
+ *  user message stays at the bottom instead of splitting the response. */
 export function addUserMessage(
 	text: string,
 	images?: string[],
-	queued?: boolean,
+	sentWhileProcessing?: boolean,
 ): void {
-	if (queued) queuedAtEpoch = chatState.turnEpoch;
 	// Finalize the in-progress assistant message only during replay,
 	// where user_message events can appear between delta events without
-	// an intervening done event.  During live streaming (queued=true),
-	// keep the assistant message unfinalized so subsequent deltas
-	// continue updating it and the queued user message stays at the end.
-	if (!queued && chatState.currentAssistantText) {
+	// an intervening done event.  During live streaming the assistant
+	// message stays unfinalized so subsequent deltas continue updating
+	// it and the queued user message stays at the end.
+	if (!sentWhileProcessing && chatState.currentAssistantText) {
 		flushAndFinalizeAssistant();
 		if (chatState.phase === "replaying") {
 			_replayInnerStreaming = false;
@@ -677,7 +643,7 @@ export function addUserMessage(
 		uuid,
 		text,
 		...(images != null && { images }),
-		...(queued != null && { queued }),
+		...(sentWhileProcessing ? { sentDuringEpoch: chatState.turnEpoch } : {}),
 	};
 	setMessages([...getMessages(), msg]);
 }
@@ -687,24 +653,6 @@ export function addUserMessage(
 export function prependMessages(msgs: ChatMessage[]): void {
 	if (msgs.length === 0) return;
 	setMessages([...msgs, ...getMessages()]);
-}
-
-/** Clear the `queued` flag on all user messages.
- *  Called when a new streaming response starts (first delta) so the
- *  previously-queued message transitions to its normal appearance.
- *  Also sets `queuedFlagsCleared` so the unified rendering pipeline
- *  can reactively remove its queued styling. */
-export function clearQueuedFlags(): void {
-	chatState.queuedFlagsCleared = true;
-	let changed = false;
-	const messages = getMessages().map((m) => {
-		if (m.type === "user" && m.queued) {
-			changed = true;
-			return { ...m, queued: false };
-		}
-		return m;
-	});
-	if (changed) setMessages(messages);
 }
 
 /** Add a system message to the chat. */
@@ -772,9 +720,7 @@ export function clearMessages(): void {
 	cancelDeferredMarkdown(); // abort in-flight deferred renders
 	chatState.messages = [];
 	chatState.currentAssistantText = "";
-	chatState.queuedFlagsCleared = false;
 	chatState.turnEpoch = 0;
-	queuedAtEpoch = -1;
 	registry.clear();
 	doneMessageIds.clear();
 	if (renderTimer !== null) {
@@ -795,6 +741,10 @@ const SESSION_CACHE_MAX = 10;
 
 interface CachedSession {
 	messages: ChatMessage[];
+	/** Preserved so that `sentDuringEpoch` comparisons remain correct
+	 *  after restore — without this, turnEpoch resets to 0 and messages
+	 *  with sentDuringEpoch would incorrectly show the "Queued" shimmer. */
+	turnEpoch: number;
 	contextPercent: number;
 	historyHasMore: boolean;
 	historyMessageCount: number;
@@ -818,6 +768,7 @@ export function stashSessionMessages(sessionId: string): void {
 	sessionMessageCache.delete(sessionId);
 	sessionMessageCache.set(sessionId, {
 		messages: $state.snapshot(chatState.messages),
+		turnEpoch: chatState.turnEpoch,
 		contextPercent: uiState.contextPercent,
 		historyHasMore: historyState.hasMore,
 		historyMessageCount: historyState.messageCount,
@@ -830,6 +781,7 @@ export function restoreCachedMessages(sessionId: string): boolean {
 	const entry = sessionMessageCache.get(sessionId);
 	if (!entry) return false;
 	chatState.messages = entry.messages;
+	chatState.turnEpoch = entry.turnEpoch;
 	updateContextPercent(entry.contextPercent);
 	historyState.hasMore = entry.historyHasMore;
 	historyState.messageCount = entry.historyMessageCount;

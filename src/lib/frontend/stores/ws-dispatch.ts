@@ -17,7 +17,6 @@ import {
 	beginReplayBatch,
 	chatState,
 	clearMessages,
-	clearQueuedFlags,
 	commitReplayBatch,
 	discardReplayBatch,
 	findMessage,
@@ -45,7 +44,6 @@ import {
 	registerClearMessagesHook,
 	renderDeferredMarkdown,
 	seedRegistryFromMessages,
-	shouldClearQueuedOnContent,
 } from "./chat.svelte.js";
 import {
 	handleAgentList,
@@ -116,14 +114,12 @@ import { wsSend } from "./ws-send.svelte.js";
 
 const log = createFrontendLogger("ws");
 
-// ─── LLM Content Start (queued-flag coordination) ───────────────────────────
+// ─── LLM Content Start ──────────────────────────────────────────────────────
 // Single source of truth for event types that indicate the LLM started
-// producing content for a turn. Used for two purposes:
-//   1. clearQueuedFlags() — remove the "Queued" shimmer when the LLM responds
-//   2. llmActive tracking in replayEvents() — infer queued state from events
-//
-// Both handleMessage() and replayEvents() use this constant via
-// isLlmContentStart() so there is exactly one place to update.
+// producing content for a turn. Used by replayEvents() to track `llmActive`
+// and infer whether a user_message was sent while the LLM was busy (queued).
+// A user_message that appears while llmActive is true gets `sentDuringEpoch`
+// set, so the UI can derive the "Queued" shimmer reactively.
 
 const LLM_CONTENT_START_TYPES: ReadonlySet<RelayMessage["type"]> = new Set([
 	"delta",
@@ -191,8 +187,8 @@ async function convertHistoryAsync(
 export interface DispatchContext {
 	/** True when replaying cached events (suppresses notifications). */
 	isReplay: boolean;
-	/** Whether the session is currently processing (queued-flag source).
-	 *  Live: `chatState.processing`. Replay: local `llmActive` tracker. */
+	/** Whether the LLM is currently active (sentDuringEpoch source).
+	 *  Live: `isProcessing()`. Replay: local `llmActive` tracker. */
 	isQueued: boolean;
 }
 
@@ -294,10 +290,6 @@ export function handleMessage(msg: RelayMessage): void {
 		isQueued: isProcessing(),
 	};
 	if (dispatchChatEvent(msg, ctx)) {
-		// Queued-flag clearing: gated by shouldClearQueuedOnContent() which
-		// uses turnEpoch to ensure only genuinely NEW turns clear flags.
-		if (isLlmContentStart(msg.type) && shouldClearQueuedOnContent())
-			clearQueuedFlags();
 		return;
 	}
 
@@ -642,11 +634,6 @@ export async function replayEvents(events: RelayMessage[]): Promise<void> {
 
 		const ctx: DispatchContext = { isReplay: true, isQueued: llmActive };
 		dispatchChatEvent(event, ctx);
-
-		// ── Queued-flag clearing ─────────────────────────────────────────
-		// Same turnEpoch gate as handleMessage().
-		if (isLlmContentStart(event.type) && shouldClearQueuedOnContent())
-			clearQueuedFlags();
 
 		// Yield between chunks to keep the main thread responsive
 		if ((i + 1) % REPLAY_CHUNK_SIZE === 0) {

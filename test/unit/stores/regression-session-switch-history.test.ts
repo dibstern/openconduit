@@ -505,17 +505,13 @@ describe("history_page for load_more_history pagination", () => {
 	});
 });
 
-// ─── Queued flag timing (Task 5) ────────────────────────────────────────────
-// status:processing no longer applies queued flags — the queued flag is set
-// exclusively by addUserMessage() (live sends) and replay dispatch. The old
-// applyQueuedFlagInPlace() was removed because it caused two bugs:
-//   1. Re-applied the queued flag after clearQueuedFlags() already cleared it
-//      (when status:processing arrived late from the monitoring poller).
-//   2. Marked non-queued messages as queued when sent to idle sessions.
+// ─── Queued state timing (Task 5) ───────────────────────────────────────────
+// status:processing never sets sentDuringEpoch — it only updates phase.
+// sentDuringEpoch is set exclusively by addUserMessage() (live sends)
+// and replay dispatch, which have the correct context.
 
-describe("Queued flag timing with REST history", () => {
-	it("status:processing does NOT apply queued flag to REST history messages", async () => {
-		// Load session with an unresponded user message via REST fallback
+describe("Queued state timing with REST history", () => {
+	it("status:processing does NOT set sentDuringEpoch on REST history messages", async () => {
 		handleMessage({
 			type: "session_switched",
 			id: "s1",
@@ -532,17 +528,13 @@ describe("Queued flag timing with REST history", () => {
 		});
 		await vi.runAllTimersAsync();
 
-		// No queued flag before status
 		const usersBefore = chatState.messages.filter((m) => m.type === "user");
-		expect(usersBefore[0]?.queued).toBeFalsy();
+		expect(usersBefore[0]?.sentDuringEpoch).toBeUndefined();
 
-		// Status arrives as a separate WS message — should NOT mark as queued
 		handleMessage({ type: "status", status: "processing" });
 
 		const usersAfter = chatState.messages.filter((m) => m.type === "user");
-		expect(
-			(usersAfter[usersAfter.length - 1] as { queued?: boolean }).queued,
-		).toBeFalsy();
+		expect(usersAfter[usersAfter.length - 1]?.sentDuringEpoch).toBeUndefined();
 	});
 
 	it("status:processing sets phase to processing without queued side-effects", async () => {
@@ -564,18 +556,12 @@ describe("Queued flag timing with REST history", () => {
 
 		handleMessage({ type: "status", status: "processing" });
 
-		// Phase should be processing but no queued flags
 		const users = chatState.messages.filter((m) => m.type === "user");
-		expect(
-			(users[users.length - 1] as { queued?: boolean }).queued,
-		).toBeFalsy();
+		expect(users[users.length - 1]?.sentDuringEpoch).toBeUndefined();
 
-		// LLM starts responding — no queued flags to clear, just normal streaming
 		handleMessage({ type: "delta", text: "Hello" });
 		vi.advanceTimersByTime(100);
 		const usersAfter = chatState.messages.filter((m) => m.type === "user");
-		expect(
-			(usersAfter[usersAfter.length - 1] as { queued?: boolean }).queued,
-		).toBeFalsy();
+		expect(usersAfter[usersAfter.length - 1]?.sentDuringEpoch).toBeUndefined();
 	});
 });
