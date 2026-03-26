@@ -127,12 +127,8 @@ export class MockOpenCodeServer {
 
 	constructor(recording: OpenCodeRecording) {
 		this.recording = recording;
-		this.targetSessionId = this.findTargetSessionId();
 		this.buildQueues();
 	}
-
-	/** The session ID used in prompt_async calls in the recording, if any. */
-	readonly targetSessionId: string | undefined;
 
 	/** Append a diagnostic entry. */
 	private diag(event: string, detail?: string): void {
@@ -349,40 +345,6 @@ export class MockOpenCodeServer {
 				this.pushPty(ix);
 			}
 		}
-
-		// Inject fallback responses for essential init endpoints that may be
-		// missing from recordings captured after the initial health check.
-		this.ensureFallback("GET /path", 200, {
-			home: "/tmp",
-			state: "/tmp/.local/state/opencode",
-			config: "/tmp/config/opencode",
-			worktree: process.cwd(),
-			directory: process.cwd(),
-		});
-
-		// Commands and file-listing endpoints are used by discovery tests but
-		// are rarely present in recordings.  Provide sensible defaults so the
-		// relay can serve command_list / file_list without a 404.
-		this.ensureFallback("GET /command", 200, [
-			{ name: "help", description: "Show available commands" },
-			{ name: "compact", description: "Compact conversation history" },
-		]);
-		this.ensureFallback("GET /file", 200, [
-			{ name: "package.json", type: "file" },
-			{ name: "src", type: "directory" },
-			{ name: "test", type: "directory" },
-		]);
-
-		// Ensure the relay selects the recording's target session at init
-		this.promoteTargetSession();
-
-		// Override normalized message fallback with empty arrays.
-		// During init the relay fetches messages for ALL sessions in the list.
-		// Non-target sessions hit the normalized fallback. Without this override,
-		// they'd get the target session's messages (complete with timestamps),
-		// which can make the sort pick the wrong session as default.
-		const msgNormKey = "GET /session/:param/message";
-		this.normalizedQueues.set(msgNormKey, [{ status: 200, responseBody: [] }]);
 	}
 
 	/** Push a response onto a queue map. */
@@ -399,16 +361,6 @@ export class MockOpenCodeServer {
 		}
 	}
 
-	/** Add a fallback response for an endpoint if it's not already in either queue. */
-	private ensureFallback(
-		key: string,
-		status: number,
-		responseBody: unknown,
-	): void {
-		if (this.exactQueues.has(key) || this.normalizedQueues.has(key)) return;
-		this.exactQueues.set(key, [{ status, responseBody }]);
-	}
-
 	/** Return a queue from a map that has at least one response, or undefined. */
 	private getActiveQueue(
 		map: Map<string, QueuedRestResponse[]>,
@@ -416,60 +368,6 @@ export class MockOpenCodeServer {
 	): QueuedRestResponse[] | undefined {
 		const queue = map.get(key);
 		return queue && queue.length > 0 ? queue : undefined;
-	}
-
-	/**
-	 * Find the session ID used in prompt_async calls in the recording.
-	 * This is the "target" session that the relay should view when replaying.
-	 */
-	private findTargetSessionId(): string | undefined {
-		for (const ix of this.recording.interactions) {
-			if (ix.kind === "rest" && ix.method === "POST") {
-				const match = /\/session\/([^/]+)\/prompt_async/.exec(ix.path);
-				if (match?.[1]) return match[1];
-			}
-		}
-		return undefined;
-	}
-
-	/**
-	 * Promote the target session to the top of GET /session list responses.
-	 * This ensures the relay selects the recording's session during init,
-	 * matching the session ID in SSE events and prompt_async calls.
-	 */
-	private promoteTargetSession(): void {
-		const targetId = this.targetSessionId;
-		if (!targetId) return;
-
-		// Find the POST /session response that created the target session
-		let targetSession: Record<string, unknown> | undefined;
-		for (const ix of this.recording.interactions) {
-			if (
-				ix.kind === "rest" &&
-				ix.method === "POST" &&
-				ix.path === "/session"
-			) {
-				const body = ix.responseBody as Record<string, unknown> | undefined;
-				if (body && typeof body === "object" && body["id"] === targetId) {
-					targetSession = body;
-					break;
-				}
-			}
-		}
-		if (!targetSession) return;
-
-		// Patch all GET /session responses to include the target session at the top
-		for (const [key, queue] of this.exactQueues) {
-			if (key !== "GET /session") continue;
-			for (const entry of queue) {
-				if (!Array.isArray(entry.responseBody)) continue;
-				const list = entry.responseBody as Array<Record<string, unknown>>;
-				// Only add if not already present
-				if (!list.some((s) => s["id"] === targetId)) {
-					list.unshift(targetSession);
-				}
-			}
-		}
 	}
 
 	private pushPty(ix: PtyInteraction): void {
