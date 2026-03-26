@@ -224,16 +224,6 @@ describe("MockOpenCodeServer", () => {
 	});
 
 	it("streams SSE events after prompt_async", async () => {
-		// Drain REST to get to prompt_async
-		await fetch(`${mock.url}/path`);
-		await fetch(`${mock.url}/session`);
-		await fetch(`${mock.url}/agent`);
-		await fetch(`${mock.url}/session`, { method: "POST", body: "{}" });
-		await fetch(`${mock.url}/session`);
-		await fetch(`${mock.url}/session/ses_2`, { method: "DELETE" });
-		await fetch(`${mock.url}/session`);
-
-		// Connect SSE
 		const controller = new AbortController();
 		const sseRes = await fetch(`${mock.url}/event`, {
 			signal: controller.signal,
@@ -244,40 +234,28 @@ describe("MockOpenCodeServer", () => {
 		const events: Array<{ type: string }> = [];
 		const collecting = collectSseEvents(sseRes.body?.getReader(), events);
 
-		// Wait for server.connected
 		await new Promise((r) => setTimeout(r, 50));
 		expect(events.some((e) => e.type === "server.connected")).toBe(true);
 
-		// Trigger prompt_async
 		await fetch(`${mock.url}/session/ses_1/prompt_async`, {
 			method: "POST",
 			body: "{}",
 		});
 
-		// Wait for SSE events to arrive
-		await new Promise((r) => setTimeout(r, 100));
+		await new Promise((r) => setTimeout(r, 200));
 		controller.abort();
 		await collecting;
 
-		// Should have server.connected + 3 SSE batch events
 		const batchEvents = events.filter((e) => e.type !== "server.connected");
-		expect(batchEvents.length).toBe(3);
+		expect(batchEvents.length).toBe(5);
 		expect(batchEvents[0]).toMatchObject({ type: "session.status" });
 		expect(batchEvents[1]).toMatchObject({ type: "message.part.delta" });
 		expect(batchEvents[2]).toMatchObject({ type: "session.status" });
+		expect(batchEvents[3]).toMatchObject({ type: "message.part.delta" });
+		expect(batchEvents[4]).toMatchObject({ type: "session.status" });
 	});
 
-	it("triggers SSE batch after permission reply (not just prompt_async)", async () => {
-		// Drain ALL REST up to and including prompt_async
-		await fetch(`${mock.url}/path`);
-		await fetch(`${mock.url}/session`);
-		await fetch(`${mock.url}/agent`);
-		await fetch(`${mock.url}/session`, { method: "POST", body: "{}" });
-		await fetch(`${mock.url}/session`);
-		await fetch(`${mock.url}/session/ses_2`, { method: "DELETE" });
-		await fetch(`${mock.url}/session`);
-
-		// Connect SSE first
+	it("emits all post-prompt SSE events when prompt fires (including permission-adjacent)", async () => {
 		const controller = new AbortController();
 		const sseRes = await fetch(`${mock.url}/event`, {
 			signal: controller.signal,
@@ -289,31 +267,170 @@ describe("MockOpenCodeServer", () => {
 
 		await new Promise((r) => setTimeout(r, 50));
 
-		// Trigger prompt_async SSE batch
 		await fetch(`${mock.url}/session/ses_1/prompt_async`, {
 			method: "POST",
 			body: "{}",
 		});
-		await new Promise((r) => setTimeout(r, 100));
-
-		const eventsAfterPrompt = events.filter(
-			(e) => e.type !== "server.connected",
-		).length;
-		expect(eventsAfterPrompt).toBe(3);
-
-		// Now trigger permission reply — should trigger ANOTHER SSE batch
-		await fetch(`${mock.url}/permission/perm_1/reply`, {
-			method: "POST",
-			body: "{}",
-		});
-		await new Promise((r) => setTimeout(r, 100));
+		await new Promise((r) => setTimeout(r, 200));
 		controller.abort();
 		await collecting;
 
 		const allBatchEvents = events.filter((e) => e.type !== "server.connected");
-		expect(allBatchEvents.length).toBe(5); // 3 from prompt + 2 from permission
+		expect(allBatchEvents.length).toBe(5);
+		expect(allBatchEvents[0]).toMatchObject({ type: "session.status" });
+		expect(allBatchEvents[1]).toMatchObject({ type: "message.part.delta" });
+		expect(allBatchEvents[2]).toMatchObject({ type: "session.status" });
 		expect(allBatchEvents[3]).toMatchObject({ type: "message.part.delta" });
 		expect(allBatchEvents[4]).toMatchObject({ type: "session.status" });
+	});
+
+	it("emits post-prompt SSE events independently of REST consumption", async () => {
+		const controller = new AbortController();
+		const sseRes = await fetch(`${mock.url}/event`, {
+			signal: controller.signal,
+			headers: { Accept: "text/event-stream" },
+		});
+
+		const events: Array<{ type: string }> = [];
+		const collecting = collectSseEvents(sseRes.body?.getReader(), events);
+
+		await new Promise((r) => setTimeout(r, 50));
+
+		await fetch(`${mock.url}/session/ses_1/prompt_async`, {
+			method: "POST",
+			body: "{}",
+		});
+
+		await new Promise((r) => setTimeout(r, 200));
+		controller.abort();
+		await collecting;
+
+		// The FIXTURE has 5 SSE events after prompt_async — 3 before
+		// the permission reply REST entry + 2 after it — all in segment 1
+		// since permission reply is NOT a prompt boundary
+		const batchEvents = events.filter((e) => e.type !== "server.connected");
+		expect(batchEvents.length).toBe(5);
+		expect(batchEvents[0]).toMatchObject({ type: "session.status" });
+		expect(batchEvents[1]).toMatchObject({ type: "message.part.delta" });
+		expect(batchEvents[2]).toMatchObject({ type: "session.status" });
+		expect(batchEvents[3]).toMatchObject({ type: "message.part.delta" });
+		expect(batchEvents[4]).toMatchObject({ type: "session.status" });
+	});
+
+	it("segments SSE events by prompt boundary for multi-turn", async () => {
+		const multiFixture: OpenCodeRecording = {
+			name: "multi-turn",
+			recordedAt: new Date().toISOString(),
+			opencodeVersion: "1.2.6",
+			interactions: [
+				{
+					kind: "rest",
+					method: "GET",
+					path: "/path",
+					status: 200,
+					responseBody: { cwd: "/tmp" },
+				},
+				{
+					kind: "rest",
+					method: "GET",
+					path: "/session",
+					status: 200,
+					responseBody: [{ id: "ses_1" }],
+				},
+				{ kind: "sse", type: "session.created", properties: {}, delayMs: 0 },
+				{
+					kind: "rest",
+					method: "POST",
+					path: "/session/ses_1/prompt_async",
+					status: 200,
+					responseBody: {},
+				},
+				{
+					kind: "sse",
+					type: "message.part.delta",
+					properties: { delta: "turn1" },
+					delayMs: 0,
+				},
+				{ kind: "sse", type: "session.idle", properties: {}, delayMs: 0 },
+				{
+					kind: "rest",
+					method: "POST",
+					path: "/session/ses_1/prompt_async",
+					status: 200,
+					responseBody: {},
+				},
+				{
+					kind: "sse",
+					type: "message.part.delta",
+					properties: { delta: "turn2" },
+					delayMs: 0,
+				},
+				{ kind: "sse", type: "session.idle", properties: {}, delayMs: 0 },
+			],
+		};
+
+		const multiMock = new MockOpenCodeServer(multiFixture);
+		await multiMock.start();
+
+		try {
+			const controller = new AbortController();
+			const sseRes = await fetch(`${multiMock.url}/event`, {
+				signal: controller.signal,
+				headers: { Accept: "text/event-stream" },
+			});
+			const events: Array<{
+				type: string;
+				properties?: Record<string, unknown>;
+			}> = [];
+			const collecting = collectSseEvents(sseRes.body?.getReader(), events);
+			await new Promise((r) => setTimeout(r, 50));
+
+			await fetch(`${multiMock.url}/session/ses_1/prompt_async`, {
+				method: "POST",
+				body: "{}",
+			});
+			await new Promise((r) => setTimeout(r, 100));
+
+			const afterPrompt1 = events.filter((e) => e.type !== "server.connected");
+			expect(afterPrompt1).toHaveLength(3);
+			expect(afterPrompt1[0]).toMatchObject({ type: "session.created" });
+			expect(afterPrompt1[1]).toMatchObject({ type: "message.part.delta" });
+			expect(afterPrompt1[2]).toMatchObject({ type: "session.idle" });
+
+			await fetch(`${multiMock.url}/session/ses_1/prompt_async`, {
+				method: "POST",
+				body: "{}",
+			});
+			await new Promise((r) => setTimeout(r, 100));
+			controller.abort();
+			await collecting;
+
+			const allBatch = events.filter((e) => e.type !== "server.connected");
+			expect(allBatch).toHaveLength(5);
+			expect(allBatch[3]).toMatchObject({ type: "message.part.delta" });
+			expect(allBatch[4]).toMatchObject({ type: "session.idle" });
+		} finally {
+			await multiMock.stop();
+		}
+	});
+
+	it("flushPendingSse emits all segments without requiring prompt_async", async () => {
+		const controller = new AbortController();
+		const sseRes = await fetch(`${mock.url}/event`, {
+			signal: controller.signal,
+			headers: { Accept: "text/event-stream" },
+		});
+		const events: Array<{ type: string }> = [];
+		const collecting = collectSseEvents(sseRes.body?.getReader(), events);
+		await new Promise((r) => setTimeout(r, 50));
+
+		mock.flushPendingSse();
+		await new Promise((r) => setTimeout(r, 200));
+		controller.abort();
+		await collecting;
+
+		const batchEvents = events.filter((e) => e.type !== "server.connected");
+		expect(batchEvents.length).toBe(5);
 	});
 
 	it("reset() re-initializes all queues", async () => {

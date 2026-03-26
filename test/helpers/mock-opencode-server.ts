@@ -24,11 +24,10 @@ interface SseEvent {
 	delayMs: number;
 }
 
-/** A queued REST response with an optional SSE batch to emit after sending. */
+/** A queued REST response. */
 interface QueuedRestResponse {
 	status: number;
 	responseBody: unknown;
-	sseBatch: SseEvent[];
 }
 
 /** PTY interaction for replay. */
@@ -85,7 +84,7 @@ export class MockOpenCodeServer {
 	 * ensuring subsequent status polls see idle state regardless of what
 	 * the queue contains. Cleared on reset() for multi-test reuse.
 	 */
-	private statusOverride: QueuedRestResponse | undefined;
+	private statusOverride: { status: number; responseBody: unknown } | undefined;
 
 	/** Counter for generating unique PTY IDs when no recording exists. */
 	private ptyCounter = 0;
@@ -106,15 +105,15 @@ export class MockOpenCodeServer {
 	private sessionCounter = 0;
 
 	/**
-	 * Whether the prompt has been sent (POST prompt_async consumed).
-	 * SSE batches are buffered until the prompt fires, preventing init-time
-	 * REST consumption from emitting SSE events before the browser client
-	 * is viewing the target session.
+	 * SSE events grouped by prompt boundary. Segment 0 holds events before the
+	 * first prompt_async, segment 1 after the first, etc. When a prompt fires,
+	 * its segment (and segment 0 for the first prompt) is emitted independently
+	 * of REST queue consumption.
 	 */
-	private promptFired = false;
+	private sseSegments: SseEvent[][] = [[]];
 
-	/** SSE batches queued before the prompt was sent. */
-	private pendingSseBatches: SseEvent[][] = [];
+	/** Number of prompt_async calls processed so far. */
+	private promptsFired = 0;
 
 	constructor(recording: OpenCodeRecording) {
 		this.recording = recording;
@@ -182,9 +181,9 @@ export class MockOpenCodeServer {
 		this.exactQueues.clear();
 		this.normalizedQueues.clear();
 		this.ptyQueues.clear();
+		this.sseSegments = [[]];
 		this.statusOverride = undefined;
-		this.promptFired = false;
-		this.pendingSseBatches = [];
+		this.promptsFired = 0;
 		this.ptyCounter = 0;
 		this.dynamicPtyIds.clear();
 		this.injectedSessions.clear();
@@ -195,15 +194,13 @@ export class MockOpenCodeServer {
 	}
 
 	/**
-	 * Force-flush any pending SSE batches without requiring a prompt.
-	 * Use in tests that need SSE events from REST activity alone.
+	 * Force-flush all SSE segments without requiring a prompt.
+	 * Use in tests that need SSE events without going through prompt_async.
 	 */
 	flushPendingSse(): void {
-		this.promptFired = true;
-		for (const batch of this.pendingSseBatches) {
-			this.emitSseBatch(batch);
-		}
-		this.pendingSseBatches = [];
+		const allEvents = this.sseSegments.flat();
+		this.emitEvents(allEvents);
+		this.promptsFired = this.sseSegments.length;
 	}
 
 	/**
@@ -218,7 +215,7 @@ export class MockOpenCodeServer {
 		responseBody: unknown,
 	): void {
 		const key = `${method} ${path}`;
-		this.exactQueues.set(key, [{ status, responseBody, sseBatch: [] }]);
+		this.exactQueues.set(key, [{ status, responseBody }]);
 	}
 
 	/**
@@ -289,12 +286,8 @@ export class MockOpenCodeServer {
 		this.exactQueues.clear();
 		this.normalizedQueues.clear();
 		this.ptyQueues.clear();
-		// Keep promptFired=true if SSE clients are connected — the relay is
-		// already viewing a session, so SSE batches should emit immediately.
-		if (this.sseClients.size === 0) {
-			this.promptFired = false;
-		}
-		this.pendingSseBatches = [];
+		this.promptsFired = 0;
+		// Preserve statusOverride — cleared when next prompt_async fires
 		this.ptyCounter = 0;
 		this.dynamicPtyIds.clear();
 		this.injectedSessions.clear();
@@ -309,77 +302,36 @@ export class MockOpenCodeServer {
 	private buildQueues(): void {
 		const { interactions } = this.recording;
 
-		interface RestEntry {
-			exactKey: string;
-			normalizedKey: string;
-			status: number;
-			responseBody: unknown;
-		}
-
-		const restEntries: RestEntry[] = [];
-		const sseBatches: SseEvent[][] = [];
-
-		let currentSseBatch: SseEvent[] = [];
-		let lastRestIndex = -1;
+		this.sseSegments = [[]];
+		let currentSegment = 0;
 
 		for (const ix of interactions) {
 			if (ix.kind === "rest") {
-				// Attach pending SSE batch to the PREVIOUS REST entry
-				if (lastRestIndex >= 0 && currentSseBatch.length > 0) {
-					sseBatches[lastRestIndex] = currentSseBatch;
-					currentSseBatch = [];
+				if (ix.method === "POST" && ix.path.includes("/prompt_async")) {
+					currentSegment++;
+					this.sseSegments[currentSegment] = [];
 				}
 
-				lastRestIndex = restEntries.length;
-				restEntries.push({
-					exactKey: exactKey(ix.method, ix.path),
-					normalizedKey: normalizedKey(ix.method, ix.path),
+				const queued: QueuedRestResponse = {
 					status: ix.status,
 					responseBody: ix.responseBody,
-				});
-				sseBatches[lastRestIndex] = [];
+				};
+
+				const ek = exactKey(ix.method, ix.path);
+				const nk = normalizedKey(ix.method, ix.path);
+
+				this.pushQueue(this.exactQueues, ek, queued);
+				if (nk !== ek) {
+					this.pushQueue(this.normalizedQueues, nk, { ...queued });
+				}
 			} else if (ix.kind === "sse") {
-				currentSseBatch.push({
+				this.sseSegments[currentSegment]!.push({
 					type: ix.type,
 					properties: ix.properties,
 					delayMs: ix.delayMs,
 				});
 			} else {
-				// PTY interactions
 				this.pushPty(ix);
-			}
-		}
-
-		// Attach any trailing SSE events to the last REST entry
-		if (lastRestIndex >= 0 && currentSseBatch.length > 0) {
-			sseBatches[lastRestIndex] = currentSseBatch;
-		}
-
-		// Build REST queues keyed by exact path (primary) and normalized path (fallback).
-		// Exact keys (e.g. "GET /session/ses_abc123/message") ensure the mock serves
-		// the right response when the relay requests a specific session ID.
-		// Normalized keys (e.g. "GET /session/:param/message") serve as fallbacks for
-		// session IDs not present in the recording (e.g. during init when the relay
-		// fetches messages for sessions it discovers in the session list).
-		for (let i = 0; i < restEntries.length; i++) {
-			const entry = restEntries[i];
-			if (!entry) continue;
-			const batch = sseBatches[i] ?? [];
-			const queued: QueuedRestResponse = {
-				status: entry.status,
-				responseBody: entry.responseBody,
-				sseBatch: batch,
-			};
-
-			// Primary: exact path
-			this.pushQueue(this.exactQueues, entry.exactKey, queued);
-
-			// Fallback: normalized path (separate copy to avoid shared-shift issues)
-			if (entry.normalizedKey !== entry.exactKey) {
-				this.pushQueue(this.normalizedQueues, entry.normalizedKey, {
-					...queued,
-					sseBatch: [...batch],
-				});
 			}
 		}
 
@@ -415,9 +367,7 @@ export class MockOpenCodeServer {
 		// they'd get the target session's messages (complete with timestamps),
 		// which can make the sort pick the wrong session as default.
 		const msgNormKey = "GET /session/:param/message";
-		this.normalizedQueues.set(msgNormKey, [
-			{ status: 200, responseBody: [], sseBatch: [] },
-		]);
+		this.normalizedQueues.set(msgNormKey, [{ status: 200, responseBody: [] }]);
 	}
 
 	/** Push a response onto a queue map. */
@@ -441,7 +391,7 @@ export class MockOpenCodeServer {
 		responseBody: unknown,
 	): void {
 		if (this.exactQueues.has(key) || this.normalizedQueues.has(key)) return;
-		this.exactQueues.set(key, [{ status, responseBody, sseBatch: [] }]);
+		this.exactQueues.set(key, [{ status, responseBody }]);
 	}
 
 	/** Return a queue from a map that has at least one response, or undefined. */
@@ -635,13 +585,6 @@ export class MockOpenCodeServer {
 				}
 				res.writeHead(entry.status, { "Content-Type": "application/json" });
 				res.end(JSON.stringify(body));
-				if (entry.sseBatch.length > 0) {
-					if (this.promptFired) {
-						this.emitSseBatch(entry.sseBatch);
-					} else {
-						this.pendingSseBatches.push(entry.sseBatch);
-					}
-				}
 				return;
 			}
 
@@ -697,14 +640,6 @@ export class MockOpenCodeServer {
 
 				res.writeHead(200, { "Content-Type": "application/json" });
 				res.end(JSON.stringify(list));
-
-				if (entry.sseBatch.length > 0) {
-					if (this.promptFired) {
-						this.emitSseBatch(entry.sseBatch);
-					} else {
-						this.pendingSseBatches.push(entry.sseBatch);
-					}
-				}
 				return;
 			}
 		}
@@ -802,18 +737,23 @@ export class MockOpenCodeServer {
 			return;
 		}
 
-		// Detect prompt_async — marks the boundary between init and active replay.
-		// Flush any pending SSE batches that were buffered during init.
+		// Detect prompt_async — emit the corresponding SSE segment.
 		// Clear the statusOverride so the status queue is used again (the next
 		// turn's busy status needs to come from the queue, not the stale idle
 		// override from the previous turn's session.idle).
 		if (method === "POST" && path.includes("/prompt_async")) {
-			this.promptFired = true;
+			this.promptsFired++;
 			this.statusOverride = undefined;
-			for (const batch of this.pendingSseBatches) {
-				this.emitSseBatch(batch);
+			if (this.promptsFired === 1) {
+				const combined = [
+					...(this.sseSegments[0] ?? []),
+					...(this.sseSegments[1] ?? []),
+				];
+				this.emitEvents(combined);
+			} else {
+				const segment = this.sseSegments[this.promptsFired] ?? [];
+				this.emitEvents(segment);
 			}
-			this.pendingSseBatches = [];
 		}
 
 		if (entry.status === 204) {
@@ -822,19 +762,6 @@ export class MockOpenCodeServer {
 		} else {
 			res.writeHead(entry.status, { "Content-Type": "application/json" });
 			res.end(JSON.stringify(entry.responseBody));
-		}
-
-		// Emit associated SSE batch to all connected clients.
-		// Before the prompt fires, buffer batches instead of emitting them —
-		// REST entries consumed during relay init would fire SSE events before
-		// the browser client is viewing the target session, causing them to be
-		// dropped by the relay's session-scoped routing.
-		if (entry.sseBatch.length > 0) {
-			if (this.promptFired) {
-				this.emitSseBatch(entry.sseBatch);
-			} else {
-				this.pendingSseBatches.push(entry.sseBatch);
-			}
 		}
 	}
 
@@ -880,21 +807,19 @@ export class MockOpenCodeServer {
 			properties: e.properties,
 			delayMs: 0,
 		}));
-		this.emitSseBatch(batch);
+		this.emitEvents(batch);
 	}
 
-	private emitSseBatch(batch: SseEvent[]): void {
-		// Check if this batch contains a session.idle event. If so, override
-		// the status queue to return idle (empty object) for all subsequent
-		// GET /session/status calls. This prevents the relay's status poller
-		// from seeing stale "busy" entries that the queue hasn't consumed yet.
-		const hasIdle = batch.some((e) => e.type === "session.idle");
+	private emitEvents(events: SseEvent[]): void {
+		if (events.length === 0) return;
+
+		const hasIdle = events.some((e) => e.type === "session.idle");
 		if (hasIdle) {
-			this.statusOverride = { status: 200, responseBody: {}, sseBatch: [] };
+			this.statusOverride = { status: 200, responseBody: {} };
 		}
 
 		void (async () => {
-			for (const event of batch) {
+			for (const event of events) {
 				const delay = Math.min(event.delayMs, 5);
 				if (delay > 0) {
 					await new Promise<void>((r) => setTimeout(r, delay));
