@@ -73,7 +73,7 @@ afterEach(() => {
 /** Replay events with cache-realism validation and full timer drain. */
 async function replayValidated(events: RelayMessage[]): Promise<void> {
 	assertCacheRealisticEvents(events);
-	const promise = replayEvents(events);
+	const promise = replayEvents(events, "test-session");
 	await vi.runAllTimersAsync();
 	await promise;
 }

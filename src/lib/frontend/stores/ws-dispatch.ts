@@ -637,7 +637,7 @@ export function handleMessage(msg: RelayMessage): void {
 
 export async function replayEvents(
 	events: RelayMessage[],
-	sessionId?: string,
+	sessionId: string,
 ): Promise<void> {
 	phaseStartReplay();
 	const generation = ++replayGeneration;
@@ -690,11 +690,7 @@ export async function replayEvents(
 
 	// Single commit: page large replays so only the last 50 messages
 	// render immediately, with older messages buffered for lazy loading.
-	if (sessionId) {
-		commitReplayFinal(sessionId);
-	} else {
-		commitReplayBatch();
-	}
+	commitReplayFinal(sessionId);
 
 	// Reconcile processing state after replay completes.
 	// During replay, handler functions (handleDone, handleDelta, etc.)

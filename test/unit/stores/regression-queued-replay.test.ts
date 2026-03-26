@@ -89,7 +89,7 @@ function isVisuallyQueued(msg: UserMessage): boolean {
  *  Async: drains the event loop so chunked replay completes before assertions. */
 async function replayValidated(events: RelayMessage[]): Promise<void> {
 	assertCacheRealisticEvents(events);
-	replayEvents(events);
+	replayEvents(events, "test-session");
 	await vi.runAllTimersAsync();
 }
 

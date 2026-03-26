@@ -147,7 +147,7 @@ describe("turnEpoch tracking", () => {
 			{ type: "done", code: 0 },
 		];
 
-		replayEvents(events);
+		replayEvents(events, "test-session");
 		await vi.runAllTimersAsync();
 
 		expect(chatState.turnEpoch).toBe(2);
@@ -250,7 +250,7 @@ describe("replay pipeline: sentDuringEpoch respects turn boundaries", () => {
 			{ type: "done", code: 0 },
 		];
 
-		replayEvents(events);
+		replayEvents(events, "test-session");
 		await vi.runAllTimersAsync();
 
 		const users = userMessages();
@@ -274,7 +274,7 @@ describe("replay pipeline: sentDuringEpoch respects turn boundaries", () => {
 			// No done — session is mid-stream
 		];
 
-		replayEvents(events);
+		replayEvents(events, "test-session");
 		await vi.runAllTimersAsync();
 
 		const users = userMessages();
