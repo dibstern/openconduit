@@ -839,11 +839,23 @@ describe("resolveSessionHistory — repaired cold cache regression", () => {
 		const repairedEvents: RelayMessage[] = [
 			{ type: "user_message", text: "q1" },
 			{ type: "delta", text: "a1", messageId: "msg_1" },
-			{ type: "result", usage: { input: 10, output: 20, cache_read: 0, cache_creation: 0 }, cost: 0.01, duration: 500, sessionId: "s1" },
+			{
+				type: "result",
+				usage: { input: 10, output: 20, cache_read: 0, cache_creation: 0 },
+				cost: 0.01,
+				duration: 500,
+				sessionId: "s1",
+			},
 			{ type: "done", code: 0 },
 			{ type: "user_message", text: "q2" },
 			{ type: "delta", text: "a2", messageId: "msg_2" },
-			{ type: "result", usage: { input: 15, output: 25, cache_read: 0, cache_creation: 0 }, cost: 0.02, duration: 600, sessionId: "s1" },
+			{
+				type: "result",
+				usage: { input: 15, output: 25, cache_read: 0, cache_creation: 0 },
+				cost: 0.02,
+				duration: 600,
+				sessionId: "s1",
+			},
 			{ type: "done", code: 0 },
 			{ type: "user_message", text: "q3" },
 			// repair removed: delta "partial-a3" with messageId "msg_3"
@@ -914,7 +926,13 @@ describe("resolveSessionHistory — repaired cold cache regression", () => {
 		const repairedEvents: RelayMessage[] = [
 			{ type: "user_message", text: "q1" },
 			{ type: "delta", text: "a1", messageId: "msg_1" },
-			{ type: "result", usage: { input: 10, output: 20, cache_read: 0, cache_creation: 0 }, cost: 0.01, duration: 500, sessionId: "s1" },
+			{
+				type: "result",
+				usage: { input: 10, output: 20, cache_read: 0, cache_creation: 0 },
+				cost: 0.01,
+				duration: 500,
+				sessionId: "s1",
+			},
 			{ type: "done", code: 0 },
 			{ type: "user_message", text: "q2" },
 			// repair removed: delta without messageId — these don't affect countUniqueMessages

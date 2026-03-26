@@ -170,6 +170,7 @@ export async function createProjectRelay(
 		: join(config.projectDir ?? process.cwd(), ".conduit", "sessions");
 	const messageCache = new MessageCache(cacheDir);
 	await messageCache.loadFromDisk();
+	await messageCache.repairColdSessions();
 
 	const toolContentStore = new ToolContentStore();
 
@@ -435,13 +436,17 @@ export async function createProjectRelay(
 		},
 
 		async stop() {
+			// 1. Stop event sources (prevents new events from being cached)
+			await sseConsumer.disconnect();
+			pollerManager.stopAll();
+			statusPoller.stop();
+			// 2. Flush all pending cache writes to disk
+			await messageCache.flush();
+			// 3. Clean up remaining resources
 			clearInterval(timeoutTimer);
 			clearInterval(rateLimitCleanupTimer);
-			statusPoller.stop();
-			pollerManager.stopAll();
 			overrides.dispose();
 			ptyManager.closeAll();
-			await sseConsumer.disconnect();
 			wsHandler.close();
 		},
 	};
