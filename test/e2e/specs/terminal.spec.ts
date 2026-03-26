@@ -202,17 +202,20 @@ test.describe("Terminal Panel", () => {
 		await tabs.first().click();
 		await expect(tabs.first()).toHaveClass(/term-tab-active/);
 
-		// Tab 1's content should still have our typed text
+		// Tab 1's content should still have our typed text.
+		// Scope to the visible tab — inactive tabs use class:hidden but
+		// remain in the DOM with their own .xterm-rows.
+		const activeRows = "#terminal-panel .term-tab-content:not(.hidden) .xterm-rows";
 		await page.waitForFunction(
-			() =>
+			(selector) =>
 				document
-					.querySelector("#terminal-panel .xterm-rows")
+					.querySelector(selector)
 					?.textContent?.includes("tab1data"),
-			null,
+			activeRows,
 			{ timeout: 5_000 },
 		);
 		const terminalText = await page
-			.locator("#terminal-panel .xterm-rows")
+			.locator(activeRows)
 			.textContent();
 		expect(terminalText).toContain("tab1data");
 	});
