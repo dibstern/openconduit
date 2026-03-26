@@ -18,6 +18,7 @@ import {
 	chatState,
 	clearMessages,
 	commitReplayBatch,
+	commitReplayFinal,
 	discardReplayBatch,
 	findMessage,
 	flushPendingRender,
@@ -356,7 +357,7 @@ export function handleMessage(msg: RelayMessage): void {
 				// Cache hit: replay raw events through existing chat handlers
 				// (full fidelity — same code paths as live streaming).
 				// Fire-and-forget — handleMessage stays synchronous.
-				replayEvents(msg.events).catch((err) => {
+				replayEvents(msg.events, msg.id).catch((err) => {
 					log.warn("Replay error:", err);
 				});
 				// Events cache covers the full session — suppress history loading.
@@ -634,7 +635,10 @@ export function handleMessage(msg: RelayMessage): void {
 // llmActive=true; done and non-retry errors set it false. A user_message
 // that appears while llmActive is true was queued behind an in-progress turn.
 
-export async function replayEvents(events: RelayMessage[]): Promise<void> {
+export async function replayEvents(
+	events: RelayMessage[],
+	sessionId?: string,
+): Promise<void> {
 	phaseStartReplay();
 	const generation = ++replayGeneration;
 
@@ -666,17 +670,25 @@ export async function replayEvents(events: RelayMessage[]): Promise<void> {
 
 		// Yield between chunks to keep the main thread responsive
 		if ((i + 1) % REPLAY_CHUNK_SIZE === 0) {
-			commitReplayBatch();
 			await yieldToEventLoop();
-			if (generation !== replayGeneration) return; // aborted during yield
-			beginReplayBatch();
+			if (generation !== replayGeneration) {
+				discardReplayBatch();
+				return;
+			}
 		}
 	}
 
 	// Flush any pending debounced render (for mid-stream sessions
 	// where no "done" event has been received yet)
 	flushPendingRender();
-	commitReplayBatch();
+
+	// Single commit: page large replays so only the last 50 messages
+	// render immediately, with older messages buffered for lazy loading.
+	if (sessionId) {
+		commitReplayFinal(sessionId);
+	} else {
+		commitReplayBatch();
+	}
 
 	// Reconcile processing state: during replay, handleDone is guarded
 	// from clearing isProcessing (to avoid overwriting a live

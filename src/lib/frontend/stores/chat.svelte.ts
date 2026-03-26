@@ -303,6 +303,45 @@ export function discardReplayBatch(): void {
 	replayBatch = null;
 }
 
+// ─── Replay Paging ──────────────────────────────────────────────────────────
+// When a replay produces more than INITIAL_PAGE_SIZE messages, only the last
+// page is committed to chatState.messages. Older messages are stored in a
+// per-session buffer for HistoryLoader to page through on demand.
+
+const INITIAL_PAGE_SIZE = 50;
+const replayBuffers = new Map<string, ChatMessage[]>();
+
+export function getReplayBuffer(sessionId: string): ChatMessage[] | undefined {
+	return replayBuffers.get(sessionId);
+}
+
+export function consumeReplayBuffer(
+	sessionId: string,
+	count: number,
+): ChatMessage[] {
+	const buffer = replayBuffers.get(sessionId);
+	if (!buffer || buffer.length === 0) return [];
+	const page = buffer.splice(buffer.length - count, count);
+	if (buffer.length === 0) replayBuffers.delete(sessionId);
+	return page;
+}
+
+export function commitReplayFinal(sessionId: string): void {
+	if (replayBatch === null) return;
+	const all = replayBatch;
+	replayBatch = null;
+
+	if (all.length <= INITIAL_PAGE_SIZE) {
+		chatState.messages = all;
+	} else {
+		const cutoff = all.length - INITIAL_PAGE_SIZE;
+		replayBuffers.set(sessionId, all.slice(0, cutoff));
+		chatState.messages = all.slice(cutoff);
+		historyState.hasMore = true;
+	}
+	chatState.loadLifecycle = "committed";
+}
+
 export function getMessages(): ChatMessage[] {
 	return replayBatch ?? chatState.messages;
 }
@@ -686,6 +725,7 @@ export function seedRegistryFromMessages(
 
 export function clearMessages(): void {
 	replayBatch = null;
+	replayBuffers.clear();
 	phaseReset(); // must be cleared before abort hook — stops replay generation check
 	onClearMessages?.(); // abort in-flight async replays
 	cancelDeferredMarkdown(); // abort in-flight deferred renders
