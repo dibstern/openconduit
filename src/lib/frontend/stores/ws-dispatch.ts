@@ -589,8 +589,13 @@ export function handleMessage(msg: RelayMessage): void {
 					dispatch({ type: "question_resolved", sessionId: msg.sessionId });
 				} else if (msg.eventType === "done") {
 					dispatch({ type: "session_done", sessionId: msg.sessionId });
+				} else if (msg.eventType === "session_viewed") {
+					dispatch({ type: "session_viewed", sessionId: msg.sessionId });
 				}
 			}
+
+			// session_viewed is a silent indicator update — no notifications or toasts.
+			if (msg.eventType === "session_viewed") break;
 
 			// Suppress all frontend notifications for subagent done events.
 			// Server-side notification-policy.ts is the primary defense; this is belt-and-suspenders.
