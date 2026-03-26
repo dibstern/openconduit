@@ -274,7 +274,14 @@ describe("LoadLifecycle 'ready' transition", () => {
 	it("renderDeferredMarkdown sets loadLifecycle to 'ready' after all messages rendered", () => {
 		chatState.loadLifecycle = "committed";
 		chatState.messages = [
-			{ type: "assistant", uuid: "1", rawText: "hello", html: "hello", needsRender: true, finalized: true },
+			{
+				type: "assistant",
+				uuid: "1",
+				rawText: "hello",
+				html: "hello",
+				needsRender: true,
+				finalized: true,
+			},
 		];
 		renderDeferredMarkdown();
 		vi.runAllTimers();
