@@ -1199,4 +1199,11 @@ describe("getSessionIndicator", () => {
 		// When s1 is the current session, its permissions don't trigger attention
 		expect(getSessionIndicator("s1", "s1")).toBeNull();
 	});
+
+	it("returns null for the currently-viewed session (clears dot instantly on click)", () => {
+		// Even with done-unviewed and questions, current session gets no indicator
+		addRemoteQuestion("s1");
+		permissionsState.doneNotViewedSessions = new Set(["s1"]);
+		expect(getSessionIndicator("s1", "s1")).toBeNull();
+	});
 });

@@ -397,6 +397,12 @@ export function getSessionIndicator(
 	sessionId: string,
 	currentSessionId: string | null,
 ): "attention" | "done-unviewed" | null {
+	// The currently-viewed session never needs an indicator —
+	// you're already looking at its questions/permissions/results.
+	// This also ensures the dot clears instantly on click (before
+	// the server round-trip that triggers onSessionSwitch).
+	if (sessionId === currentSessionId) return null;
+
 	// Check attention: remote questions for this session
 	const hasQuestions = permissionsState.remoteQuestionCounts.has(sessionId);
 
