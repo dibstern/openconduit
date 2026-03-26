@@ -5,7 +5,7 @@ import {
 	type NotifMap,
 	reduce,
 	type SessionNotifState,
-} from "../../../src/lib/frontend/stores/notification-reducer.js";
+} from "../../../src/lib/frontend/stores/notification-reducer.svelte.js";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 

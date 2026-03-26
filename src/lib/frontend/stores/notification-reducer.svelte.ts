@@ -145,3 +145,60 @@ export function reduce(state: NotifMap, action: NotifAction): NotifMap {
 	const _exhaustive: never = action;
 	return state;
 }
+
+// ─── Svelte Store Integration ───────────────────────────────────────────────
+
+const NONE: SessionNotifState = { kind: "none" } as const;
+
+let _state = $state<NotifMap>(new Map());
+
+/** Dispatch an action through the reducer. In dev mode, log all actions. */
+export function dispatch(action: NotifAction): void {
+	if (import.meta.env.DEV) {
+		console.debug("[notif]", action.type, action);
+	}
+	_state = reduce(_state, action);
+}
+
+/** Get the current notification state for a session. */
+export function getNotifState(sessionId: string): SessionNotifState {
+	return _state.get(sessionId) ?? NONE;
+}
+
+/** Get session indicator for sidebar dot rendering. Returns null for current session. */
+export function getSessionIndicator(
+	sessionId: string,
+	currentSessionId: string | null,
+): "attention" | "done-unviewed" | null {
+	if (sessionId === currentSessionId) return null;
+	const entry = _state.get(sessionId);
+	if (!entry || entry.kind === "none") return null;
+	if (entry.kind === "attention") return "attention";
+	if (entry.kind === "done-unviewed") return "done-unviewed";
+	return null;
+}
+
+/** Get all sessions needing attention (for AttentionBanner). Excludes current session and descendants. */
+export function getAttentionSessions(
+	currentSessionId: string | null,
+	getDescendantIds: (sid: string) => Set<string>,
+): Map<string, { questions: number; permissions: number }> {
+	const result = new Map<string, { questions: number; permissions: number }>();
+	const descendants = currentSessionId
+		? getDescendantIds(currentSessionId)
+		: new Set<string>();
+	for (const [sid, entry] of _state) {
+		if (entry.kind !== "attention") continue;
+		if (sid === currentSessionId || descendants.has(sid)) continue;
+		result.set(sid, {
+			questions: entry.questions,
+			permissions: entry.permissions,
+		});
+	}
+	return result;
+}
+
+/** Reset internal state (for testing). */
+export function resetNotifState(): void {
+	_state = new Map();
+}
