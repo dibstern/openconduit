@@ -11,7 +11,7 @@
 //   E2E_PROVIDER  — provider ID to use (default: opencode)
 //   E2E_ALLOW_PAID — set to "1" to allow non-opencode providers (paid models)
 
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
 import WebSocket from "ws";
@@ -463,7 +463,34 @@ async function main(): Promise<void> {
 	}
 	console.log();
 
-	// 1. Spawn ephemeral OpenCode
+	// 1. Spawn ephemeral OpenCode with tool permissions set to "ask"
+	// so that permission.asked SSE events are captured in recordings.
+	// Non-permission scenarios send simple prompts that don't trigger
+	// tool calls, so this doesn't affect them.
+	const needsPermissions = scenarios.some((s) => s.needsPermissionApproval);
+	const permConfigPath = needsPermissions
+		? path.join(process.cwd(), "opencode.json")
+		: undefined;
+	if (permConfigPath) {
+		writeFileSync(
+			permConfigPath,
+			JSON.stringify(
+				{
+					$schema: "https://opencode.ai/config.json",
+					permission: {
+						read: "ask",
+						write: "ask",
+						edit: "ask",
+						bash: "ask",
+					},
+				},
+				null,
+				"\t",
+			),
+		);
+		console.log("Created temporary opencode.json with permission: ask");
+	}
+
 	console.log("Spawning ephemeral OpenCode...");
 	const opencode = await spawnOpenCode({ timeoutMs: 60_000 });
 	console.log(`  OpenCode running on port ${opencode.port}`);
@@ -703,6 +730,14 @@ async function main(): Promise<void> {
 		console.log(`Fixtures saved to: ${FIXTURES_DIR}`);
 	} finally {
 		// 5. Cleanup
+		if (permConfigPath) {
+			try {
+				unlinkSync(permConfigPath);
+				console.log("Removed temporary opencode.json");
+			} catch {
+				// Ignore if already removed
+			}
+		}
 		console.log("\nStopping recording proxy...");
 		await proxy.stop();
 		console.log("Stopping OpenCode...");
