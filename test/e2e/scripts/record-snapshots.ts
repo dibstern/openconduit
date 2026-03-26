@@ -657,9 +657,7 @@ async function main(): Promise<void> {
 				if (res.ok) {
 					const sessions = (await res.json()) as { id: string }[];
 					if (sessions.length > 0) {
-						console.log(
-							`  Cleaning up ${sessions.length} session(s)...`,
-						);
+						console.log(`  Cleaning up ${sessions.length} session(s)...`);
 						await Promise.all(
 							sessions.map((s) =>
 								fetch(`${opencode.url}/session/${s.id}`, {
