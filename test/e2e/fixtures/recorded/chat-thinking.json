@@ -1,7 +1,7 @@
 {
 	"name": "chat-thinking",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T05:38:17.054Z",
+	"recordedAt": "2026-03-26T07:13:10.073Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,98 +13,12 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-			"events": [
-				{
-					"type": "user_message",
-					"text": "Write a paragraph explaining why automated testing is important for software quality."
-				},
-				{
-					"type": "result",
-					"usage": {
-						"input": 0,
-						"output": 0,
-						"cache_read": 0,
-						"cache_creation": 0
-					},
-					"cost": 0,
-					"duration": 0,
-					"sessionId": ""
-				},
-				{
-					"type": "delta",
-					"text": "\n\nAutomated testing is important",
-					"messageId": "msg_d28a5ff6c001r5iZGLqgGg8Dzs"
-				},
-				{
-					"type": "delta",
-					"text": " for software quality because it provides fast, repeatable verification that code behaves as expected after",
-					"messageId": "msg_d28a5ff6c001r5iZGLqgGg8Dzs"
-				},
-				{
-					"type": "delta",
-					"text": " every change. Manual testing is slow, error-prone, and doesn't scale — a",
-					"messageId": "msg_d28a5ff6c001r5iZGLqgGg8Dzs"
-				},
-				{
-					"type": "delta",
-					"text": " human can't reliably re-check thousands of behaviors across a",
-					"messageId": "msg_d28a5ff6c001r5iZGLqgGg8Dzs"
-				},
-				{
-					"type": "delta",
-					"text": " codebase after each commit. Automated tests catch regressions early, before they reach production, and serve as executable documentation",
-					"messageId": "msg_d28a5ff6c001r5iZGLqgGg8Dzs"
-				},
-				{
-					"type": "delta",
-					"text": " of intended behavior. They enable developers to refactor with confidence, knowing that breaking changes will surface immediately rather",
-					"messageId": "msg_d28a5ff6c001r5iZGLqgGg8Dzs"
-				},
-				{
-					"type": "delta",
-					"text": " than weeks later in a bug report. Over time, a well-maintained",
-					"messageId": "msg_d28a5ff6c001r5iZGLqgGg8Dzs"
-				},
-				{
-					"type": "delta",
-					"text": " test suite reduces the cost of change, shortens feedback loops, and shifts quality ass",
-					"messageId": "msg_d28a5ff6c001r5iZGLqgGg8Dzs"
-				},
-				{
-					"type": "delta",
-					"text": "urance from a reactive gate at the end of development to a continuous, integrated part of the workflow.",
-					"messageId": "msg_d28a5ff6c001r5iZGLqgGg8Dzs"
-				},
-				{
-					"type": "result",
-					"usage": {
-						"input": 3,
-						"output": 157,
-						"cache_read": 17817,
-						"cache_creation": 332
-					},
-					"cost": 0.0149235,
-					"duration": 0,
-					"sessionId": ""
-				},
-				{
-					"type": "result",
-					"usage": {
-						"input": 3,
-						"output": 157,
-						"cache_read": 17817,
-						"cache_creation": 332
-					},
-					"cost": 0.0149235,
-					"duration": 5950,
-					"sessionId": ""
-				},
-				{
-					"type": "done",
-					"code": 0
-				}
-			]
+			"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+			"history": {
+				"messages": [],
+				"hasMore": false,
+				"total": 0
+			}
 		},
 		{
 			"type": "status",
@@ -119,63 +33,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-					"title": "Importance of automated testing",
-					"updatedAt": 1774503466694,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-					"title": "Banana memory task",
-					"updatedAt": 1774503456621,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-					"title": "Acknowledgment",
-					"updatedAt": 1774503441622,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-					"title": "Package.json version lookup",
-					"updatedAt": 1774503434882,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-					"title": "Greet function in JavaScript",
-					"updatedAt": 1774503422788,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-					"title": "Greeting",
-					"updatedAt": 1774503418133,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-					"title": "ok",
-					"updatedAt": 1774503413727,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-					"title": "Pong response",
-					"updatedAt": 1774503409317,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-					"title": "Greeting",
-					"updatedAt": 1774503403812,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-					"title": "New session - 2026-03-26T05:36:37.670Z",
-					"updatedAt": 1774503397670,
+					"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+					"title": "New session - 2026-03-26T07:12:23.435Z",
+					"updatedAt": 1774509143435,
 					"messageCount": 0
 				}
 			],
@@ -185,63 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-					"title": "Importance of automated testing",
-					"updatedAt": 1774503466694,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-					"title": "Banana memory task",
-					"updatedAt": 1774503456621,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-					"title": "Acknowledgment",
-					"updatedAt": 1774503441622,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-					"title": "Package.json version lookup",
-					"updatedAt": 1774503434882,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-					"title": "Greet function in JavaScript",
-					"updatedAt": 1774503422788,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-					"title": "Greeting",
-					"updatedAt": 1774503418133,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-					"title": "ok",
-					"updatedAt": 1774503413727,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-					"title": "Pong response",
-					"updatedAt": 1774503409317,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-					"title": "Greeting",
-					"updatedAt": 1774503403812,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-					"title": "New session - 2026-03-26T05:36:37.670Z",
-					"updatedAt": 1774503397670,
+					"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+					"title": "New session - 2026-03-26T07:12:23.435Z",
+					"updatedAt": 1774509143435,
 					"messageCount": 0
 				}
 			],
@@ -679,69 +485,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
-							"title": "New session - 2026-03-26T05:37:50.415Z",
-							"updatedAt": 1774503471436,
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
+							"title": "New session - 2026-03-26T07:12:25.742Z",
+							"updatedAt": 1774509146754,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -751,69 +503,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
-							"title": "New session - 2026-03-26T05:37:50.415Z",
-							"updatedAt": 1774503471436,
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
+							"title": "New session - 2026-03-26T07:12:25.742Z",
+							"updatedAt": 1774509146754,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -823,69 +521,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
-							"title": "New session - 2026-03-26T05:37:50.415Z",
-							"updatedAt": 1774503471436,
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
+							"title": "New session - 2026-03-26T07:12:25.742Z",
+							"updatedAt": 1774509146754,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -895,69 +539,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
-							"title": "New session - 2026-03-26T05:37:50.415Z",
-							"updatedAt": 1774503471436,
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
+							"title": "New session - 2026-03-26T07:12:25.742Z",
+							"updatedAt": 1774509146754,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -967,70 +557,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
-							"title": "New session - 2026-03-26T05:37:50.415Z",
-							"updatedAt": 1774503471436,
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
+							"title": "New session - 2026-03-26T07:12:25.742Z",
+							"updatedAt": 1774509146754,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -1044,70 +580,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
-							"title": "New session - 2026-03-26T05:37:50.415Z",
-							"updatedAt": 1774503471436,
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
+							"title": "New session - 2026-03-26T07:12:25.742Z",
+							"updatedAt": 1774509146754,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -1117,70 +599,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
 							"title": "Agentic AI context management essay",
-							"updatedAt": 1774503471436,
+							"updatedAt": 1774509146754,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -1190,70 +618,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
 							"title": "Agentic AI context management essay",
-							"updatedAt": 1774503471436,
+							"updatedAt": 1774509146754,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -1264,261 +638,281 @@
 				},
 				{
 					"type": "thinking_delta",
-					"text": "The user wants me to think about and then write a 300-word essay on agentic AI context management. This is a writing/",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "The user wants me to think about and write a 300-word essay on agentic AI context management. This is a writing/",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": "thinking task, not a coding task. Let me think carefully about the topic and",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "thinking task, not a coding task. Let me just think",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " craft a well-written essay.\n\nLet me consider the key aspects of agentic AI context management:\n\n1. What is context",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " about this carefully and write a well-crafted essay.\n\nLet me think",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " in agentic AI? - The working memory that AI agents",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " about what makes a good essay on this topic:\n\n1. **What is agentic AI context management?** - It",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " operate with, including conversation history, tool results, system instructions, and retrieved information.",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "'s about how AI agents manage their limited context windows while performing complex,",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": "\n\n2. Why is it challenging? - Context windows are finite, information accum",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " multi-step tasks. This includes deciding what information to keep, what to summarize, what to discard, and how",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": "ulates rapidly during multi-step tasks, and agents must decide what to retain, summar",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " to structure working memory.\n",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": "ize, or discard.\n",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "\n\n2",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": "\n\n3",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": ". **Key tensions:** There's a fundamental conflict between finite context windows and arbitrarily complex tasks,",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": ". Key strategies - Hierarchical summarization, selective retrieval, structured memory systems, tool-based exploration vs. in-context retention.\n\n4. The fundamental tension - Between having enough context to make good decisions and not overwhelming the window with irrelevant detail.\n\n5. Real-world implications",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " and I need to balance having enough information for accuracy against the",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " - Affects task completion rates, coherence over long sessions, cost efficiency.\n\nNow I'm thinking about how to structure the essay itself",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " dilution that comes from too much context. Agents face a trade-off between breadth and depth,",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": ". I should open with the core problem—that agents",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " and they need to actively manage context rather than just passively accumulate it.\n3. **Style considerations:** The user wants",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " need to juggle limited context while handling increasingly complex tasks—then explore the tension between retention and efficiency, discuss",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " something thoughtful and substantive rather than rushed or superficial, and with only 300 words, every sentence has to count",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " practical strategies like summarization and selective memory, and close with why this matters for building",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " and demonstrate real understanding of the topic.",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " reliable AI systems. I'll aim for clear, direct language that avoids jargon while maintaining intellectual",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "\n\nNow",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " rigor.",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " I'm working through the core argument about context management as the",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " actual bottleneck in agentic AI—the idea that naive accumulation fails because attention",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " dilutes even when information is available, and that effective agents need specific",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " capabilities to handle this constraint.",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " that",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "'s the real constraint—context fills up fast, and once",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " it's full, you're either dropping information or paying exponentially for",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " retrieval. The solution isn't a bigger window; it's treating",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " attention as finite and designing around that scarcity through strategic retrieval, aggressive summarization of",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " completed work, and delegating bounded tasks to fresh sub-agents. This mirrors how experienced engineers actually think—they don't memor",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "ize entire systems, they build layered mental models, know where to find things, and ruthlessly focus on what matters for the current problem.",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " The agents that will win aren't the ones with the largest context windows,",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " but the ones that use them most deliberately.",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " The",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " naive approach of just accumulating everything breaks down fast—",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "a massive context window feels spacious until you're juggling multiple",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " source files, documentation, and test suites, at which point the sheer volume starts",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " degrading performance rather than improving it.",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "\n\nEffective context management really",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " comes down to three key capabilities: first, being strategic about what to retrieve by understanding the problem space",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " before diving into search, rather than just grepping blindly; second, ag",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "gressively summarizing completed work into compact representations that capture decisions and outcomes without keeping all the raw details around.",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "\n\nThird",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " is delegating bounded subtasks to fresh sub-agents with clean contexts, then pulling back only what matters",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " from their conclusions. What strikes me is how much this mirrors how experienced",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " engineers actually work—they don't memorize entire systems, they build mental models at different levels of abstraction and know",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " exactly where to look things up. The real advantage won't come from agents",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " with massive context windows, but from those that treat attention as the precious resource it actually is and use their windows with",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " real intentionality.",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_delta",
 					"text": "",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "thinking_stop"
 				},
 				{
 					"type": "delta",
-					"text": "Let me think through the structure and argument before writing",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "The context window is the bottleneck of agentic AI. An agent that can browse files, run commands, and edit code across a large codebase",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "delta",
-					"text": ".\n\nThe core tension worth exploring: context management is fundamentally a",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " operates under a fundamental constraint: it can only attend to a fraction of the information relevant to its task at any moment. Context management -- the discipline of deciding what enters, persists in, and exits the agent's working memory -- is what separates effective agents from expensive autocomplete.\n\nThe",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "delta",
-					"text": " *compression* problem -- agents must decide what matters before they can decide",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " naive approach is accumulation: read everything, keep everything. This fails quickly. A 200,000-token window sounds generous until you've read fifteen source files, three stack traces, and a test suite. The context fills, attention dilutes, and the agent begins making errors not from ignorance but from dist",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "delta",
-					"text": " what to do. The essay should avoid generic AI hype",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "raction. The problem isn't insufficient information -- it's insufficient curation.\n\nEffective context management requires three capabilities. First, *strategic retrieval*: knowing what to look for before looking, and searching with precision rather than breadth. An agent that greps the entire c",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "delta",
-					"text": " and instead examine the actual mechanics and tradeoffs.\n\nStructure",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "odebase for a keyword is doing less work than one that reads the architecture document first and navigates directly to the relevant module. Second, *aggressive summarization*: compressing completed subtasks into compact representations that preserve decisions and outcomes without retaining raw material. The agent doesn't need the full diff after a ref",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "delta",
-					"text": ": problem framing, the fundamental tension, emerging strategies",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "actor -- it needs to know what changed and why. Third, *hierarchical delegation*: offloading bounded subtasks to fresh sub-agents with clean contexts, then integrating only their conclusions.\n\nThe deeper insight is that context management mirrors how skilled engineers think. A senior developer doesn't hold an entire system",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "delta",
-					"text": ", a forward-looking insight.\n\n---\n\n## The Bottleneck That Thinks",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": " in their head. They build mental models at varying levels of abstraction, know where to look things up, and ruthlessly prioritize what matters for the current task. The best agentic systems will not be those with the largest context windows, but those that use their windows most deliberately -- treating attention as the scar",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "delta",
-					"text": "\n\nEvery agentic AI system runs into the same wall: the context window is finite, but the world",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " is not. An agent tasked with modifying a large codebase, resear",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": "ching a complex topic, or orchestrating multi-step workflows must continuously decide what information to hold close and what to let",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " go. This is context management -- and it is arguably the defining challenge of agentic AI today",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": ".\n\nThe problem is harder than it appears. A naive approach fills the context",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " window greedily: every file read, every tool result, every intermediate",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " reasoning step accumulates until the agent is swimming in tokens,",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " most of them irrelevant to the current decision. Performance degrades not from",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " lack of information but from excess of it. The signal drowns in noise the agent",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " itself created.\n\nEffective context management requires the agent to act as its own editor",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": ". Hierarchical summarization compresses earlier work into distilled representations. Selective retrieval -- searching",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " files on demand rather than pre-loading them -- trades lat",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": "ency for headroom. Structured delegation splits work across sub-agents, each with a",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " focused context tailored to a narrow subtask. The best systems",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " combine all three, treating context not as a log but",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " as a curated workspace.\n\nWhat makes this genuinely difficult is that relevance is task-dependent and",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " shifts mid-execution. Information discarded in step three may",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " become critical in step twelve. Every summarization is a bet",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " that the compressed representation preserves what will matter later. Get it",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " wrong and the agent loses coherence, repeats work, or sil",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": "ently drops constraints.\n\nThe deeper insight is this: context management is not a peripheral engineering concern",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": ". It is the agent's epistemology -- the mechanism by which it decides what it",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " knows. Improving it does not merely make agents faster or cheaper",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": ". It makes them meaningfully more capable of sustained, coherent reasoning over the",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
-				},
-				{
-					"type": "delta",
-					"text": " kind of complex tasks that justify building agents in the first place.",
-					"messageId": "msg_d28a62943001E2bH7O1p1hwxBn"
+					"text": "ce resource it is.",
+					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
 				},
 				{
 					"type": "result",
 					"usage": {
 						"input": 3,
-						"output": 855,
+						"output": 3122,
 						"cache_read": 17817,
 						"cache_creation": 355
 					},
-					"cost": 0.03251725,
+					"cost": 0.08919225,
 					"duration": 0,
 					"sessionId": ""
 				},
@@ -1526,81 +920,27 @@
 					"type": "result",
 					"usage": {
 						"input": 3,
-						"output": 855,
+						"output": 3122,
 						"cache_read": 17817,
 						"cache_creation": 355
 					},
-					"cost": 0.03251725,
-					"duration": 25114,
+					"cost": 0.08919225,
+					"duration": 42812,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
 							"title": "Agentic AI context management essay",
-							"updatedAt": 1774503496543,
+							"updatedAt": 1774509189562,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -1614,69 +954,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
 							"title": "Agentic AI context management essay",
-							"updatedAt": 1774503496543,
+							"updatedAt": 1774509189562,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -1686,69 +972,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
 							"title": "Agentic AI context management essay",
-							"updatedAt": 1774503496556,
+							"updatedAt": 1774509189574,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],
@@ -1758,69 +990,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d759dab0ffemJ1dyEcI49R7pC",
+							"id": "ses_2d7034171ffeMzU76aoyTTv387",
 							"title": "Agentic AI context management essay",
-							"updatedAt": 1774503496556,
+							"updatedAt": 1774509189574,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a0483ffethyLfqSF5HDti6",
-							"title": "Importance of automated testing",
-							"updatedAt": 1774503466694,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456621,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+							"title": "New session - 2026-03-26T07:12:23.435Z",
+							"updatedAt": 1774509143435,
 							"messageCount": 0
 						}
 					],

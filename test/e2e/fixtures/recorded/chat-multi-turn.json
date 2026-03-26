@@ -1,7 +1,7 @@
 {
 	"name": "chat-multi-turn",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T05:37:37.118Z",
+	"recordedAt": "2026-03-26T07:12:10.313Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,58 +13,12 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-			"events": [
-				{
-					"type": "user_message",
-					"text": "Reply with just the word 'ok'. Nothing else."
-				},
-				{
-					"type": "result",
-					"usage": {
-						"input": 0,
-						"output": 0,
-						"cache_read": 0,
-						"cache_creation": 0
-					},
-					"cost": 0,
-					"duration": 0,
-					"sessionId": ""
-				},
-				{
-					"type": "delta",
-					"text": "ok",
-					"messageId": "msg_d28a5acef0015k8VRi5woSoJ3B"
-				},
-				{
-					"type": "result",
-					"usage": {
-						"input": 3,
-						"output": 4,
-						"cache_read": 17817,
-						"cache_creation": 331
-					},
-					"cost": 0.01109225,
-					"duration": 0,
-					"sessionId": ""
-				},
-				{
-					"type": "result",
-					"usage": {
-						"input": 3,
-						"output": 4,
-						"cache_read": 17817,
-						"cache_creation": 331
-					},
-					"cost": 0.01109225,
-					"duration": 2006,
-					"sessionId": ""
-				},
-				{
-					"type": "done",
-					"code": 0
-				}
-			]
+			"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+			"history": {
+				"messages": [],
+				"hasMore": false,
+				"total": 0
+			}
 		},
 		{
 			"type": "status",
@@ -79,51 +33,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-					"title": "Acknowledgment",
-					"updatedAt": 1774503441622,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-					"title": "Package.json version lookup",
-					"updatedAt": 1774503434882,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-					"title": "Greet function in JavaScript",
-					"updatedAt": 1774503422788,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-					"title": "Greeting",
-					"updatedAt": 1774503418133,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-					"title": "ok",
-					"updatedAt": 1774503413727,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-					"title": "Pong response",
-					"updatedAt": 1774503409317,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-					"title": "Greeting",
-					"updatedAt": 1774503403812,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-					"title": "New session - 2026-03-26T05:36:37.670Z",
-					"updatedAt": 1774503397670,
+					"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+					"title": "New session - 2026-03-26T07:11:59.095Z",
+					"updatedAt": 1774509119095,
 					"messageCount": 0
 				}
 			],
@@ -133,51 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-					"title": "Acknowledgment",
-					"updatedAt": 1774503441622,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-					"title": "Package.json version lookup",
-					"updatedAt": 1774503434882,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-					"title": "Greet function in JavaScript",
-					"updatedAt": 1774503422788,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-					"title": "Greeting",
-					"updatedAt": 1774503418133,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-					"title": "ok",
-					"updatedAt": 1774503413727,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-					"title": "Pong response",
-					"updatedAt": 1774503409317,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-					"title": "Greeting",
-					"updatedAt": 1774503403812,
-					"messageCount": 0
-				},
-				{
-					"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-					"title": "New session - 2026-03-26T05:36:37.670Z",
-					"updatedAt": 1774503397670,
+					"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+					"title": "New session - 2026-03-26T07:11:59.095Z",
+					"updatedAt": 1774509119095,
 					"messageCount": 0
 				}
 			],
@@ -615,57 +485,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "New session - 2026-03-26T05:37:25.314Z",
-							"updatedAt": 1774503446333,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "New session - 2026-03-26T07:12:01.402Z",
+							"updatedAt": 1774509122414,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -675,57 +503,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "New session - 2026-03-26T05:37:25.314Z",
-							"updatedAt": 1774503446333,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "New session - 2026-03-26T07:12:01.402Z",
+							"updatedAt": 1774509122414,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -735,57 +521,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "New session - 2026-03-26T05:37:25.314Z",
-							"updatedAt": 1774503446333,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "New session - 2026-03-26T07:12:01.402Z",
+							"updatedAt": 1774509122414,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -795,57 +539,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "New session - 2026-03-26T05:37:25.314Z",
-							"updatedAt": 1774503446333,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "New session - 2026-03-26T07:12:01.402Z",
+							"updatedAt": 1774509122414,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -855,58 +557,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "New session - 2026-03-26T05:37:25.314Z",
-							"updatedAt": 1774503446333,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "New session - 2026-03-26T07:12:01.402Z",
+							"updatedAt": 1774509122414,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -920,58 +580,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "New session - 2026-03-26T05:37:25.314Z",
-							"updatedAt": 1774503446333,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "New session - 2026-03-26T07:12:01.402Z",
+							"updatedAt": 1774509122414,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -981,58 +599,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503446333,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509122414,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1042,58 +618,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503446333,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509122414,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1102,12 +636,12 @@
 				{
 					"type": "delta",
 					"text": "ok",
-					"messageId": "msg_d28a5c734001A4jEYadqPubde6"
+					"messageId": "msg_d28fc6368001Arq4RprUC1ArVt"
 				},
 				{
 					"type": "delta",
 					"text": ", remembered.",
-					"messageId": "msg_d28a5c734001A4jEYadqPubde6"
+					"messageId": "msg_d28fc6368001Arq4RprUC1ArVt"
 				},
 				{
 					"type": "result",
@@ -1130,64 +664,22 @@
 						"cache_creation": 334
 					},
 					"cost": 0.011186,
-					"duration": 7150,
+					"duration": 3050,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503453476,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125461,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1201,57 +693,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503453476,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125461,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1261,57 +711,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503453488,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125472,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1321,57 +729,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503453488,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125472,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1402,57 +768,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503454012,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125979,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1462,57 +786,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503454012,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125979,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1522,57 +804,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503454012,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125979,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1582,57 +822,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503454012,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125979,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1642,58 +840,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503454012,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125979,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1707,58 +863,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503454012,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509125979,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1767,7 +881,7 @@
 				{
 					"type": "delta",
 					"text": "banana",
-					"messageId": "msg_d28a5e52c001L7MXcq6zEtxi2k"
+					"messageId": "msg_d28fc7156001puNPSF5EKlVv8Y"
 				},
 				{
 					"type": "result",
@@ -1790,64 +904,22 @@
 						"cache_creation": 25
 					},
 					"cost": 0.00934675,
-					"duration": 2610,
+					"duration": 3830,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456609,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509129805,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1861,57 +933,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456609,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509129805,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1921,57 +951,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456622,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509129819,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],
@@ -1981,57 +969,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75a3cbdffelBvpl35t7jby1P",
-							"title": "Banana memory task",
-							"updatedAt": 1774503456622,
+							"id": "ses_2d703a085ffeY3FrrMON6KKo0k",
+							"title": "Memory test: banana",
+							"updatedAt": 1774509129819,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75a56ffffe5jxcn6j7mySOVD",
-							"title": "Acknowledgment",
-							"updatedAt": 1774503441622,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75a8864ffemShD7nf4pxAKRg",
-							"title": "Package.json version lookup",
-							"updatedAt": 1774503434882,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422788,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "Greeting",
-							"updatedAt": 1774503418133,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413727,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "Pong response",
-							"updatedAt": 1774503409317,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "Greeting",
-							"updatedAt": 1774503403812,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d703a988ffeSuYwLNTqyQiwnH",
+							"title": "New session - 2026-03-26T07:11:59.095Z",
+							"updatedAt": 1774509119095,
 							"messageCount": 0
 						}
 					],

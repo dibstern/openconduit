@@ -1,7 +1,7 @@
 {
 	"name": "chat-simple",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T05:37:03.289Z",
+	"recordedAt": "2026-03-26T07:11:39.154Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
+			"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
 			"history": {
 				"messages": [],
 				"hasMore": false,
@@ -33,9 +33,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-					"title": "New session - 2026-03-26T05:36:37.670Z",
-					"updatedAt": 1774503397670,
+					"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+					"title": "New session - 2026-03-26T07:11:00.180Z",
+					"updatedAt": 1774509060180,
 					"messageCount": 0
 				}
 			],
@@ -45,9 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-					"title": "New session - 2026-03-26T05:36:37.670Z",
-					"updatedAt": 1774503397670,
+					"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+					"title": "New session - 2026-03-26T07:11:00.180Z",
+					"updatedAt": 1774509060180,
 					"messageCount": 0
 				}
 			],
@@ -487,15 +487,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "New session - 2026-03-26T05:36:39.985Z",
-							"updatedAt": 1774503401024,
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
+							"title": "New session - 2026-03-26T07:11:02.492Z",
+							"updatedAt": 1774509063527,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -505,15 +505,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "New session - 2026-03-26T05:36:39.985Z",
-							"updatedAt": 1774503401024,
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
+							"title": "New session - 2026-03-26T07:11:02.492Z",
+							"updatedAt": 1774509063527,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -523,15 +523,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "New session - 2026-03-26T05:36:39.985Z",
-							"updatedAt": 1774503401024,
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
+							"title": "New session - 2026-03-26T07:11:02.492Z",
+							"updatedAt": 1774509063527,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -541,15 +541,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "New session - 2026-03-26T05:36:39.985Z",
-							"updatedAt": 1774503401024,
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
+							"title": "New session - 2026-03-26T07:11:02.492Z",
+							"updatedAt": 1774509063527,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -559,16 +559,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "New session - 2026-03-26T05:36:39.985Z",
-							"updatedAt": 1774503401024,
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
+							"title": "New session - 2026-03-26T07:11:02.492Z",
+							"updatedAt": 1774509063527,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -582,16 +582,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
-							"title": "New session - 2026-03-26T05:36:39.985Z",
-							"updatedAt": 1774503401024,
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
+							"title": "New session - 2026-03-26T07:11:02.492Z",
+							"updatedAt": 1774509063527,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -601,16 +601,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503401024,
+							"updatedAt": 1774509063527,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -620,16 +620,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503401024,
+							"updatedAt": 1774509063527,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -638,12 +638,12 @@
 				{
 					"type": "delta",
 					"text": "p",
-					"messageId": "msg_d28a5162a001mf7fuRq8UGPVuD"
+					"messageId": "msg_d28fb7d5200108fwy7BKud4ypd"
 				},
 				{
 					"type": "delta",
 					"text": "ong",
-					"messageId": "msg_d28a5162a001mf7fuRq8UGPVuD"
+					"messageId": "msg_d28fb7d5200108fwy7BKud4ypd"
 				},
 				{
 					"type": "result",
@@ -666,22 +666,22 @@
 						"cache_creation": 18145
 					},
 					"cost": 0.11354625,
-					"duration": 2796,
+					"duration": 3772,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403801,
+							"updatedAt": 1774509067280,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -695,15 +695,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067280,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -713,15 +713,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -731,15 +731,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -770,21 +770,21 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "New session - 2026-03-26T05:36:44.320Z",
-							"updatedAt": 1774503405344,
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
+							"title": "New session - 2026-03-26T07:11:07.793Z",
+							"updatedAt": 1774509068805,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -794,21 +794,21 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "New session - 2026-03-26T05:36:44.320Z",
-							"updatedAt": 1774503405344,
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
+							"title": "New session - 2026-03-26T07:11:07.793Z",
+							"updatedAt": 1774509068805,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -818,21 +818,21 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "New session - 2026-03-26T05:36:44.320Z",
-							"updatedAt": 1774503405344,
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
+							"title": "New session - 2026-03-26T07:11:07.793Z",
+							"updatedAt": 1774509068805,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -842,21 +842,21 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "New session - 2026-03-26T05:36:44.320Z",
-							"updatedAt": 1774503405344,
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
+							"title": "New session - 2026-03-26T07:11:07.793Z",
+							"updatedAt": 1774509068805,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -866,22 +866,22 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "New session - 2026-03-26T05:36:44.320Z",
-							"updatedAt": 1774503405344,
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
+							"title": "New session - 2026-03-26T07:11:07.793Z",
+							"updatedAt": 1774509068805,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -895,22 +895,22 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
-							"title": "New session - 2026-03-26T05:36:44.320Z",
-							"updatedAt": 1774503405344,
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
+							"title": "New session - 2026-03-26T07:11:07.793Z",
+							"updatedAt": 1774509068805,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -920,22 +920,22 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503405344,
+							"updatedAt": 1774509068805,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -945,22 +945,22 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503405344,
+							"updatedAt": 1774509068805,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -969,12 +969,12 @@
 				{
 					"type": "delta",
 					"text": "p",
-					"messageId": "msg_d28a5271a001ygfP6UlzO3qqKK"
+					"messageId": "msg_d28fb9200001Iai2JkGRYhyU1Q"
 				},
 				{
 					"type": "delta",
 					"text": "ong",
-					"messageId": "msg_d28a5271a001ygfP6UlzO3qqKK"
+					"messageId": "msg_d28fb9200001Iai2JkGRYhyU1Q"
 				},
 				{
 					"type": "result",
@@ -997,28 +997,28 @@
 						"cache_creation": 332
 					},
 					"cost": 0.0111235,
-					"duration": 3964,
+					"duration": 14101,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409305,
+							"updatedAt": 1774509082903,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1032,21 +1032,21 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409305,
+							"updatedAt": 1774509082903,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1056,21 +1056,21 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1080,21 +1080,21 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1125,27 +1125,27 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "New session - 2026-03-26T05:36:49.816Z",
-							"updatedAt": 1774503410828,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "New session - 2026-03-26T07:11:23.415Z",
+							"updatedAt": 1774509084437,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1155,27 +1155,27 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "New session - 2026-03-26T05:36:49.816Z",
-							"updatedAt": 1774503410828,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "New session - 2026-03-26T07:11:23.415Z",
+							"updatedAt": 1774509084437,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1185,27 +1185,27 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "New session - 2026-03-26T05:36:49.816Z",
-							"updatedAt": 1774503410828,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "New session - 2026-03-26T07:11:23.415Z",
+							"updatedAt": 1774509084437,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1215,27 +1215,27 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "New session - 2026-03-26T05:36:49.816Z",
-							"updatedAt": 1774503410828,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "New session - 2026-03-26T07:11:23.415Z",
+							"updatedAt": 1774509084437,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1245,28 +1245,28 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "New session - 2026-03-26T05:36:49.816Z",
-							"updatedAt": 1774503410828,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "New session - 2026-03-26T07:11:23.415Z",
+							"updatedAt": 1774509084437,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1280,28 +1280,28 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "New session - 2026-03-26T05:36:49.816Z",
-							"updatedAt": 1774503410828,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "New session - 2026-03-26T07:11:23.415Z",
+							"updatedAt": 1774509084437,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1311,28 +1311,28 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503410828,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509084437,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1342,28 +1342,28 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503410828,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509084437,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1372,7 +1372,7 @@
 				{
 					"type": "delta",
 					"text": "ok",
-					"messageId": "msg_d28a53c87001PVREP01snUP8rg"
+					"messageId": "msg_d28fbcf0a0011tvzI7UHOpF3sT"
 				},
 				{
 					"type": "result",
@@ -1395,34 +1395,34 @@
 						"cache_creation": 328
 					},
 					"cost": 0.0110735,
-					"duration": 2891,
+					"duration": 3381,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413716,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087808,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1436,27 +1436,27 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413716,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087808,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1466,27 +1466,27 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1496,27 +1496,27 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1547,33 +1547,33 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "New session - 2026-03-26T05:36:54.224Z",
-							"updatedAt": 1774503415234,
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
+							"title": "New session - 2026-03-26T07:11:28.317Z",
+							"updatedAt": 1774509089329,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1583,33 +1583,33 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "New session - 2026-03-26T05:36:54.224Z",
-							"updatedAt": 1774503415234,
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
+							"title": "New session - 2026-03-26T07:11:28.317Z",
+							"updatedAt": 1774509089329,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1619,33 +1619,33 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "New session - 2026-03-26T05:36:54.224Z",
-							"updatedAt": 1774503415234,
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
+							"title": "New session - 2026-03-26T07:11:28.317Z",
+							"updatedAt": 1774509089329,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1655,33 +1655,33 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "New session - 2026-03-26T05:36:54.224Z",
-							"updatedAt": 1774503415234,
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
+							"title": "New session - 2026-03-26T07:11:28.317Z",
+							"updatedAt": 1774509089329,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1691,34 +1691,34 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "New session - 2026-03-26T05:36:54.224Z",
-							"updatedAt": 1774503415234,
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
+							"title": "New session - 2026-03-26T07:11:28.317Z",
+							"updatedAt": 1774509089329,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1732,34 +1732,34 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
-							"title": "New session - 2026-03-26T05:36:54.224Z",
-							"updatedAt": 1774503415234,
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
+							"title": "New session - 2026-03-26T07:11:28.317Z",
+							"updatedAt": 1774509089329,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1769,34 +1769,34 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503415234,
+							"updatedAt": 1774509089329,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1806,34 +1806,34 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503415234,
+							"updatedAt": 1774509089329,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1842,7 +1842,7 @@
 				{
 					"type": "delta",
 					"text": "hello",
-					"messageId": "msg_d28a54dbd001U0wMKPuehG9vfT"
+					"messageId": "msg_d28fbe22c001YJJV9zdv63po2E"
 				},
 				{
 					"type": "result",
@@ -1865,40 +1865,40 @@
 						"cache_creation": 328
 					},
 					"cost": 0.0110735,
-					"duration": 2892,
+					"duration": 5392,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418123,
+							"updatedAt": 1774509094718,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1912,33 +1912,33 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418123,
+							"updatedAt": 1774509094718,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1948,33 +1948,33 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -1984,33 +1984,33 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2041,39 +2041,39 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "New session - 2026-03-26T05:36:58.637Z",
-							"updatedAt": 1774503419651,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "New session - 2026-03-26T07:11:35.229Z",
+							"updatedAt": 1774509096242,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2083,39 +2083,39 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "New session - 2026-03-26T05:36:58.637Z",
-							"updatedAt": 1774503419651,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "New session - 2026-03-26T07:11:35.229Z",
+							"updatedAt": 1774509096242,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2125,39 +2125,39 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "New session - 2026-03-26T05:36:58.637Z",
-							"updatedAt": 1774503419651,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "New session - 2026-03-26T07:11:35.229Z",
+							"updatedAt": 1774509096242,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2167,39 +2167,39 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "New session - 2026-03-26T05:36:58.637Z",
-							"updatedAt": 1774503419651,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "New session - 2026-03-26T07:11:35.229Z",
+							"updatedAt": 1774509096242,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2209,40 +2209,40 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "New session - 2026-03-26T05:36:58.637Z",
-							"updatedAt": 1774503419651,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "New session - 2026-03-26T07:11:35.229Z",
+							"updatedAt": 1774509096242,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2256,40 +2256,40 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "New session - 2026-03-26T05:36:58.637Z",
-							"updatedAt": 1774503419651,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "New session - 2026-03-26T07:11:35.229Z",
+							"updatedAt": 1774509096242,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2299,40 +2299,40 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503419651,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "Greet function creation",
+							"updatedAt": 1774509096242,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2342,40 +2342,40 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503419651,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "Greet function creation",
+							"updatedAt": 1774509096242,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2384,12 +2384,12 @@
 				{
 					"type": "delta",
 					"text": "\n\n```javascript\nfunction greet() {",
-					"messageId": "msg_d28a55efe001lUrvtZue3M8YA9"
+					"messageId": "msg_d28fbfd2d001aHSoQJDWpdmuvR"
 				},
 				{
 					"type": "delta",
 					"text": "\n  return 'hello';\n}\n```",
-					"messageId": "msg_d28a55efe001lUrvtZue3M8YA9"
+					"messageId": "msg_d28fbfd2d001aHSoQJDWpdmuvR"
 				},
 				{
 					"type": "result",
@@ -2412,46 +2412,46 @@
 						"cache_creation": 344
 					},
 					"cost": 0.0116485,
-					"duration": 3130,
+					"duration": 2406,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422778,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "Greet function creation",
+							"updatedAt": 1774509098645,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2465,39 +2465,39 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422778,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "Greet function creation",
+							"updatedAt": 1774509098645,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2507,39 +2507,39 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422790,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "Greet function creation",
+							"updatedAt": 1774509098660,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
@@ -2549,39 +2549,39 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d75aa4f2ffe1UmAgjWY2pharM",
-							"title": "Greet function in JavaScript",
-							"updatedAt": 1774503422790,
+							"id": "ses_2d70406c2ffevJhY3y67tW8Bfx",
+							"title": "Greet function creation",
+							"updatedAt": 1774509098660,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ab62fffe0zXlDl1W5hlYiH",
+							"id": "ses_2d70421c2ffet3dEEjpr96T1sX",
 							"title": "Greeting",
-							"updatedAt": 1774503418134,
+							"updatedAt": 1774509094730,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75ac767ffe2pTPjox96YycKW",
-							"title": "ok",
-							"updatedAt": 1774503413728,
+							"id": "ses_2d70434e8ffeR26u4W2Cs8nMrF",
+							"title": "Ok",
+							"updatedAt": 1774509087820,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75adcdfffe3W5LRODtHGIOnn",
+							"id": "ses_2d70471eeffeFJsxhaWCb2I6G3",
 							"title": "Pong response",
-							"updatedAt": 1774503409318,
+							"updatedAt": 1774509082915,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75aedceffesD7Vt19KefOZI7",
+							"id": "ses_2d70486a3ffeqSj1nbYblSsTp1",
 							"title": "Greeting",
-							"updatedAt": 1774503403813,
+							"updatedAt": 1774509067292,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d75af6d9ffeI1F4HjPH0w58ZD",
-							"title": "New session - 2026-03-26T05:36:37.670Z",
-							"updatedAt": 1774503397670,
+							"id": "ses_2d7048fabffeS5iTo5FeIZvHtg",
+							"title": "New session - 2026-03-26T07:11:00.180Z",
+							"updatedAt": 1774509060180,
 							"messageCount": 0
 						}
 					],
