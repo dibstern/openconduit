@@ -54,10 +54,6 @@ export const chatState = $state({
 	phase: "idle" as ChatPhase,
 	/** Tracks the lifecycle of loading session data into the chat store. */
 	loadLifecycle: "empty" as LoadLifecycle,
-	/** True after clearQueuedFlags() is called, reset when processing starts.
-	 *  Used by the unified rendering pipeline to know that the LLM has started
-	 *  responding to a previously-queued message (so the queued shimmer should be removed). */
-	queuedFlagsCleared: false,
 	/** Monotonically increasing counter, bumped on each `done` event.
 	 *  Provides an explicit, reliable turn-boundary signal for logic that
 	 *  needs to distinguish "same turn" from "new turn" (e.g. queued-flag

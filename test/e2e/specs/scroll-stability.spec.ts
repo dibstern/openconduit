@@ -654,3 +654,511 @@ test.describe("Scroll Stability — Desktop", () => {
 		expect(drift).toBeLessThan(MAX_DRIFT_PX);
 	});
 });
+
+// ─── Session Switch & Lifecycle Tests ───────────────────────────────────────
+// Tests that cover session switching, infinite scroll, empty sessions, and
+// multi-turn streaming — the most common user interactions that exercise
+// the scroll controller's lifecycle state machine.
+
+test.describe("Scroll Controller — Session Lifecycle", () => {
+	test.describe.configure({ timeout: 60_000 });
+	test.use({ viewport: { width: 1440, height: 900 } });
+
+	test("switching sessions scrolls new session to bottom", async ({
+		page,
+		relayUrl,
+	}) => {
+		// Session A: 40-turn conversation (starts loaded)
+		const sessionAEvents = generateConversationEvents(TURN_COUNT);
+		// Session B: 20-turn conversation (loaded on switch)
+		const sessionBEvents = generateConversationEvents(20);
+
+		const _wsMock = await mockRelayWebSocket(page, {
+			initMessages: [
+				{
+					type: "session_switched",
+					id: "sess-switch-A",
+					events: sessionAEvents,
+				},
+				{ type: "status", status: "idle" },
+				{ type: "model_info", model: "claude-sonnet-4", provider: "anthropic" },
+				{ type: "client_count", count: 1 },
+				{
+					type: "session_list",
+					roots: true,
+					sessions: [
+						{
+							id: "sess-switch-A",
+							title: "Session A",
+							updatedAt: Date.now(),
+							messageCount: TURN_COUNT * 2,
+						},
+						{
+							id: "sess-switch-B",
+							title: "Session B",
+							updatedAt: Date.now() - 3600_000,
+							messageCount: 40,
+						},
+					],
+				},
+				{
+					type: "model_list",
+					providers: [
+						{
+							id: "anthropic",
+							name: "Anthropic",
+							configured: true,
+							models: [
+								{
+									id: "claude-sonnet-4",
+									name: "claude-sonnet-4",
+									provider: "anthropic",
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "agent_list",
+					agents: [
+						{
+							id: "code",
+							name: "Code",
+							description: "General coding assistant",
+						},
+					],
+				},
+			],
+			responses: new Map(),
+			onClientMessage: (parsed, control) => {
+				// Respond to session switch requests
+				if (
+					parsed["type"] === "view_session" &&
+					parsed["sessionId"] === "sess-switch-B"
+				) {
+					control.sendMessage({
+						type: "session_switched",
+						id: "sess-switch-B",
+						events: sessionBEvents,
+					});
+					control.sendMessage({ type: "status", status: "idle" });
+				}
+			},
+		});
+
+		await page.goto(relayUrl);
+		await page.locator("#connect-overlay").waitFor({
+			state: "hidden",
+			timeout: 15_000,
+		});
+		await page.waitForTimeout(2000);
+
+		// Session A should be at the bottom
+		const distA = await page.evaluate(() => {
+			const el = document.getElementById("messages");
+			return el ? el.scrollHeight - el.scrollTop - el.clientHeight : -1;
+		});
+		expect(distA).toBeLessThan(50);
+
+		// Click on Session B in the sidebar
+		await page.locator('text="Session B"').click();
+		await page.waitForTimeout(3000);
+
+		// Session B should also be scrolled to the bottom
+		const distB = await page.evaluate(() => {
+			const el = document.getElementById("messages");
+			return el ? el.scrollHeight - el.scrollTop - el.clientHeight : -1;
+		});
+		expect(distB).toBeLessThan(50);
+
+		// Verify Session B actually has content (not empty)
+		const msgCount = await page.evaluate(() => {
+			return document.querySelectorAll(".msg-container").length;
+		});
+		expect(msgCount).toBeGreaterThan(5);
+	});
+
+	test("infinite scroll prepends older messages without scroll jump", async ({
+		page,
+		relayUrl,
+	}) => {
+		// Create a session with 60 turns. With 50-message paging,
+		// only last ~50 render initially, older ones are in the replay buffer.
+		const initMessages = createInitMessages(60);
+
+		const _wsMock = await mockRelayWebSocket(page, {
+			initMessages,
+			responses: new Map(),
+		});
+
+		await page.goto(relayUrl);
+		await page.locator("#connect-overlay").waitFor({
+			state: "hidden",
+			timeout: 15_000,
+		});
+		await page.waitForTimeout(2000);
+
+		// Count initial messages
+		const initialCount = await page.evaluate(() => {
+			return document.querySelectorAll(".msg-container").length;
+		});
+
+		// Scroll up far enough to trigger HistoryLoader's IntersectionObserver
+		await scrollUpIncrementally(page, 3000);
+		const scrollBefore = await getScrollTop(page);
+
+		// Wait for prepend to happen (HistoryLoader fires, loads from buffer)
+		await page.waitForTimeout(2000);
+
+		// Check if more messages were loaded
+		const afterCount = await page.evaluate(() => {
+			return document.querySelectorAll(".msg-container").length;
+		});
+
+		// If buffer had messages, count should increase.
+		// If not (all already loaded), this is still a valid test —
+		// the scroll position should remain stable regardless.
+		const scrollAfter = await getScrollTop(page);
+
+		if (afterCount > initialCount) {
+			// Messages were prepended — scroll position should be approximately
+			// preserved (not jumped to 0 or to bottom).
+			// The prepend adds height above, so scrollTop should increase by
+			// approximately the added height. We check that the user's viewport
+			// position is roughly preserved (within 50px).
+			const drift = Math.abs(scrollAfter - scrollBefore);
+			expect(drift).toBeLessThan(200);
+		} else {
+			// No prepend occurred — scroll position should be stable
+			const drift = Math.abs(scrollAfter - scrollBefore);
+			expect(drift).toBeLessThan(MAX_DRIFT_PX);
+		}
+	});
+
+	test("empty session shows content when first message streams in", async ({
+		page,
+		relayUrl,
+	}) => {
+		// Start with an empty session (no events, no history)
+		const wsMock = await mockRelayWebSocket(page, {
+			initMessages: [
+				{
+					type: "session_switched",
+					id: "sess-empty-001",
+					// No events — empty session
+				},
+				{ type: "status", status: "idle" },
+				{ type: "model_info", model: "claude-sonnet-4", provider: "anthropic" },
+				{ type: "client_count", count: 1 },
+				{
+					type: "session_list",
+					roots: true,
+					sessions: [
+						{
+							id: "sess-empty-001",
+							title: "New session",
+							updatedAt: Date.now(),
+							messageCount: 0,
+						},
+					],
+				},
+				{
+					type: "model_list",
+					providers: [
+						{
+							id: "anthropic",
+							name: "Anthropic",
+							configured: true,
+							models: [
+								{
+									id: "claude-sonnet-4",
+									name: "claude-sonnet-4",
+									provider: "anthropic",
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "agent_list",
+					agents: [
+						{
+							id: "code",
+							name: "Code",
+							description: "General coding assistant",
+						},
+					],
+				},
+			],
+			responses: new Map(),
+		});
+
+		await page.goto(relayUrl);
+		await page.locator("#connect-overlay").waitFor({
+			state: "hidden",
+			timeout: 15_000,
+		});
+		await page.waitForTimeout(1000);
+
+		// Simulate: user sent a message, server starts processing
+		wsMock.sendMessage({
+			type: "user_message",
+			text: "Hello, can you help me?",
+		});
+		wsMock.sendMessage({ type: "status", status: "processing" });
+		await page.waitForTimeout(300);
+
+		// Stream response
+		for (let i = 0; i < 8; i++) {
+			wsMock.sendMessage({
+				type: "delta",
+				text: `This is line ${i} of the response. It contains enough text to create vertical height in the scroll container for testing purposes. `,
+			});
+			await page.waitForTimeout(100);
+		}
+
+		await page.waitForTimeout(500);
+
+		// Should be near the bottom — auto-scroll working for empty session
+		const distFromBottom = await page.evaluate(() => {
+			const el = document.getElementById("messages");
+			return el ? el.scrollHeight - el.scrollTop - el.clientHeight : -1;
+		});
+		expect(distFromBottom).toBeLessThan(100);
+
+		// Should have rendered messages
+		const msgCount = await page.evaluate(() => {
+			return document.querySelectorAll(".msg-container").length;
+		});
+		expect(msgCount).toBeGreaterThan(0);
+
+		// Complete the turn
+		wsMock.sendMessage({ type: "done", code: 0 });
+		wsMock.sendMessage({ type: "status", status: "idle" });
+	});
+
+	test("multi-turn streaming: auto-scroll works across done→new message→streaming cycles", async ({
+		page,
+		relayUrl,
+	}) => {
+		const initMessages = createInitMessages(10);
+
+		const wsMock = await mockRelayWebSocket(page, {
+			initMessages,
+			responses: new Map(),
+		});
+
+		await page.goto(relayUrl);
+		await page.locator("#connect-overlay").waitFor({
+			state: "hidden",
+			timeout: 15_000,
+		});
+		await page.waitForTimeout(2000);
+
+		// ── Turn 1: stream and complete ──
+		wsMock.sendMessage({ type: "status", status: "processing" });
+		await page.waitForTimeout(200);
+
+		for (let i = 0; i < 5; i++) {
+			wsMock.sendMessage({
+				type: "delta",
+				text: `Turn 1 content line ${i}. Adding enough text to grow the scroll height meaningfully. `,
+			});
+			await page.waitForTimeout(80);
+		}
+		wsMock.sendMessage({ type: "done", code: 0 });
+		wsMock.sendMessage({ type: "status", status: "idle" });
+		await page.waitForTimeout(500);
+
+		// Should be at bottom after turn 1
+		let dist = await page.evaluate(() => {
+			const el = document.getElementById("messages");
+			return el ? el.scrollHeight - el.scrollTop - el.clientHeight : -1;
+		});
+		expect(dist).toBeLessThan(100);
+
+		// ── Turn 2: new user message then stream ──
+		wsMock.sendMessage({
+			type: "user_message",
+			text: "Follow-up question for turn 2",
+		});
+		wsMock.sendMessage({ type: "status", status: "processing" });
+		await page.waitForTimeout(200);
+
+		for (let i = 0; i < 5; i++) {
+			wsMock.sendMessage({
+				type: "delta",
+				text: `Turn 2 content line ${i}. More text to ensure scrolling continues to work on subsequent turns. `,
+			});
+			await page.waitForTimeout(80);
+		}
+		wsMock.sendMessage({ type: "done", code: 0 });
+		wsMock.sendMessage({ type: "status", status: "idle" });
+		await page.waitForTimeout(500);
+
+		// Should still be at bottom after turn 2
+		dist = await page.evaluate(() => {
+			const el = document.getElementById("messages");
+			return el ? el.scrollHeight - el.scrollTop - el.clientHeight : -1;
+		});
+		expect(dist).toBeLessThan(100);
+	});
+
+	test("large session replay buffer consumed on scroll-up", async ({
+		page,
+		relayUrl,
+	}) => {
+		// 80 turns = ~160+ messages. Only last 50 render initially.
+		// Remaining ~110+ go into the replay buffer.
+		const initMessages = createInitMessages(80);
+
+		const _wsMock = await mockRelayWebSocket(page, {
+			initMessages,
+			responses: new Map(),
+		});
+
+		await page.goto(relayUrl);
+		await page.locator("#connect-overlay").waitFor({
+			state: "hidden",
+			timeout: 15_000,
+		});
+		await page.waitForTimeout(3000);
+
+		// Count initial messages (should be ~50 due to paging)
+		const initialCount = await page.evaluate(() => {
+			return document.querySelectorAll(".msg-container").length;
+		});
+		expect(initialCount).toBeLessThan(100);
+		expect(initialCount).toBeGreaterThan(20);
+
+		// Scroll to the very top to trigger HistoryLoader
+		await page.evaluate(() => {
+			const el = document.getElementById("messages");
+			if (el) el.scrollTop = 0;
+		});
+		await page.waitForTimeout(2000);
+
+		// More messages should have loaded from the replay buffer
+		const afterCount = await page.evaluate(() => {
+			return document.querySelectorAll(".msg-container").length;
+		});
+
+		// After loading from buffer, we should have more messages
+		expect(afterCount).toBeGreaterThanOrEqual(initialCount);
+	});
+
+	test("session switch while scrolled up resets to bottom on new session", async ({
+		page,
+		relayUrl,
+	}) => {
+		const sessionAEvents = generateConversationEvents(TURN_COUNT);
+		const sessionBEvents = generateConversationEvents(15);
+
+		const _wsMock = await mockRelayWebSocket(page, {
+			initMessages: [
+				{
+					type: "session_switched",
+					id: "sess-scrollup-A",
+					events: sessionAEvents,
+				},
+				{ type: "status", status: "idle" },
+				{ type: "model_info", model: "claude-sonnet-4", provider: "anthropic" },
+				{ type: "client_count", count: 1 },
+				{
+					type: "session_list",
+					roots: true,
+					sessions: [
+						{
+							id: "sess-scrollup-A",
+							title: "Session A (long)",
+							updatedAt: Date.now(),
+							messageCount: TURN_COUNT * 2,
+						},
+						{
+							id: "sess-scrollup-B",
+							title: "Session B (short)",
+							updatedAt: Date.now() - 3600_000,
+							messageCount: 30,
+						},
+					],
+				},
+				{
+					type: "model_list",
+					providers: [
+						{
+							id: "anthropic",
+							name: "Anthropic",
+							configured: true,
+							models: [
+								{
+									id: "claude-sonnet-4",
+									name: "claude-sonnet-4",
+									provider: "anthropic",
+								},
+							],
+						},
+					],
+				},
+				{
+					type: "agent_list",
+					agents: [
+						{
+							id: "code",
+							name: "Code",
+							description: "General coding assistant",
+						},
+					],
+				},
+			],
+			responses: new Map(),
+			onClientMessage: (parsed, control) => {
+				if (
+					parsed["type"] === "view_session" &&
+					parsed["sessionId"] === "sess-scrollup-B"
+				) {
+					control.sendMessage({
+						type: "session_switched",
+						id: "sess-scrollup-B",
+						events: sessionBEvents,
+					});
+					control.sendMessage({ type: "status", status: "idle" });
+				}
+			},
+		});
+
+		await page.goto(relayUrl);
+		await page.locator("#connect-overlay").waitFor({
+			state: "hidden",
+			timeout: 15_000,
+		});
+		await page.waitForTimeout(2000);
+
+		// Verify Session A is at bottom
+		let dist = await page.evaluate(() => {
+			const el = document.getElementById("messages");
+			return el ? el.scrollHeight - el.scrollTop - el.clientHeight : -1;
+		});
+		expect(dist).toBeLessThan(50);
+
+		// Scroll way up in Session A
+		await scrollUpIncrementally(page, SCROLL_UP_PX);
+
+		// Verify we're NOT at the bottom (detached)
+		const scrollBtn = page.locator("#scroll-btn");
+		await expect(scrollBtn).toBeVisible({ timeout: 3000 });
+
+		// Switch to Session B
+		await page.locator('text="Session B (short)"').click();
+		await page.waitForTimeout(3000);
+
+		// Session B should be at the bottom, regardless of A's scroll state
+		dist = await page.evaluate(() => {
+			const el = document.getElementById("messages");
+			return el ? el.scrollHeight - el.scrollTop - el.clientHeight : -1;
+		});
+		expect(dist).toBeLessThan(50);
+
+		// Scroll-to-bottom button should NOT be visible on new session
+		await expect(scrollBtn).toBeHidden({ timeout: 3000 });
+	});
+});

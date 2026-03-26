@@ -17,7 +17,6 @@ import {
 	beginReplayBatch,
 	chatState,
 	clearMessages,
-	clearQueuedFlags,
 	commitReplayFinal,
 	discardReplayBatch,
 	findMessage,
@@ -673,11 +672,6 @@ export async function replayEvents(
 
 		const ctx: DispatchContext = { isReplay: true, isQueued: llmActive };
 		dispatchChatEvent(event, ctx);
-
-		// ── Queued-flag clearing ─────────────────────────────────────────
-		// Same turnEpoch gate as handleMessage().
-		if (isLlmContentStart(event.type) && shouldClearQueuedOnContent())
-			clearQueuedFlags();
 
 		// Yield between chunks to keep the main thread responsive.
 		// NOTE: Do NOT call discardReplayBatch() on abort after yield.
