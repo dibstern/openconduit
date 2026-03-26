@@ -556,10 +556,13 @@ async function main(): Promise<void> {
 							// biome-ignore lint/style/noNonNullAssertion: safe — bounded by length check
 							const prompt = scenario.prompts[i]!;
 
-							// Create a new session for every prompt (including the first)
-							// so recordings never inherit a stale session from a prior scenario
+						if (i > 0) {
+							// Create a new session for each prompt after the first.
+							// The first prompt uses the relay's init session, which is
+							// guaranteed fresh by inter-scenario session cleanup.
 							await requestNewSession(ws);
 							await collectMessages(ws, 1_000);
+						}
 
 							console.log(
 								`  Turn ${i + 1}: "${prompt.slice(0, 50)}${prompt.length > 50 ? "..." : ""}"`,
