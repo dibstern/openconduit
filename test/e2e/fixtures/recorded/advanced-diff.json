@@ -1,7 +1,7 @@
 {
 	"name": "advanced-diff",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T07:14:18.006Z",
+	"recordedAt": "2026-03-26T07:45:58.225Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
+			"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
 			"history": {
 				"messages": [],
 				"hasMore": false,
@@ -26,16 +26,16 @@
 		},
 		{
 			"type": "model_info",
-			"model": "big-pickle",
-			"provider": "opencode"
+			"model": "claude-opus-4-6",
+			"provider": "anthropic"
 		},
 		{
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-					"title": "New session - 2026-03-26T07:13:39.181Z",
-					"updatedAt": 1774509219181,
+					"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+					"title": "New session - 2026-03-26T07:45:11.229Z",
+					"updatedAt": 1774511111229,
 					"messageCount": 0
 				}
 			],
@@ -45,9 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-					"title": "New session - 2026-03-26T07:13:39.181Z",
-					"updatedAt": 1774509219181,
+					"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+					"title": "New session - 2026-03-26T07:45:11.229Z",
+					"updatedAt": 1774511111229,
 					"messageCount": 0
 				}
 			],
@@ -444,8 +444,10 @@
 		},
 		{
 			"type": "variant_info",
-			"variant": "",
+			"variant": "max",
 			"variants": [
+				"low",
+				"medium",
 				"high",
 				"max"
 			]
@@ -485,15 +487,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "New session - 2026-03-26T07:13:41.490Z",
-							"updatedAt": 1774509222501,
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "New session - 2026-03-26T07:45:13.544Z",
+							"updatedAt": 1774511114575,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -503,15 +505,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "New session - 2026-03-26T07:13:41.490Z",
-							"updatedAt": 1774509222501,
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "New session - 2026-03-26T07:45:13.544Z",
+							"updatedAt": 1774511114575,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -521,15 +523,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "New session - 2026-03-26T07:13:41.490Z",
-							"updatedAt": 1774509222501,
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "New session - 2026-03-26T07:45:13.544Z",
+							"updatedAt": 1774511114575,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -539,15 +541,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "New session - 2026-03-26T07:13:41.490Z",
-							"updatedAt": 1774509222501,
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "New session - 2026-03-26T07:45:13.544Z",
+							"updatedAt": 1774511114575,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -557,16 +559,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "New session - 2026-03-26T07:13:41.490Z",
-							"updatedAt": 1774509222501,
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "New session - 2026-03-26T07:45:13.544Z",
+							"updatedAt": 1774511114575,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -580,54 +582,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "New session - 2026-03-26T07:13:41.490Z",
-							"updatedAt": 1774509222501,
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "New session - 2026-03-26T07:45:13.544Z",
+							"updatedAt": 1774511114575,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
-							"messageCount": 0
-						}
-					],
-					"roots": false
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509222501,
-							"messageCount": 0,
-							"processing": true
-						},
-						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
-							"messageCount": 0
-						}
-					],
-					"roots": true
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509222501,
-							"messageCount": 0,
-							"processing": true
-						},
-						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -635,12 +599,12 @@
 				},
 				{
 					"type": "tool_start",
-					"id": "toolu_019SynJHBJPQAqpisE3TSC34",
+					"id": "toolu_019hQWzUf5dQMdywWqc94pCB",
 					"name": "Write"
 				},
 				{
 					"type": "tool_executing",
-					"id": "toolu_019SynJHBJPQAqpisE3TSC34",
+					"id": "toolu_019hQWzUf5dQMdywWqc94pCB",
 					"name": "Write",
 					"input": {
 						"filePath": "/tmp/e2e-test-diff.txt",
@@ -649,7 +613,7 @@
 				},
 				{
 					"type": "tool_result",
-					"id": "toolu_019SynJHBJPQAqpisE3TSC34",
+					"id": "toolu_019hQWzUf5dQMdywWqc94pCB",
 					"content": "You must read file /tmp/e2e-test-diff.txt before overwriting it. Use the Read tool first",
 					"is_error": true
 				},
@@ -674,7 +638,7 @@
 						"cache_creation": 343
 					},
 					"cost": 0.01311725,
-					"duration": 4150,
+					"duration": 3452,
 					"sessionId": ""
 				},
 				{
@@ -693,16 +657,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509226663,
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "New session - 2026-03-26T07:45:13.544Z",
+							"updatedAt": 1774511118027,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -712,16 +676,54 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509226663,
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "New session - 2026-03-26T07:45:13.544Z",
+							"updatedAt": 1774511118027,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
+							"messageCount": 0
+						}
+					],
+					"roots": false
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "Create /tmp/e2e-test-diff.txt file",
+							"updatedAt": 1774511118027,
+							"messageCount": 0,
+							"processing": true
+						},
+						{
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
+							"messageCount": 0
+						}
+					],
+					"roots": true
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "Create /tmp/e2e-test-diff.txt file",
+							"updatedAt": 1774511118027,
+							"messageCount": 0,
+							"processing": true
+						},
+						{
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -729,12 +731,12 @@
 				},
 				{
 					"type": "tool_start",
-					"id": "toolu_01WXUZDZZWDWdV2FqLMot3yd",
+					"id": "toolu_01MKrAeKYoey8x9j3JoGkaiH",
 					"name": "Read"
 				},
 				{
 					"type": "tool_executing",
-					"id": "toolu_01WXUZDZZWDWdV2FqLMot3yd",
+					"id": "toolu_01MKrAeKYoey8x9j3JoGkaiH",
 					"name": "Read",
 					"input": {
 						"filePath": "/tmp/e2e-test-diff.txt"
@@ -742,7 +744,7 @@
 				},
 				{
 					"type": "tool_result",
-					"id": "toolu_01WXUZDZZWDWdV2FqLMot3yd",
+					"id": "toolu_01MKrAeKYoey8x9j3JoGkaiH",
 					"content": "<path>/tmp/e2e-test-diff.txt</path>\n<type>file</type>\n<content>1: goodbye world\n\n(End of file - total 1 lines)\n</content>",
 					"is_error": false
 				},
@@ -751,10 +753,10 @@
 					"usage": {
 						"input": 1,
 						"output": 63,
-						"cache_read": 17817,
-						"cache_creation": 473
+						"cache_read": 18160,
+						"cache_creation": 130
 					},
-					"cost": 0.01344475,
+					"cost": 0.0114725,
 					"duration": 0,
 					"sessionId": ""
 				},
@@ -763,11 +765,11 @@
 					"usage": {
 						"input": 1,
 						"output": 63,
-						"cache_read": 17817,
-						"cache_creation": 473
+						"cache_read": 18160,
+						"cache_creation": 130
 					},
-					"cost": 0.01344475,
-					"duration": 3711,
+					"cost": 0.0114725,
+					"duration": 5484,
 					"sessionId": ""
 				},
 				{
@@ -786,16 +788,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509230377,
+							"updatedAt": 1774511123511,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -805,16 +807,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509230377,
+							"updatedAt": 1774511123511,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -822,12 +824,12 @@
 				},
 				{
 					"type": "tool_start",
-					"id": "toolu_01TafCCmyUbSXSHTPD4oq4hG",
+					"id": "toolu_01Rf5bqQVFqr6F3cPZt3SQLV",
 					"name": "Write"
 				},
 				{
 					"type": "tool_executing",
-					"id": "toolu_01TafCCmyUbSXSHTPD4oq4hG",
+					"id": "toolu_01Rf5bqQVFqr6F3cPZt3SQLV",
 					"name": "Write",
 					"input": {
 						"filePath": "/tmp/e2e-test-diff.txt",
@@ -836,7 +838,7 @@
 				},
 				{
 					"type": "tool_result",
-					"id": "toolu_01TafCCmyUbSXSHTPD4oq4hG",
+					"id": "toolu_01Rf5bqQVFqr6F3cPZt3SQLV",
 					"content": "Wrote file successfully.",
 					"is_error": false
 				},
@@ -845,10 +847,10 @@
 					"usage": {
 						"input": 1,
 						"output": 81,
-						"cache_read": 18160,
-						"cache_creation": 252
+						"cache_read": 18290,
+						"cache_creation": 122
 					},
-					"cost": 0.012685,
+					"cost": 0.0119375,
 					"duration": 0,
 					"sessionId": ""
 				},
@@ -857,11 +859,11 @@
 					"usage": {
 						"input": 1,
 						"output": 81,
-						"cache_read": 18160,
-						"cache_creation": 252
+						"cache_read": 18290,
+						"cache_creation": 122
 					},
-					"cost": 0.012685,
-					"duration": 2743,
+					"cost": 0.0119375,
+					"duration": 6308,
 					"sessionId": ""
 				},
 				{
@@ -880,16 +882,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509233118,
+							"updatedAt": 1774511129819,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -899,16 +901,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509233118,
+							"updatedAt": 1774511129819,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -917,12 +919,12 @@
 				{
 					"type": "delta",
 					"text": "Done",
-					"messageId": "msg_d28fe13cf0017SciY6Ny2Cxuxs"
+					"messageId": "msg_d291b04ce001jh31DQMyTGwrtC"
 				},
 				{
 					"type": "delta",
 					"text": ". `/tmp/e2e-test-diff.txt` now contains `hello world`.",
-					"messageId": "msg_d28fe13cf0017SciY6Ny2Cxuxs"
+					"messageId": "msg_d291b04ce001jh31DQMyTGwrtC"
 				},
 				{
 					"type": "result",
@@ -945,22 +947,22 @@
 						"cache_creation": 97
 					},
 					"cost": 0.01041725,
-					"duration": 3591,
+					"duration": 2680,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509236696,
+							"updatedAt": 1774511132488,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -974,15 +976,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509236696,
+							"updatedAt": 1774511132500,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -992,15 +994,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509236707,
+							"updatedAt": 1774511132500,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1010,15 +1012,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509236707,
+							"updatedAt": 1774511132500,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1049,15 +1051,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509237247,
+							"updatedAt": 1774511133010,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1067,16 +1069,70 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509237247,
+							"updatedAt": 1774511133010,
+							"messageCount": 0
+						},
+						{
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
+							"messageCount": 0
+						}
+					],
+					"roots": false
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "Create /tmp/e2e-test-diff.txt file",
+							"updatedAt": 1774511133010,
+							"messageCount": 0
+						},
+						{
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
+							"messageCount": 0
+						}
+					],
+					"roots": true
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "Create /tmp/e2e-test-diff.txt file",
+							"updatedAt": 1774511133010,
+							"messageCount": 0
+						},
+						{
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
+							"messageCount": 0
+						}
+					],
+					"roots": false
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "Create /tmp/e2e-test-diff.txt file",
+							"updatedAt": 1774511133010,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1090,72 +1146,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509237247,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
-							"messageCount": 0
-						}
-					],
-					"roots": false
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509237247,
+							"updatedAt": 1774511133010,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
-							"messageCount": 0
-						}
-					],
-					"roots": false
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509237247,
-							"messageCount": 0,
-							"processing": true
-						},
-						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
-							"messageCount": 0
-						}
-					],
-					"roots": true
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509237247,
-							"messageCount": 0,
-							"processing": true
-						},
-						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1163,12 +1163,12 @@
 				},
 				{
 					"type": "tool_start",
-					"id": "toolu_01Hiv3kvgW9tSC7MqNaomdHu",
+					"id": "toolu_017fz28LUh6y5kJRJvMDFHma",
 					"name": "Edit"
 				},
 				{
 					"type": "tool_executing",
-					"id": "toolu_01Hiv3kvgW9tSC7MqNaomdHu",
+					"id": "toolu_017fz28LUh6y5kJRJvMDFHma",
 					"name": "Edit",
 					"input": {
 						"filePath": "/tmp/e2e-test-diff.txt",
@@ -1178,7 +1178,7 @@
 				},
 				{
 					"type": "tool_executing",
-					"id": "toolu_01Hiv3kvgW9tSC7MqNaomdHu",
+					"id": "toolu_017fz28LUh6y5kJRJvMDFHma",
 					"name": "Edit",
 					"input": {
 						"filePath": "/tmp/e2e-test-diff.txt",
@@ -1199,7 +1199,7 @@
 				},
 				{
 					"type": "tool_result",
-					"id": "toolu_01Hiv3kvgW9tSC7MqNaomdHu",
+					"id": "toolu_017fz28LUh6y5kJRJvMDFHma",
 					"content": "Edit applied successfully.",
 					"is_error": false
 				},
@@ -1224,7 +1224,7 @@
 						"cache_creation": 51
 					},
 					"cost": 0.01208825,
-					"duration": 4851,
+					"duration": 3509,
 					"sessionId": ""
 				},
 				{
@@ -1243,16 +1243,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509242093,
+							"updatedAt": 1774511136528,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1262,16 +1262,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509242093,
+							"updatedAt": 1774511136528,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1280,12 +1280,12 @@
 				{
 					"type": "delta",
 					"text": "Done. The",
-					"messageId": "msg_d28fe36dc0018ste4z8Gs73fEX"
+					"messageId": "msg_d291b1f02001IPiaT645QmLtQH"
 				},
 				{
 					"type": "delta",
 					"text": " file now contains `goodbye world`.",
-					"messageId": "msg_d28fe36dc0018ste4z8Gs73fEX"
+					"messageId": "msg_d291b1f02001IPiaT645QmLtQH"
 				},
 				{
 					"type": "result",
@@ -1308,22 +1308,22 @@
 						"cache_creation": 117
 					},
 					"cost": 0.01034125,
-					"duration": 3361,
+					"duration": 11745,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245438,
+							"updatedAt": 1774511148261,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1337,15 +1337,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245438,
+							"updatedAt": 1774511148261,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1355,15 +1355,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245451,
+							"updatedAt": 1774511148273,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1373,15 +1373,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245451,
+							"updatedAt": 1774511148273,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1412,15 +1412,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245958,
+							"updatedAt": 1774511148824,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1430,70 +1430,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245958,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
-							"messageCount": 0
-						}
-					],
-					"roots": false
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245958,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
-							"messageCount": 0
-						}
-					],
-					"roots": true
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245958,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
-							"messageCount": 0
-						}
-					],
-					"roots": false
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
-							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245958,
+							"updatedAt": 1774511148824,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1507,16 +1453,72 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509245958,
+							"updatedAt": 1774511148824,
+							"messageCount": 0
+						},
+						{
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
+							"messageCount": 0
+						}
+					],
+					"roots": false
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "Create /tmp/e2e-test-diff.txt file",
+							"updatedAt": 1774511148824,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
+							"messageCount": 0
+						}
+					],
+					"roots": false
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "Create /tmp/e2e-test-diff.txt file",
+							"updatedAt": 1774511148824,
+							"messageCount": 0,
+							"processing": true
+						},
+						{
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
+							"messageCount": 0
+						}
+					],
+					"roots": true
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
+							"title": "Create /tmp/e2e-test-diff.txt file",
+							"updatedAt": 1774511148824,
+							"messageCount": 0,
+							"processing": true
+						},
+						{
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1524,12 +1526,12 @@
 				},
 				{
 					"type": "tool_start",
-					"id": "toolu_01UK6gynUjLHGCrpLs1gziG8",
+					"id": "toolu_01Xi8RjYnpk7ocL8yUbH1KZ3",
 					"name": "Read"
 				},
 				{
 					"type": "tool_executing",
-					"id": "toolu_01UK6gynUjLHGCrpLs1gziG8",
+					"id": "toolu_01Xi8RjYnpk7ocL8yUbH1KZ3",
 					"name": "Read",
 					"input": {
 						"filePath": "/tmp/e2e-test-diff.txt"
@@ -1537,7 +1539,7 @@
 				},
 				{
 					"type": "tool_result",
-					"id": "toolu_01UK6gynUjLHGCrpLs1gziG8",
+					"id": "toolu_01Xi8RjYnpk7ocL8yUbH1KZ3",
 					"content": "<path>/tmp/e2e-test-diff.txt</path>\n<type>file</type>\n<content>1: goodbye world\n\n(End of file - total 1 lines)\n</content>",
 					"is_error": false
 				},
@@ -1562,7 +1564,7 @@
 						"cache_creation": 34
 					},
 					"cost": 0.011166,
-					"duration": 8903,
+					"duration": 5474,
 					"sessionId": ""
 				},
 				{
@@ -1581,16 +1583,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509254870,
+							"updatedAt": 1774511154292,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1600,16 +1602,16 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509254870,
+							"updatedAt": 1774511154292,
 							"messageCount": 0,
 							"processing": true
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1617,23 +1619,23 @@
 				},
 				{
 					"type": "delta",
-					"text": "The file contains `goodbye",
-					"messageId": "msg_d28fe68c8001rNT5emIb3QXCtr"
+					"text": "The",
+					"messageId": "msg_d291b6466001mSis8e04fsRdex"
 				},
 				{
 					"type": "delta",
-					"text": " world`.",
-					"messageId": "msg_d28fe68c8001rNT5emIb3QXCtr"
+					"text": " file contains `goodbye world`.",
+					"messageId": "msg_d291b6466001mSis8e04fsRdex"
 				},
 				{
 					"type": "result",
 					"usage": {
 						"input": 1,
 						"output": 10,
-						"cache_read": 18688,
-						"cache_creation": 148
+						"cache_read": 18711,
+						"cache_creation": 125
 					},
-					"cost": 0.010524,
+					"cost": 0.01039175,
 					"duration": 0,
 					"sessionId": ""
 				},
@@ -1642,26 +1644,26 @@
 					"usage": {
 						"input": 1,
 						"output": 10,
-						"cache_read": 18688,
-						"cache_creation": 148
+						"cache_read": 18711,
+						"cache_creation": 125
 					},
-					"cost": 0.010524,
-					"duration": 2637,
+					"cost": 0.01039175,
+					"duration": 3434,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509257495,
+							"updatedAt": 1774511157714,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1675,15 +1677,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509257495,
+							"updatedAt": 1774511157714,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1693,15 +1695,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509257507,
+							"updatedAt": 1774511157725,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],
@@ -1711,15 +1713,15 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d702198dffelviAXpGwHCHro0",
+							"id": "ses_2d6e53ab7ffeq62uGZ6sNmkSB4",
 							"title": "Create /tmp/e2e-test-diff.txt file",
-							"updatedAt": 1774509257507,
+							"updatedAt": 1774511157725,
 							"messageCount": 0
 						},
 						{
-							"id": "ses_2d7022292ffeeODXeL5ExXnnZW",
-							"title": "New session - 2026-03-26T07:13:39.181Z",
-							"updatedAt": 1774509219181,
+							"id": "ses_2d6e543c2ffews7EBISsjGXo1A",
+							"title": "New session - 2026-03-26T07:45:11.229Z",
+							"updatedAt": 1774511111229,
 							"messageCount": 0
 						}
 					],

@@ -1,7 +1,7 @@
 {
 	"name": "chat-thinking",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T07:13:10.073Z",
+	"recordedAt": "2026-03-26T07:44:40.476Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
+			"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
 			"history": {
 				"messages": [],
 				"hasMore": false,
@@ -33,9 +33,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-					"title": "New session - 2026-03-26T07:12:23.435Z",
-					"updatedAt": 1774509143435,
+					"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+					"title": "New session - 2026-03-26T07:44:24.400Z",
+					"updatedAt": 1774511064400,
 					"messageCount": 0
 				}
 			],
@@ -45,9 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-					"title": "New session - 2026-03-26T07:12:23.435Z",
-					"updatedAt": 1774509143435,
+					"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+					"title": "New session - 2026-03-26T07:44:24.400Z",
+					"updatedAt": 1774511064400,
 					"messageCount": 0
 				}
 			],
@@ -485,15 +485,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "New session - 2026-03-26T07:12:25.742Z",
-							"updatedAt": 1774509146754,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511066759,
 							"messageCount": 0
 						}
 					],
@@ -503,15 +497,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "New session - 2026-03-26T07:12:25.742Z",
-							"updatedAt": 1774509146754,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511066759,
 							"messageCount": 0
 						}
 					],
@@ -521,15 +509,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "New session - 2026-03-26T07:12:25.742Z",
-							"updatedAt": 1774509146754,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511066759,
 							"messageCount": 0
 						}
 					],
@@ -539,15 +521,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "New session - 2026-03-26T07:12:25.742Z",
-							"updatedAt": 1774509146754,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511066759,
 							"messageCount": 0
 						}
 					],
@@ -557,17 +533,11 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "New session - 2026-03-26T07:12:25.742Z",
-							"updatedAt": 1774509146754,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511066759,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
-							"messageCount": 0
 						}
 					],
 					"roots": true
@@ -580,55 +550,11 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "New session - 2026-03-26T07:12:25.742Z",
-							"updatedAt": 1774509146754,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511066759,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
-							"messageCount": 0
-						}
-					],
-					"roots": false
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "Agentic AI context management essay",
-							"updatedAt": 1774509146754,
-							"messageCount": 0,
-							"processing": true
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
-							"messageCount": 0
-						}
-					],
-					"roots": true
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "Agentic AI context management essay",
-							"updatedAt": 1774509146754,
-							"messageCount": 0,
-							"processing": true
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
-							"messageCount": 0
 						}
 					],
 					"roots": false
@@ -638,309 +564,203 @@
 				},
 				{
 					"type": "thinking_delta",
-					"text": "The user wants me to think about and write a 300-word essay on agentic AI context management. This is a writing/",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": "The",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "thinking_delta",
-					"text": "thinking task, not a coding task. Let me just think",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": " user is asking me to write a 300 word essay on agentic AI context management. This is a creative/informational writing task, not a coding task. Let",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " about this carefully and write a well-crafted essay.\n\nLet me think",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": " me think about this topic and write an essay.\n\nAgentic AI context management refers to how autonomous AI",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " about what makes a good essay on this topic:\n\n1. **What is agentic AI context management?** - It",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": " agents maintain, update, and utilize context during extended interactions or tasks. This is an important topic in AI systems",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "thinking_delta",
-					"text": "'s about how AI agents manage their limited context windows while performing complex,",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " multi-step tasks. This includes deciding what information to keep, what to summarize, what to discard, and how",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " to structure working memory.\n",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "\n\n2",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": ". **Key tensions:** There's a fundamental conflict between finite context windows and arbitrarily complex tasks,",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " and I need to balance having enough information for accuracy against the",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " dilution that comes from too much context. Agents face a trade-off between breadth and depth,",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " and they need to actively manage context rather than just passively accumulate it.\n3. **Style considerations:** The user wants",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " something thoughtful and substantive rather than rushed or superficial, and with only 300 words, every sentence has to count",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " and demonstrate real understanding of the topic.",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "\n\nNow",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " I'm working through the core argument about context management as the",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " actual bottleneck in agentic AI—the idea that naive accumulation fails because attention",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " dilutes even when information is available, and that effective agents need specific",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " capabilities to handle this constraint.",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " that",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "'s the real constraint—context fills up fast, and once",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " it's full, you're either dropping information or paying exponentially for",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " retrieval. The solution isn't a bigger window; it's treating",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " attention as finite and designing around that scarcity through strategic retrieval, aggressive summarization of",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " completed work, and delegating bounded tasks to fresh sub-agents. This mirrors how experienced engineers actually think—they don't memor",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "ize entire systems, they build layered mental models, know where to find things, and ruthlessly focus on what matters for the current problem.",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " The agents that will win aren't the ones with the largest context windows,",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " but the ones that use them most deliberately.",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " The",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " naive approach of just accumulating everything breaks down fast—",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "a massive context window feels spacious until you're juggling multiple",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " source files, documentation, and test suites, at which point the sheer volume starts",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " degrading performance rather than improving it.",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "\n\nEffective context management really",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " comes down to three key capabilities: first, being strategic about what to retrieve by understanding the problem space",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " before diving into search, rather than just grepping blindly; second, ag",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "gressively summarizing completed work into compact representations that capture decisions and outcomes without keeping all the raw details around.",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "\n\nThird",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " is delegating bounded subtasks to fresh sub-agents with clean contexts, then pulling back only what matters",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " from their conclusions. What strikes me is how much this mirrors how experienced",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " engineers actually work—they don't memorize entire systems, they build mental models at different levels of abstraction and know",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " exactly where to look things up. The real advantage won't come from agents",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " with massive context windows, but from those that treat attention as the precious resource it actually is and use their windows with",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " real intentionality.",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": " design.\n\nLet me write this essay now.",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "thinking_delta",
 					"text": "",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "thinking_stop"
 				},
 				{
 					"type": "delta",
-					"text": "The context window is the bottleneck of agentic AI. An agent that can browse files, run commands, and edit code across a large codebase",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": "# Agentic AI Context Management\n\nAgentic AI systems—aut",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "delta",
-					"text": " operates under a fundamental constraint: it can only attend to a fraction of the information relevant to its task at any moment. Context management -- the discipline of deciding what enters, persists in, and exits the agent's working memory -- is what separates effective agents from expensive autocomplete.\n\nThe",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": "onomous agents capable of reasoning, planning, and executing multi-step tasks—face a fundamental challenge: maintaining",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "delta",
-					"text": " naive approach is accumulation: read everything, keep everything. This fails quickly. A 200,000-token window sounds generous until you've read fifteen source files, three stack traces, and a test suite. The context fills, attention dilutes, and the agent begins making errors not from ignorance but from dist",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": " coherent context across extended operations. Unlike simple request-response interactions, agentic workflows require persistent,",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "delta",
-					"text": "raction. The problem isn't insufficient information -- it's insufficient curation.\n\nEffective context management requires three capabilities. First, *strategic retrieval*: knowing what to look for before looking, and searching with precision rather than breadth. An agent that greps the entire c",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": " evolving awareness of goals, intermediate states, and environmental feedback.\n\n## The Core Challenge\n\n",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "delta",
-					"text": "odebase for a keyword is doing less work than one that reads the architecture document first and navigates directly to the relevant module. Second, *aggressive summarization*: compressing completed subtasks into compact representations that preserve decisions and outcomes without retaining raw material. The agent doesn't need the full diff after a ref",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": "Context management for agentic systems spans multiple dimensions. **Working memory** must track the current",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "delta",
-					"text": "actor -- it needs to know what changed and why. Third, *hierarchical delegation*: offloading bounded subtasks to fresh sub-agents with clean contexts, then integrating only their conclusions.\n\nThe deeper insight is that context management mirrors how skilled engineers think. A senior developer doesn't hold an entire system",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": " task state—what's been attempted, what's succeeded, what remains. **Semantic context",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "delta",
-					"text": " in their head. They build mental models at varying levels of abstraction, know where to look things up, and ruthlessly prioritize what matters for the current task. The best agentic systems will not be those with the largest context windows, but those that use their windows most deliberately -- treating attention as the scar",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": "** preserves the meaning and intent behind user requests, preventing the system from losing sight of the broader objective",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "delta",
-					"text": "ce resource it is.",
-					"messageId": "msg_d28fcc27c001clxwEcmP196OcR"
+					"text": " amid granular subtasks. **Episodic memory** enables the agent to recall prior interactions within",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " a session, building toward cumulative understanding rather than treating each exchange as isolated.\n\nTraditional approaches",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " relied on fixed context windows, but this creates artificial boundaries. An agent working",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " on a complex codebase can't meaningfully contribute if it can only see the most recent messages. The solution lies",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " in architectural patterns that treat context as a first-class concern: hierarchical memory systems, selective",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " retrieval mechanisms, and explicit state management.\n\n## Architectural Approaches\n\nEffective context management typically employs a",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " layered strategy. The **immediate layer** handles the active conversation window—what's",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " currently in focus. A **retrieval layer** pulls relevant historical information on demand, using embeddings",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " or structured queries to surface pertinent past context. A **summarization layer** compresses older information into distilled",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " forms, preserving essential patterns without overwhelming the working context.\n\nSome systems implement **",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": "checkpointing**—periodically saving structured representations of agent state that can be restored or consulted later. Others use",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " **tool-augmented memory**, where the agent itself decides what to remember by writing to external stores",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": ".\n\n## The Attention Problem\n\nPerhaps the most sophisticated aspect of agentic context management is determining *",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": "what matters*. An agent processing a codebase across hundreds of files can't treat",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " all information equally. Attention mechanisms—whether learned or heuristic—help the",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " agent focus on contextually relevant signals while filtering noise.\n\nThe future",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " of agentic AI context management lies in systems that are **proactively self-aware**",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": "—continuously evaluating what context to maintain, what to discard, and what to synthesize. The goal",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " isn't more context, but *better* context: precise, actionable, and aligned with the",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
+				},
+				{
+					"type": "delta",
+					"text": " task at hand.",
+					"messageId": "msg_d291a0e7b001wN0a7JTMDtdVV5"
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 3,
-						"output": 3122,
-						"cache_read": 17817,
-						"cache_creation": 355
+						"input": 70,
+						"output": 549,
+						"cache_read": 510,
+						"cache_creation": 16472
 					},
-					"cost": 0.08919225,
+					"cost": 0,
 					"duration": 0,
 					"sessionId": ""
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 3,
-						"output": 3122,
-						"cache_read": 17817,
-						"cache_creation": 355
+						"input": 70,
+						"output": 549,
+						"cache_read": 510,
+						"cache_creation": 16472
 					},
-					"cost": 0.08919225,
-					"duration": 42812,
+					"cost": 0,
+					"duration": 13217,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "Agentic AI context management essay",
-							"updatedAt": 1774509189562,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511079967,
 							"messageCount": 0
 						}
 					],
@@ -954,15 +774,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "Agentic AI context management essay",
-							"updatedAt": 1774509189562,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511079967,
 							"messageCount": 0
 						}
 					],
@@ -972,15 +786,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "Agentic AI context management essay",
-							"updatedAt": 1774509189574,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511079980,
 							"messageCount": 0
 						}
 					],
@@ -990,15 +798,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d7034171ffeMzU76aoyTTv387",
-							"title": "Agentic AI context management essay",
-							"updatedAt": 1774509189574,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d7034a74ffeijmanRHyy1JrmE",
-							"title": "New session - 2026-03-26T07:12:23.435Z",
-							"updatedAt": 1774509143435,
+							"id": "ses_2d6e5fab0ffer8WJQ47Pl0G5j0",
+							"title": "New session - 2026-03-26T07:44:24.400Z",
+							"updatedAt": 1774511079980,
 							"messageCount": 0
 						}
 					],

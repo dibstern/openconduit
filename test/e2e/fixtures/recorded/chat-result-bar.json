@@ -1,7 +1,7 @@
 {
 	"name": "chat-result-bar",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T07:11:58.557Z",
+	"recordedAt": "2026-03-26T07:44:01.764Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
+			"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
 			"history": {
 				"messages": [],
 				"hasMore": false,
@@ -33,9 +33,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-					"title": "New session - 2026-03-26T07:11:51.438Z",
-					"updatedAt": 1774509111438,
+					"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+					"title": "New session - 2026-03-26T07:43:56.752Z",
+					"updatedAt": 1774511036752,
 					"messageCount": 0
 				}
 			],
@@ -45,9 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-					"title": "New session - 2026-03-26T07:11:51.438Z",
-					"updatedAt": 1774509111438,
+					"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+					"title": "New session - 2026-03-26T07:43:56.752Z",
+					"updatedAt": 1774511036752,
 					"messageCount": 0
 				}
 			],
@@ -485,15 +485,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "New session - 2026-03-26T07:11:53.746Z",
-							"updatedAt": 1774509114757,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "New session - 2026-03-26T07:43:56.752Z",
+							"updatedAt": 1774511039090,
 							"messageCount": 0
 						}
 					],
@@ -503,15 +497,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "New session - 2026-03-26T07:11:53.746Z",
-							"updatedAt": 1774509114757,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "New session - 2026-03-26T07:43:56.752Z",
+							"updatedAt": 1774511039090,
 							"messageCount": 0
 						}
 					],
@@ -521,15 +509,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "New session - 2026-03-26T07:11:53.746Z",
-							"updatedAt": 1774509114757,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "New session - 2026-03-26T07:43:56.752Z",
+							"updatedAt": 1774511039090,
 							"messageCount": 0
 						}
 					],
@@ -539,15 +521,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "New session - 2026-03-26T07:11:53.746Z",
-							"updatedAt": 1774509114757,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "New session - 2026-03-26T07:43:56.752Z",
+							"updatedAt": 1774511039090,
 							"messageCount": 0
 						}
 					],
@@ -557,17 +533,11 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "New session - 2026-03-26T07:11:53.746Z",
-							"updatedAt": 1774509114757,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "New session - 2026-03-26T07:43:56.752Z",
+							"updatedAt": 1774511039090,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
-							"messageCount": 0
 						}
 					],
 					"roots": true
@@ -580,17 +550,11 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "New session - 2026-03-26T07:11:53.746Z",
-							"updatedAt": 1774509114757,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "New session - 2026-03-26T07:43:56.752Z",
+							"updatedAt": 1774511039090,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
-							"messageCount": 0
 						}
 					],
 					"roots": false
@@ -599,17 +563,11 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "ok",
-							"updatedAt": 1774509114757,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "Conversation: reply with just the word ok",
+							"updatedAt": 1774511039090,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
-							"messageCount": 0
 						}
 					],
 					"roots": true
@@ -618,63 +576,72 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "ok",
-							"updatedAt": 1774509114757,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "Conversation: reply with just the word ok",
+							"updatedAt": 1774511039090,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
-							"messageCount": 0
 						}
 					],
 					"roots": false
 				},
 				{
+					"type": "thinking_start"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "The",
+					"messageId": "msg_d2919a260001TVAukw7ev1LGxa"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " user wants me to reply with just the word 'ok'. Nothing else.",
+					"messageId": "msg_d2919a260001TVAukw7ev1LGxa"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "",
+					"messageId": "msg_d2919a260001TVAukw7ev1LGxa"
+				},
+				{
+					"type": "thinking_stop"
+				},
+				{
 					"type": "delta",
 					"text": "ok",
-					"messageId": "msg_d28fc4580001vOx02lZU6cnwTl"
+					"messageId": "msg_d2919a260001TVAukw7ev1LGxa"
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 3,
-						"output": 4,
-						"cache_read": 17817,
-						"cache_creation": 331
+						"input": 70,
+						"output": 21,
+						"cache_read": 510,
+						"cache_creation": 16450
 					},
-					"cost": 0.01109225,
+					"cost": 0,
 					"duration": 0,
 					"sessionId": ""
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 3,
-						"output": 4,
-						"cache_read": 17817,
-						"cache_creation": 331
+						"input": 70,
+						"output": 21,
+						"cache_read": 510,
+						"cache_creation": 16450
 					},
-					"cost": 0.01109225,
-					"duration": 3292,
+					"cost": 0,
+					"duration": 2180,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "ok",
-							"updatedAt": 1774509118045,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "Conversation: reply with just the word ok",
+							"updatedAt": 1774511041255,
 							"messageCount": 0
 						}
 					],
@@ -688,15 +655,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "ok",
-							"updatedAt": 1774509118045,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "Conversation: reply with just the word ok",
+							"updatedAt": 1774511041255,
 							"messageCount": 0
 						}
 					],
@@ -706,15 +667,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "ok",
-							"updatedAt": 1774509118057,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "Conversation: reply with just the word ok",
+							"updatedAt": 1774511041269,
 							"messageCount": 0
 						}
 					],
@@ -724,15 +679,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d703be6dffeZszZVJ4a0GJf20",
-							"title": "ok",
-							"updatedAt": 1774509118057,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d703c771ffegCSzKOvbQoMZ8L",
-							"title": "New session - 2026-03-26T07:11:51.438Z",
-							"updatedAt": 1774509111438,
+							"id": "ses_2d6e666afffeoT5CevZQJp3Fsi",
+							"title": "Conversation: reply with just the word ok",
+							"updatedAt": 1774511041269,
 							"messageCount": 0
 						}
 					],
