@@ -890,24 +890,16 @@ describe("resolveSessionHistory — repaired cold cache regression", () => {
 			messageCache: {
 				getEvents: vi.fn().mockReturnValue(repairedEvents),
 			},
-			client: {
-				getMessages: vi.fn().mockResolvedValue([]),
-				getMessageCount: vi.fn().mockResolvedValue(6),
-			},
-			sessionMgr: {
-				loadPreRenderedHistory: vi.fn().mockResolvedValue({
-					messages: [{ id: "m1", role: "user" as const, parts: [] }],
-					hasMore: false,
-				}),
-			},
+			// Return 6 messages — more than the 5 unique in cache
+			client: { getMessages: vi.fn().mockResolvedValue(fakeMessages(6)) },
 		});
 
-		const source = await resolveSessionHistory("ses_repaired", deps);
+		const result = await resolveSessionHistory("ses_repaired", deps);
 
 		// countUniqueMessages: 3 user_messages + 2 messageIds (msg_1, msg_2) = 5
-		// actualCount: 6
+		// getMessages returns 6
 		// 5 < 6 → stale → falls back to REST
-		expect(source.kind).toBe("rest-history");
+		expect(result.source.kind).toBe("rest-history");
 	});
 
 	it("falls back to REST when repair removed ALL streaming events (only user_messages remain)", async () => {
@@ -926,22 +918,14 @@ describe("resolveSessionHistory — repaired cold cache regression", () => {
 			messageCache: {
 				getEvents: vi.fn().mockReturnValue(repairedEvents),
 			},
-			client: {
-				getMessages: vi.fn().mockResolvedValue([]),
-				getMessageCount: vi.fn().mockResolvedValue(4),
-			},
-			sessionMgr: {
-				loadPreRenderedHistory: vi.fn().mockResolvedValue({
-					messages: [{ id: "m1", role: "user" as const, parts: [] }],
-					hasMore: false,
-				}),
-			},
+			// Return 4 messages — more than the 2 unique in cache
+			client: { getMessages: vi.fn().mockResolvedValue(fakeMessages(4)) },
 		});
 
-		const source = await resolveSessionHistory("ses_all_removed", deps);
+		const result = await resolveSessionHistory("ses_all_removed", deps);
 
-		// countUniqueMessages: 2, actualCount: 4 → 2 < 4 → REST fallback
-		expect(source.kind).toBe("rest-history");
+		// countUniqueMessages: 2, getMessages returns 4 → 2 < 4 → REST fallback
+		expect(result.source.kind).toBe("rest-history");
 	});
 
 	it("serves cache when repair removed events without messageId (staleness check still passes)", async () => {
@@ -967,19 +951,16 @@ describe("resolveSessionHistory — repaired cold cache regression", () => {
 			messageCache: {
 				getEvents: vi.fn().mockReturnValue(repairedEvents),
 			},
-			client: {
-				getMessages: vi.fn().mockResolvedValue([]),
-				// REST count: 2 user + 1 complete assistant = 3.
-				// Incomplete assistant wasn't persisted in OpenCode before crash.
-				getMessageCount: vi.fn().mockResolvedValue(3),
-			},
+			// Return 3 messages — matches the 3 unique in cache
+			// (2 user_messages + 1 messageId = 3, getMessages returns 3 → passes)
+			client: { getMessages: vi.fn().mockResolvedValue(fakeMessages(3)) },
 		});
 
-		const source = await resolveSessionHistory("ses_safe_pass", deps);
+		const result = await resolveSessionHistory("ses_safe_pass", deps);
 
 		// countUniqueMessages: 2 user_messages + 1 messageId (msg_1) = 3
-		// actualCount: 3
+		// getMessages returns 3
 		// 3 >= 3 → passes → serves cache (this is correct — the incomplete data was removed)
-		expect(source.kind).toBe("cached-events");
+		expect(result.source.kind).toBe("cached-events");
 	});
 });
