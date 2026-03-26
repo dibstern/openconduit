@@ -1,7 +1,7 @@
 {
 	"name": "fork-session",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T10:15:43.779Z",
+	"recordedAt": "2026-03-26T11:06:51.738Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
+			"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
 			"history": {
 				"messages": [],
 				"hasMore": false,
@@ -26,16 +26,16 @@
 		},
 		{
 			"type": "model_info",
-			"model": "big-pickle",
-			"provider": "opencode"
+			"model": "claude-opus-4-6",
+			"provider": "anthropic"
 		},
 		{
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-					"title": "New session - 2026-03-26T10:15:32.806Z",
-					"updatedAt": 1774520132806,
+					"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+					"title": "New session - 2026-03-26T11:06:32.746Z",
+					"updatedAt": 1774523192746,
 					"messageCount": 0
 				}
 			],
@@ -45,9 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-					"title": "New session - 2026-03-26T10:15:32.806Z",
-					"updatedAt": 1774520132806,
+					"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+					"title": "New session - 2026-03-26T11:06:32.746Z",
+					"updatedAt": 1774523192746,
 					"messageCount": 0
 				}
 			],
@@ -444,8 +444,10 @@
 		},
 		{
 			"type": "variant_info",
-			"variant": "",
+			"variant": "max",
 			"variants": [
+				"low",
+				"medium",
 				"high",
 				"max"
 			]
@@ -485,9 +487,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "New session - 2026-03-26T10:15:32.806Z",
-							"updatedAt": 1774520135122,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "New session - 2026-03-26T11:06:32.746Z",
+							"updatedAt": 1774523195097,
 							"messageCount": 0
 						}
 					],
@@ -497,9 +499,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "New session - 2026-03-26T10:15:32.806Z",
-							"updatedAt": 1774520135122,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "New session - 2026-03-26T11:06:32.746Z",
+							"updatedAt": 1774523195097,
 							"messageCount": 0
 						}
 					],
@@ -509,9 +511,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "New session - 2026-03-26T10:15:32.806Z",
-							"updatedAt": 1774520135122,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "New session - 2026-03-26T11:06:32.746Z",
+							"updatedAt": 1774523195097,
 							"messageCount": 0
 						}
 					],
@@ -521,9 +523,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "New session - 2026-03-26T10:15:32.806Z",
-							"updatedAt": 1774520135122,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "New session - 2026-03-26T11:06:32.746Z",
+							"updatedAt": 1774523195097,
 							"messageCount": 0
 						}
 					],
@@ -533,9 +535,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "New session - 2026-03-26T10:15:32.806Z",
-							"updatedAt": 1774520135122,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "New session - 2026-03-26T11:06:32.746Z",
+							"updatedAt": 1774523195097,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -550,9 +552,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "New session - 2026-03-26T10:15:32.806Z",
-							"updatedAt": 1774520135122,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "New session - 2026-03-26T11:06:32.746Z",
+							"updatedAt": 1774523195097,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -563,9 +565,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520135122,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523195097,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -576,9 +578,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520135122,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523195097,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -586,62 +588,46 @@
 					"roots": false
 				},
 				{
-					"type": "thinking_start"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "The",
-					"messageId": "msg_d29a46dcd001hk3K8Qr2XF5Vow"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " user wants me to remember the word \"alpha\" and respond with only \"ok, remembered.\"",
-					"messageId": "msg_d29a46dcd001hk3K8Qr2XF5Vow"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "",
-					"messageId": "msg_d29a46dcd001hk3K8Qr2XF5Vow"
-				},
-				{
-					"type": "thinking_stop"
+					"type": "delta",
+					"text": "ok",
+					"messageId": "msg_d29d31ebf001oKpNqqbBvjigLa"
 				},
 				{
 					"type": "delta",
-					"text": "ok, remembered.",
-					"messageId": "msg_d29a46dcd001hk3K8Qr2XF5Vow"
+					"text": ", remembered.",
+					"messageId": "msg_d29d31ebf001oKpNqqbBvjigLa"
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 70,
-						"output": 28,
-						"cache_read": 510,
-						"cache_creation": 16453
+						"input": 3,
+						"output": 7,
+						"cache_read": 17817,
+						"cache_creation": 334
 					},
-					"cost": 0,
+					"cost": 0.011186,
 					"duration": 0,
 					"sessionId": ""
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 70,
-						"output": 28,
-						"cache_read": 510,
-						"cache_creation": 16453
+						"input": 3,
+						"output": 7,
+						"cache_read": 17817,
+						"cache_creation": 334
 					},
-					"cost": 0,
-					"duration": 1927,
+					"cost": 0.011186,
+					"duration": 3523,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137046,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523198597,
 							"messageCount": 0
 						}
 					],
@@ -655,9 +641,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137046,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523198617,
 							"messageCount": 0
 						}
 					],
@@ -667,9 +653,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137057,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523198617,
 							"messageCount": 0
 						}
 					],
@@ -679,9 +665,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137057,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523198617,
 							"messageCount": 0
 						}
 					],
@@ -712,9 +698,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137562,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523199120,
 							"messageCount": 0
 						}
 					],
@@ -724,9 +710,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137562,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523199120,
 							"messageCount": 0
 						}
 					],
@@ -736,9 +722,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137562,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523199120,
 							"messageCount": 0
 						}
 					],
@@ -748,9 +734,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137562,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523199120,
 							"messageCount": 0
 						}
 					],
@@ -760,9 +746,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137562,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523199120,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -777,9 +763,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520137562,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523199120,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -787,62 +773,46 @@
 					"roots": false
 				},
 				{
-					"type": "thinking_start"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "The",
-					"messageId": "msg_d29a47756001fFZLehOUi31xCN"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " user wants me to remember the word 'beta' in addition to 'alpha'. I'll just acknowledge this.",
-					"messageId": "msg_d29a47756001fFZLehOUi31xCN"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "",
-					"messageId": "msg_d29a47756001fFZLehOUi31xCN"
-				},
-				{
-					"type": "thinking_stop"
+					"type": "delta",
+					"text": "ok",
+					"messageId": "msg_d29d32e8b0016hxz3lTflIbkne"
 				},
 				{
 					"type": "delta",
-					"text": "ok, remembered.",
-					"messageId": "msg_d29a47756001fFZLehOUi31xCN"
+					"text": ", remembered.",
+					"messageId": "msg_d29d32e8b0016hxz3lTflIbkne"
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 70,
-						"output": 30,
-						"cache_read": 16944,
-						"cache_creation": 48
+						"input": 3,
+						"output": 7,
+						"cache_read": 18151,
+						"cache_creation": 26
 					},
-					"cost": 0,
+					"cost": 0.009428,
 					"duration": 0,
 					"sessionId": ""
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 70,
-						"output": 30,
-						"cache_read": 16944,
-						"cache_creation": 48
+						"input": 3,
+						"output": 7,
+						"cache_read": 18151,
+						"cache_creation": 26
 					},
-					"cost": 0,
-					"duration": 1791,
+					"cost": 0.009428,
+					"duration": 6025,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139351,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205143,
 							"messageCount": 0
 						}
 					],
@@ -856,9 +826,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139351,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -868,9 +838,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -880,9 +850,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -913,17 +883,17 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520141396,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523207209,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF"
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d"
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -933,17 +903,17 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520141396,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523207209,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF"
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d"
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -953,17 +923,17 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520141396,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523207209,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF"
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d"
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -973,17 +943,17 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520141396,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523207209,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF"
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d"
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -993,18 +963,18 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520141396,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523207209,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF",
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d",
 							"processing": true
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -1018,88 +988,72 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520141396,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523207209,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF",
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d",
 							"processing": true
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
 					"roots": false
 				},
 				{
-					"type": "thinking_start"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "The",
-					"messageId": "msg_d29a4864e001tHgpbM5icJKAyK"
-				},
-				{
-					"type": "thinking_delta",
-					"text": " user asked me to remember \"alpha\" and then \"beta\". I should list both words.",
-					"messageId": "msg_d29a4864e001tHgpbM5icJKAyK"
-				},
-				{
-					"type": "thinking_delta",
-					"text": "",
-					"messageId": "msg_d29a4864e001tHgpbM5icJKAyK"
-				},
-				{
-					"type": "thinking_stop"
+					"type": "delta",
+					"text": "alpha",
+					"messageId": "msg_d29d34e25001TjDYgWLYWK8y0W"
 				},
 				{
 					"type": "delta",
-					"text": "alpha, beta",
-					"messageId": "msg_d29a4864e001tHgpbM5icJKAyK"
+					"text": ", beta",
+					"messageId": "msg_d29d34e25001TjDYgWLYWK8y0W"
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 70,
-						"output": 27,
-						"cache_read": 510,
-						"cache_creation": 16511
+						"input": 3,
+						"output": 6,
+						"cache_read": 18177,
+						"cache_creation": 25
 					},
-					"cost": 0,
+					"cost": 0.00940975,
 					"duration": 0,
 					"sessionId": ""
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 70,
-						"output": 27,
-						"cache_read": 510,
-						"cache_creation": 16511
+						"input": 3,
+						"output": 6,
+						"cache_read": 18177,
+						"cache_creation": 25
 					},
-					"cost": 0,
-					"duration": 1878,
+					"cost": 0.00940975,
+					"duration": 4007,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520143270,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523211214,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF"
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d"
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -1113,17 +1067,17 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520143270,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523211229,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF"
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d"
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -1133,17 +1087,17 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520143282,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523211229,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF"
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d"
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
@@ -1153,17 +1107,17 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65b7fa7ffeil5DM1QowRtd6S",
-							"title": "Conversation: memory cue for word alpha (fork #1)",
-							"updatedAt": 1774520143282,
+							"id": "ses_2d62cb7d8ffeJfYsbyskKeraQO",
+							"title": "Memory test: alpha (fork #1)",
+							"updatedAt": 1774523211229,
 							"messageCount": 0,
-							"parentID": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"forkMessageId": "msg_d29a48059009Ih8eTZK1uXpiDF"
+							"parentID": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"forkMessageId": "msg_d29d34829008Tb0q8inARnEU8d"
 						},
 						{
-							"id": "ses_2d65b9b39ffeI3vhjmC9TPD6pA",
-							"title": "Conversation: memory cue for word alpha",
-							"updatedAt": 1774520139363,
+							"id": "ses_2d62cea55ffeNSexrzpRxUaLdw",
+							"title": "Memory test: alpha",
+							"updatedAt": 1774523205164,
 							"messageCount": 0
 						}
 					],
