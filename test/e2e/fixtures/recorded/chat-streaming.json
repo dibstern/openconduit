@@ -1,7 +1,7 @@
 {
 	"name": "chat-streaming",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T07:44:23.419Z",
+	"recordedAt": "2026-03-26T10:13:25.680Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
+			"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
 			"history": {
 				"messages": [],
 				"hasMore": false,
@@ -33,9 +33,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-					"title": "New session - 2026-03-26T07:44:16.313Z",
-					"updatedAt": 1774511056313,
+					"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+					"title": "New session - 2026-03-26T10:13:19.311Z",
+					"updatedAt": 1774519999311,
 					"messageCount": 0
 				}
 			],
@@ -45,9 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-					"title": "New session - 2026-03-26T07:44:16.313Z",
-					"updatedAt": 1774511056313,
+					"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+					"title": "New session - 2026-03-26T10:13:19.311Z",
+					"updatedAt": 1774519999311,
 					"messageCount": 0
 				}
 			],
@@ -485,9 +485,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-							"title": "New session - 2026-03-26T07:44:16.313Z",
-							"updatedAt": 1774511058635,
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+							"title": "New session - 2026-03-26T10:13:19.311Z",
+							"updatedAt": 1774520001625,
 							"messageCount": 0
 						}
 					],
@@ -497,9 +497,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-							"title": "New session - 2026-03-26T07:44:16.313Z",
-							"updatedAt": 1774511058635,
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+							"title": "New session - 2026-03-26T10:13:19.311Z",
+							"updatedAt": 1774520001625,
 							"messageCount": 0
 						}
 					],
@@ -509,9 +509,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-							"title": "New session - 2026-03-26T07:44:16.313Z",
-							"updatedAt": 1774511058635,
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+							"title": "New session - 2026-03-26T10:13:19.311Z",
+							"updatedAt": 1774520001625,
 							"messageCount": 0
 						}
 					],
@@ -521,9 +521,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-							"title": "New session - 2026-03-26T07:44:16.313Z",
-							"updatedAt": 1774511058635,
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+							"title": "New session - 2026-03-26T10:13:19.311Z",
+							"updatedAt": 1774520001625,
 							"messageCount": 0
 						}
 					],
@@ -533,9 +533,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-							"title": "New session - 2026-03-26T07:44:16.313Z",
-							"updatedAt": 1774511058635,
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+							"title": "New session - 2026-03-26T10:13:19.311Z",
+							"updatedAt": 1774520001625,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -550,35 +550,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-							"title": "New session - 2026-03-26T07:44:16.313Z",
-							"updatedAt": 1774511058635,
-							"messageCount": 0,
-							"processing": true
-						}
-					],
-					"roots": false
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-							"title": "Automated testing importance for software quality",
-							"updatedAt": 1774511058635,
-							"messageCount": 0,
-							"processing": true
-						}
-					],
-					"roots": true
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
-							"title": "Automated testing importance for software quality",
-							"updatedAt": 1774511058635,
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+							"title": "New session - 2026-03-26T10:13:19.311Z",
+							"updatedAt": 1774520001625,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -591,56 +565,77 @@
 				{
 					"type": "thinking_delta",
 					"text": "The",
-					"messageId": "msg_d2919eec5001yPutSomCV6kOeO"
+					"messageId": "msg_d29a26455001lyWL0CebgxyZdM"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " user is asking me to write a paragraph explaining why automated testing is important for software quality. This is a straightforward knowledge-based question that doesn't require any",
-					"messageId": "msg_d2919eec5001yPutSomCV6kOeO"
+					"text": " user is asking me to write a paragraph about automated testing. This is a general knowledge question that doesn't require any tools - I can answer this directly based on",
+					"messageId": "msg_d29a26455001lyWL0CebgxyZdM"
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+							"title": "Automated testing importance for software quality",
+							"updatedAt": 1774520003489,
+							"messageCount": 0,
+							"processing": true
+						}
+					],
+					"roots": true
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
+							"title": "Automated testing importance for software quality",
+							"updatedAt": 1774520003489,
+							"messageCount": 0,
+							"processing": true
+						}
+					],
+					"roots": false
 				},
 				{
 					"type": "thinking_delta",
-					"text": " tools or skills - it's general knowledge about software engineering.",
-					"messageId": "msg_d2919eec5001yPutSomCV6kOeO"
+					"text": " my knowledge.",
+					"messageId": "msg_d29a26455001lyWL0CebgxyZdM"
 				},
 				{
 					"type": "thinking_delta",
 					"text": "",
-					"messageId": "msg_d2919eec5001yPutSomCV6kOeO"
+					"messageId": "msg_d29a26455001lyWL0CebgxyZdM"
 				},
 				{
 					"type": "thinking_stop"
 				},
 				{
 					"type": "delta",
-					"text": "Automated testing is important because it catches bugs early, before code",
-					"messageId": "msg_d2919eec5001yPutSomCV6kOeO"
+					"text": "Automated testing is essential for software quality because it ensures code correctness is continuously verified rather than relying on sporadic",
+					"messageId": "msg_d29a26455001lyWL0CebgxyZdM"
 				},
 				{
 					"type": "delta",
-					"text": " reaches production, reducing the cost and effort of fixing issues. It ensures that changes don't break existing functionality,",
-					"messageId": "msg_d2919eec5001yPutSomCV6kOeO"
+					"text": " manual checks. It catches regressions early, allowing developers to refactor with confidence and ship changes",
+					"messageId": "msg_d29a26455001lyWL0CebgxyZdM"
 				},
 				{
 					"type": "delta",
-					"text": " providing confidence during refactoring and continuous integration. Tests serve as living documentation of expected behavior, making codebases easier to understand and maintain",
-					"messageId": "msg_d2919eec5001yPutSomCV6kOeO"
+					"text": " faster. Tests serve as living documentation of expected behavior, making codebases easier to understand and maintain. They also reduce human error in repetitive",
+					"messageId": "msg_d29a26455001lyWL0CebgxyZdM"
 				},
 				{
 					"type": "delta",
-					"text": ". Finally, automated tests run consistently and frequently, something manual testing cannot scale",
-					"messageId": "msg_d2919eec5001yPutSomCV6kOeO"
-				},
-				{
-					"type": "delta",
-					"text": " to, enabling faster development cycles without sacrificing quality.",
-					"messageId": "msg_d2919eec5001yPutSomCV6kOeO"
+					"text": " validation tasks and enable teams to iterate quickly without sacrificing reliability.",
+					"messageId": "msg_d29a26455001lyWL0CebgxyZdM"
 				},
 				{
 					"type": "result",
 					"usage": {
 						"input": 70,
-						"output": 129,
+						"output": 116,
 						"cache_read": 510,
 						"cache_creation": 16452
 					},
@@ -652,21 +647,21 @@
 					"type": "result",
 					"usage": {
 						"input": 70,
-						"output": 129,
+						"output": 116,
 						"cache_read": 510,
 						"cache_creation": 16452
 					},
 					"cost": 0,
-					"duration": 4278,
+					"duration": 3546,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
 							"title": "Automated testing importance for software quality",
-							"updatedAt": 1774511062909,
+							"updatedAt": 1774520005168,
 							"messageCount": 0
 						}
 					],
@@ -680,9 +675,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
 							"title": "Automated testing importance for software quality",
-							"updatedAt": 1774511062909,
+							"updatedAt": 1774520005168,
 							"messageCount": 0
 						}
 					],
@@ -692,9 +687,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
 							"title": "Automated testing importance for software quality",
-							"updatedAt": 1774511062921,
+							"updatedAt": 1774520005182,
 							"messageCount": 0
 						}
 					],
@@ -704,9 +699,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e61a46ffehfguiUCmsGN6jB",
+							"id": "ses_2d65da4b0ffe5oIdsThilLfz5a",
 							"title": "Automated testing importance for software quality",
-							"updatedAt": 1774511062921,
+							"updatedAt": 1774520005182,
 							"messageCount": 0
 						}
 					],

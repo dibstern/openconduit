@@ -1,7 +1,7 @@
 {
 	"name": "chat-multi-turn",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T07:44:15.376Z",
+	"recordedAt": "2026-03-26T10:13:18.992Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
+			"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
 			"history": {
 				"messages": [],
 				"hasMore": false,
@@ -33,9 +33,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-					"title": "New session - 2026-03-26T07:44:02.076Z",
-					"updatedAt": 1774511042076,
+					"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+					"title": "New session - 2026-03-26T10:13:12.486Z",
+					"updatedAt": 1774519992486,
 					"messageCount": 0
 				}
 			],
@@ -45,9 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-					"title": "New session - 2026-03-26T07:44:02.076Z",
-					"updatedAt": 1774511042076,
+					"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+					"title": "New session - 2026-03-26T10:13:12.486Z",
+					"updatedAt": 1774519992486,
 					"messageCount": 0
 				}
 			],
@@ -485,15 +485,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "New session - 2026-03-26T07:44:04.390Z",
-							"updatedAt": 1774511045432,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519994802,
 							"messageCount": 0
 						}
 					],
@@ -503,15 +497,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "New session - 2026-03-26T07:44:04.390Z",
-							"updatedAt": 1774511045432,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519994802,
 							"messageCount": 0
 						}
 					],
@@ -521,15 +509,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "New session - 2026-03-26T07:44:04.390Z",
-							"updatedAt": 1774511045432,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519994802,
 							"messageCount": 0
 						}
 					],
@@ -539,15 +521,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "New session - 2026-03-26T07:44:04.390Z",
-							"updatedAt": 1774511045432,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519994802,
 							"messageCount": 0
 						}
 					],
@@ -557,17 +533,11 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "New session - 2026-03-26T07:44:04.390Z",
-							"updatedAt": 1774511045432,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519994802,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
-							"messageCount": 0
 						}
 					],
 					"roots": true
@@ -580,106 +550,77 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "New session - 2026-03-26T07:44:04.390Z",
-							"updatedAt": 1774511045432,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519994802,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
-							"messageCount": 0
 						}
 					],
 					"roots": false
 				},
 				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511045432,
-							"messageCount": 0,
-							"processing": true
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
-							"messageCount": 0
-						}
-					],
-					"roots": true
+					"type": "thinking_start"
 				},
 				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511045432,
-							"messageCount": 0,
-							"processing": true
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
-							"messageCount": 0
-						}
-					],
-					"roots": false
+					"type": "thinking_delta",
+					"text": "The",
+					"messageId": "msg_d29a249ad001oSBQnOGMTpPNA0"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " user is asking me to remember a word. This is a simple request that doesn't require any tools or code-related tasks. I should just respond with the requested",
+					"messageId": "msg_d29a249ad001oSBQnOGMTpPNA0"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " acknowledgment.",
+					"messageId": "msg_d29a249ad001oSBQnOGMTpPNA0"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "",
+					"messageId": "msg_d29a249ad001oSBQnOGMTpPNA0"
+				},
+				{
+					"type": "thinking_stop"
 				},
 				{
 					"type": "delta",
-					"text": "ok",
-					"messageId": "msg_d2919bb2d001ni2vks32kJCB5L"
-				},
-				{
-					"type": "delta",
-					"text": ", remembered.",
-					"messageId": "msg_d2919bb2d001ni2vks32kJCB5L"
+					"text": "ok, remembered.",
+					"messageId": "msg_d29a249ad001oSBQnOGMTpPNA0"
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 3,
-						"output": 7,
-						"cache_read": 17817,
-						"cache_creation": 334
+						"input": 70,
+						"output": 42,
+						"cache_read": 510,
+						"cache_creation": 16454
 					},
-					"cost": 0.011186,
+					"cost": 0,
 					"duration": 0,
 					"sessionId": ""
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 3,
-						"output": 7,
-						"cache_read": 17817,
-						"cache_creation": 334
+						"input": 70,
+						"output": 42,
+						"cache_read": 510,
+						"cache_creation": 16454
 					},
-					"cost": 0.011186,
-					"duration": 2082,
+					"cost": 0,
+					"duration": 1986,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511047505,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519996785,
 							"messageCount": 0
 						}
 					],
@@ -693,15 +634,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511047505,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519996785,
 							"messageCount": 0
 						}
 					],
@@ -711,15 +646,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511047518,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519996796,
 							"messageCount": 0
 						}
 					],
@@ -729,15 +658,33 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511047518,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "New session - 2026-03-26T10:13:12.486Z",
+							"updatedAt": 1774519996796,
 							"messageCount": 0
-						},
+						}
+					],
+					"roots": false
+				},
+				{
+					"type": "session_list",
+					"sessions": [
 						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519996796,
+							"messageCount": 0
+						}
+					],
+					"roots": true
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519996796,
 							"messageCount": 0
 						}
 					],
@@ -768,15 +715,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511048043,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519997303,
 							"messageCount": 0
 						}
 					],
@@ -786,15 +727,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511048043,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519997303,
 							"messageCount": 0
 						}
 					],
@@ -804,15 +739,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511048043,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519997303,
 							"messageCount": 0
 						}
 					],
@@ -822,15 +751,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511048043,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519997303,
 							"messageCount": 0
 						}
 					],
@@ -840,17 +763,11 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511048043,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519997303,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
-							"messageCount": 0
 						}
 					],
 					"roots": true
@@ -863,63 +780,72 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511048043,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519997303,
 							"messageCount": 0,
 							"processing": true
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
-							"messageCount": 0
 						}
 					],
 					"roots": false
 				},
 				{
+					"type": "thinking_start"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "The",
+					"messageId": "msg_d29a253730010sKckTA8V1cB80"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " user asked me to remember the word \"banana\".",
+					"messageId": "msg_d29a253730010sKckTA8V1cB80"
+				},
+				{
+					"type": "thinking_delta",
+					"text": "",
+					"messageId": "msg_d29a253730010sKckTA8V1cB80"
+				},
+				{
+					"type": "thinking_stop"
+				},
+				{
 					"type": "delta",
 					"text": "banana",
-					"messageId": "msg_d2919c55d0015DDHnuBDdf47uy"
+					"messageId": "msg_d29a253730010sKckTA8V1cB80"
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 3,
-						"output": 4,
-						"cache_read": 18151,
-						"cache_creation": 25
+						"input": 70,
+						"output": 18,
+						"cache_read": 16944,
+						"cache_creation": 49
 					},
-					"cost": 0.00934675,
+					"cost": 0,
 					"duration": 0,
 					"sessionId": ""
 				},
 				{
 					"type": "result",
 					"usage": {
-						"input": 3,
-						"output": 4,
-						"cache_read": 18151,
-						"cache_creation": 25
+						"input": 70,
+						"output": 18,
+						"cache_read": 16944,
+						"cache_creation": 49
 					},
-					"cost": 0.00934675,
-					"duration": 6833,
+					"cost": 0,
+					"duration": 1184,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511054864,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519998485,
 							"messageCount": 0
 						}
 					],
@@ -933,15 +859,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511054864,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519998485,
 							"messageCount": 0
 						}
 					],
@@ -951,15 +871,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511054876,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519998497,
 							"messageCount": 0
 						}
 					],
@@ -969,15 +883,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e648d9ffezkgFT62pitJ6Ku",
-							"title": "Memory test: banana",
-							"updatedAt": 1774511054876,
-							"messageCount": 0
-						},
-						{
-							"id": "ses_2d6e651e3ffeIxbU5Ar6OUstPK",
-							"title": "New session - 2026-03-26T07:44:02.076Z",
-							"updatedAt": 1774511042076,
+							"id": "ses_2d65dbf59ffeedefYoNWUcAo0H",
+							"title": "Memory task: remember word banana",
+							"updatedAt": 1774519998497,
 							"messageCount": 0
 						}
 					],

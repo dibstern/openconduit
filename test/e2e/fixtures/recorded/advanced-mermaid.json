@@ -1,7 +1,7 @@
 {
 	"name": "advanced-mermaid",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T07:46:05.035Z",
+	"recordedAt": "2026-03-26T10:14:33.430Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d6e4885effeSmyudDisYD0zGU",
+			"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
 			"history": {
 				"messages": [],
 				"hasMore": false,
@@ -33,9 +33,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-					"title": "New session - 2026-03-26T07:45:59.201Z",
-					"updatedAt": 1774511159201,
+					"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+					"title": "New session - 2026-03-26T10:14:28.526Z",
+					"updatedAt": 1774520068526,
 					"messageCount": 0
 				}
 			],
@@ -45,9 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-					"title": "New session - 2026-03-26T07:45:59.201Z",
-					"updatedAt": 1774511159201,
+					"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+					"title": "New session - 2026-03-26T10:14:28.526Z",
+					"updatedAt": 1774520068526,
 					"messageCount": 0
 				}
 			],
@@ -485,9 +485,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "New session - 2026-03-26T07:45:59.201Z",
-							"updatedAt": 1774511161551,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520070841,
 							"messageCount": 0
 						}
 					],
@@ -497,9 +497,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "New session - 2026-03-26T07:45:59.201Z",
-							"updatedAt": 1774511161551,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520070841,
 							"messageCount": 0
 						}
 					],
@@ -509,9 +509,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "New session - 2026-03-26T07:45:59.201Z",
-							"updatedAt": 1774511161551,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520070841,
 							"messageCount": 0
 						}
 					],
@@ -521,9 +521,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "New session - 2026-03-26T07:45:59.201Z",
-							"updatedAt": 1774511161551,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520070841,
 							"messageCount": 0
 						}
 					],
@@ -533,9 +533,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "New session - 2026-03-26T07:45:59.201Z",
-							"updatedAt": 1774511161551,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520070841,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -550,35 +550,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "New session - 2026-03-26T07:45:59.201Z",
-							"updatedAt": 1774511161551,
-							"messageCount": 0,
-							"processing": true
-						}
-					],
-					"roots": false
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "Mermaid flowchart request: 3 nodes Start-Process-End",
-							"updatedAt": 1774511161551,
-							"messageCount": 0,
-							"processing": true
-						}
-					],
-					"roots": true
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "Mermaid flowchart request: 3 nodes Start-Process-End",
-							"updatedAt": 1774511161551,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520070841,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -591,41 +565,36 @@
 				{
 					"type": "thinking_delta",
 					"text": "The",
-					"messageId": "msg_d291b80bc0018Qv679ougAb6QG"
+					"messageId": "msg_d29a372b5001CGBM0PU9046BcN"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " user wants me to create a simple mermaid flowchart with 3 nodes. This is a straightforward request for a",
-					"messageId": "msg_d291b80bc0018Qv679ougAb6QG"
+					"text": " user wants a simple mermaid flowchart with 3 nodes. This is a straightforward request that doesn't require any tools or",
+					"messageId": "msg_d29a372b5001CGBM0PU9046BcN"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " code block.",
-					"messageId": "msg_d291b80bc0018Qv679ougAb6QG"
+					"text": " skills.",
+					"messageId": "msg_d29a372b5001CGBM0PU9046BcN"
 				},
 				{
 					"type": "thinking_delta",
 					"text": "",
-					"messageId": "msg_d291b80bc0018Qv679ougAb6QG"
+					"messageId": "msg_d29a372b5001CGBM0PU9046BcN"
 				},
 				{
 					"type": "thinking_stop"
 				},
 				{
 					"type": "delta",
-					"text": "```mermaid\nflowchart LR\n    A[Start] --> B[Process] --> C",
-					"messageId": "msg_d291b80bc0018Qv679ougAb6QG"
-				},
-				{
-					"type": "delta",
-					"text": "[End]\n```",
-					"messageId": "msg_d291b80bc0018Qv679ougAb6QG"
+					"text": "```mermaid\nflowchart LR\n    Start --> Process --> End\n```",
+					"messageId": "msg_d29a372b5001CGBM0PU9046BcN"
 				},
 				{
 					"type": "result",
 					"usage": {
 						"input": 70,
-						"output": 54,
+						"output": 46,
 						"cache_read": 510,
 						"cache_creation": 16463
 					},
@@ -637,21 +606,21 @@
 					"type": "result",
 					"usage": {
 						"input": 70,
-						"output": 54,
+						"output": 46,
 						"cache_read": 510,
 						"cache_creation": 16463
 					},
 					"cost": 0,
-					"duration": 2992,
+					"duration": 2081,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "Mermaid flowchart request: 3 nodes Start-Process-End",
-							"updatedAt": 1774511164525,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520072920,
 							"messageCount": 0
 						}
 					],
@@ -665,9 +634,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "Mermaid flowchart request: 3 nodes Start-Process-End",
-							"updatedAt": 1774511164525,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520072920,
 							"messageCount": 0
 						}
 					],
@@ -677,9 +646,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "Mermaid flowchart request: 3 nodes Start-Process-End",
-							"updatedAt": 1774511164537,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520072931,
 							"messageCount": 0
 						}
 					],
@@ -689,9 +658,33 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d6e4885effeSmyudDisYD0zGU",
-							"title": "Mermaid flowchart request: 3 nodes Start-Process-End",
-							"updatedAt": 1774511164537,
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "New session - 2026-03-26T10:14:28.526Z",
+							"updatedAt": 1774520072931,
+							"messageCount": 0
+						}
+					],
+					"roots": false
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "Mermaid flowchart: 3 nodes Start -> Process -> End",
+							"updatedAt": 1774520072931,
+							"messageCount": 0
+						}
+					],
+					"roots": true
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d65c9651ffeqbpl8ysXchMtvA",
+							"title": "Mermaid flowchart: 3 nodes Start -> Process -> End",
+							"updatedAt": 1774520072931,
 							"messageCount": 0
 						}
 					],

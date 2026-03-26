@@ -1,7 +1,7 @@
 {
-	"name": "chat-result-bar",
+	"name": "chat-code-block",
 	"model": "opencode/big-pickle",
-	"recordedAt": "2026-03-26T10:13:12.215Z",
+	"recordedAt": "2026-03-26T10:12:57.146Z",
 	"initMessages": [
 		{
 			"type": "client_count",
@@ -13,7 +13,7 @@
 		},
 		{
 			"type": "session_switched",
-			"id": "ses_2d65dd187ffeoM764u43aElxhZ",
+			"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
 			"history": {
 				"messages": [],
 				"hasMore": false,
@@ -33,9 +33,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-					"title": "New session - 2026-03-26T10:13:07.832Z",
-					"updatedAt": 1774519987832,
+					"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+					"title": "New session - 2026-03-26T10:12:47.931Z",
+					"updatedAt": 1774519967931,
 					"messageCount": 0
 				}
 			],
@@ -45,9 +45,9 @@
 			"type": "session_list",
 			"sessions": [
 				{
-					"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-					"title": "New session - 2026-03-26T10:13:07.832Z",
-					"updatedAt": 1774519987832,
+					"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+					"title": "New session - 2026-03-26T10:12:47.931Z",
+					"updatedAt": 1774519967931,
 					"messageCount": 0
 				}
 			],
@@ -463,7 +463,7 @@
 	],
 	"turns": [
 		{
-			"prompt": "Reply with just the word 'ok'. Nothing else.",
+			"prompt": "Write a single JavaScript function called greet that takes a name parameter and returns a greeting string. Reply with ONLY the code block, no explanation.",
 			"events": [
 				{
 					"type": "status",
@@ -485,9 +485,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "New session - 2026-03-26T10:13:07.832Z",
-							"updatedAt": 1774519990150,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "New session - 2026-03-26T10:12:47.931Z",
+							"updatedAt": 1774519970248,
 							"messageCount": 0
 						}
 					],
@@ -497,9 +497,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "New session - 2026-03-26T10:13:07.832Z",
-							"updatedAt": 1774519990150,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "New session - 2026-03-26T10:12:47.931Z",
+							"updatedAt": 1774519970248,
 							"messageCount": 0
 						}
 					],
@@ -509,9 +509,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "New session - 2026-03-26T10:13:07.832Z",
-							"updatedAt": 1774519990150,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "New session - 2026-03-26T10:12:47.931Z",
+							"updatedAt": 1774519970248,
 							"messageCount": 0
 						}
 					],
@@ -521,9 +521,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "New session - 2026-03-26T10:13:07.832Z",
-							"updatedAt": 1774519990150,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "New session - 2026-03-26T10:12:47.931Z",
+							"updatedAt": 1774519970248,
 							"messageCount": 0
 						}
 					],
@@ -533,9 +533,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "New session - 2026-03-26T10:13:07.832Z",
-							"updatedAt": 1774519990150,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "New session - 2026-03-26T10:12:47.931Z",
+							"updatedAt": 1774519970248,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -550,9 +550,35 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "New session - 2026-03-26T10:13:07.832Z",
-							"updatedAt": 1774519990150,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "New session - 2026-03-26T10:12:47.931Z",
+							"updatedAt": 1774519970248,
+							"messageCount": 0,
+							"processing": true
+						}
+					],
+					"roots": false
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "JavaScript greet function request thread",
+							"updatedAt": 1774519970248,
+							"messageCount": 0,
+							"processing": true
+						}
+					],
+					"roots": true
+				},
+				{
+					"type": "session_list",
+					"sessions": [
+						{
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "JavaScript greet function request thread",
+							"updatedAt": 1774519970248,
 							"messageCount": 0,
 							"processing": true
 						}
@@ -564,60 +590,39 @@
 				},
 				{
 					"type": "thinking_delta",
-					"text": "The",
-					"messageId": "msg_d29a2377f001nsAqNOUQMufgBH"
+					"text": "The user",
+					"messageId": "msg_d29a1e9c1001L3Mdevfu0fGuPJ"
 				},
 				{
 					"type": "thinking_delta",
-					"text": " user is asking me to reply with just the word 'ok'. This is a simple request that doesn't require any tool usage.",
-					"messageId": "msg_d29a2377f001nsAqNOUQMufgBH"
+					"text": " wants a simple JavaScript function that takes a name and returns a greeting. This is a trivial task that doesn't require any tool usage or skill",
+					"messageId": "msg_d29a1e9c1001L3Mdevfu0fGuPJ"
+				},
+				{
+					"type": "thinking_delta",
+					"text": " loading.",
+					"messageId": "msg_d29a1e9c1001L3Mdevfu0fGuPJ"
 				},
 				{
 					"type": "thinking_delta",
 					"text": "",
-					"messageId": "msg_d29a2377f001nsAqNOUQMufgBH"
+					"messageId": "msg_d29a1e9c1001L3Mdevfu0fGuPJ"
 				},
 				{
 					"type": "thinking_stop"
 				},
 				{
 					"type": "delta",
-					"text": "ok",
-					"messageId": "msg_d29a2377f001nsAqNOUQMufgBH"
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "Reply: respond with only 'ok'",
-							"updatedAt": 1774519991610,
-							"messageCount": 0,
-							"processing": true
-						}
-					],
-					"roots": true
-				},
-				{
-					"type": "session_list",
-					"sessions": [
-						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "Reply: respond with only 'ok'",
-							"updatedAt": 1774519991610,
-							"messageCount": 0,
-							"processing": true
-						}
-					],
-					"roots": false
+					"text": "```javascript\nfunction greet(name) {\n  return `Hello, ${name}!`;\n}\n```",
+					"messageId": "msg_d29a1e9c1001L3Mdevfu0fGuPJ"
 				},
 				{
 					"type": "result",
 					"usage": {
 						"input": 70,
-						"output": 31,
+						"output": 56,
 						"cache_read": 510,
-						"cache_creation": 16450
+						"cache_creation": 16468
 					},
 					"cost": 0,
 					"duration": 0,
@@ -627,21 +632,21 @@
 					"type": "result",
 					"usage": {
 						"input": 70,
-						"output": 31,
+						"output": 56,
 						"cache_read": 510,
-						"cache_creation": 16450
+						"cache_creation": 16468
 					},
 					"cost": 0,
-					"duration": 1562,
+					"duration": 6391,
 					"sessionId": ""
 				},
 				{
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "Reply: respond with only 'ok'",
-							"updatedAt": 1774519991707,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "JavaScript greet function request thread",
+							"updatedAt": 1774519976634,
 							"messageCount": 0
 						}
 					],
@@ -655,9 +660,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "Reply: respond with only 'ok'",
-							"updatedAt": 1774519991707,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "JavaScript greet function request thread",
+							"updatedAt": 1774519976646,
 							"messageCount": 0
 						}
 					],
@@ -667,9 +672,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "Reply: respond with only 'ok'",
-							"updatedAt": 1774519991719,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "JavaScript greet function request thread",
+							"updatedAt": 1774519976646,
 							"messageCount": 0
 						}
 					],
@@ -679,9 +684,9 @@
 					"type": "session_list",
 					"sessions": [
 						{
-							"id": "ses_2d65dd187ffeoM764u43aElxhZ",
-							"title": "Reply: respond with only 'ok'",
-							"updatedAt": 1774519991719,
+							"id": "ses_2d65e1f44ffeL4K2m4996QdoaD",
+							"title": "JavaScript greet function request thread",
+							"updatedAt": 1774519976646,
 							"messageCount": 0
 						}
 					],
