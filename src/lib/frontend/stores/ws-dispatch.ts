@@ -140,9 +140,51 @@ function yieldToEventLoop(): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, 0));
 }
 
+// ─── Live event buffer during replay ────────────────────────────────────────
+// When an async replay is in progress, live WebSocket chat events are buffered
+// instead of being dispatched immediately. This prevents interleaving of live
+// events (e.g. thinking_stop) with cached events being replayed, which would
+// cause data loss (e.g. cached thinking_deltas silently dropped after a live
+// thinking_stop prematurely marks the thinking message as done).
+let liveEventBuffer: RelayMessage[] | null = null;
+
+/** Event types handled by dispatchChatEvent — used to decide what to buffer. */
+const CHAT_EVENT_TYPES: ReadonlySet<string> = new Set([
+	"user_message",
+	"delta",
+	"thinking_start",
+	"thinking_delta",
+	"thinking_stop",
+	"tool_start",
+	"tool_executing",
+	"tool_result",
+	"result",
+	"done",
+	"status",
+	"error",
+]);
+
+/** Start buffering live chat events (called at the start of replay). */
+function startBufferingLiveEvents(): void {
+	liveEventBuffer = [];
+}
+
+/** Drain buffered live events through normal dispatch (called after replay commits). */
+function drainLiveEventBuffer(): void {
+	const buffer = liveEventBuffer;
+	liveEventBuffer = null;
+	if (!buffer || buffer.length === 0) return;
+	for (const event of buffer) {
+		const ctx: DispatchContext = { isReplay: false, isQueued: isProcessing() };
+		dispatchChatEvent(event, ctx);
+	}
+}
+
 // Register abort hook: clearMessages bumps generation to cancel in-flight replays
+// and discards the live event buffer (session is changing, buffered events are stale).
 registerClearMessagesHook(() => {
 	replayGeneration++;
+	liveEventBuffer = null;
 });
 
 // ─── Async history conversion ───────────────────────────────────────────────
@@ -284,6 +326,16 @@ function dispatchChatEvent(event: RelayMessage, ctx: DispatchContext): boolean {
  * Replaces the vanilla handler registry pattern.
  */
 export function handleMessage(msg: RelayMessage): void {
+	// ── Buffer live chat events during replay ───────────────────────────
+	// Prevents interleaving with cached events being replayed async.
+	// Without this, a live thinking_stop can arrive mid-replay and mark
+	// a thinking message as done, causing remaining cached thinking_deltas
+	// to be silently dropped (updateLastMessage can't find !done message).
+	if (liveEventBuffer !== null && CHAT_EVENT_TYPES.has(msg.type)) {
+		liveEventBuffer.push(msg);
+		return;
+	}
+
 	// ── Chat events (shared dispatch) ───────────────────────────────────
 	const ctx: DispatchContext = {
 		isReplay: false,
@@ -653,58 +705,73 @@ export async function replayEvents(
 	const generation = ++replayGeneration;
 
 	beginReplayBatch();
+	startBufferingLiveEvents();
 
-	// Local tracker: true when the LLM is producing content for the current
-	// turn. Inferred from event structure, NOT from status events (which
-	// aren't cached). Used to set the `queued` flag on user_message events.
-	let llmActive = false;
+	try {
+		// Local tracker: true when the LLM is producing content for the current
+		// turn. Inferred from event structure, NOT from status events (which
+		// aren't cached). Used to set the `queued` flag on user_message events.
+		let llmActive = false;
 
-	for (let i = 0; i < events.length; i++) {
-		// Abort: a newer replay or clearMessages happened
-		if (generation !== replayGeneration) {
-			discardReplayBatch();
-			return; // don't call phaseEndReplay — clearMessages already reset loadLifecycle, or a new replay set it to loading
+		for (let i = 0; i < events.length; i++) {
+			// Abort: a newer replay or clearMessages happened
+			if (generation !== replayGeneration) {
+				discardReplayBatch();
+				return; // don't call phaseEndReplay — clearMessages already reset loadLifecycle, or a new replay set it to loading
+			}
+
+			// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
+			const event = events[i]!;
+
+			// ── LLM activity tracking (before handler, so user_message reads it) ──
+			if (isLlmContentStart(event.type)) llmActive = true;
+			else if (event.type === "done") llmActive = false;
+			else if (event.type === "error" && event.code !== "RETRY")
+				llmActive = false;
+
+			const ctx: DispatchContext = { isReplay: true, isQueued: llmActive };
+			dispatchChatEvent(event, ctx);
+
+			// Yield between chunks to keep the main thread responsive.
+			// NOTE: Do NOT call discardReplayBatch() on abort after yield.
+			// A newer replay may have already called beginReplayBatch() and
+			// started populating it — discarding here would destroy the new
+			// replay's batch. clearMessages() already sets replayBatch = null.
+			if ((i + 1) % REPLAY_CHUNK_SIZE === 0) {
+				await yieldToEventLoop();
+				if (generation !== replayGeneration) return;
+			}
 		}
 
-		// biome-ignore lint/style/noNonNullAssertion: safe — loop bounded by array length
-		const event = events[i]!;
+		// Flush any pending debounced render (for mid-stream sessions
+		// where no "done" event has been received yet)
+		flushPendingRender();
 
-		// ── LLM activity tracking (before handler, so user_message reads it) ──
-		if (isLlmContentStart(event.type)) llmActive = true;
-		else if (event.type === "done") llmActive = false;
-		else if (event.type === "error" && event.code !== "RETRY")
-			llmActive = false;
+		// Single commit: page large replays so only the last 50 messages
+		// render immediately, with older messages buffered for lazy loading.
+		commitReplayFinal(sessionId);
 
-		const ctx: DispatchContext = { isReplay: true, isQueued: llmActive };
-		dispatchChatEvent(event, ctx);
+		// Reconcile processing state after replay completes.
+		// During replay, handler functions (handleDone, handleDelta, etc.)
+		// set chatState.phase directly (no longer guarded by "replaying").
+		// phaseEndReplay only needs to handle the edge case where llmActive
+		// is true but phase ended at "idle" (all turns completed during
+		// replay, but server says LLM is still active).
+		phaseEndReplay(llmActive);
 
-		// Yield between chunks to keep the main thread responsive.
-		// NOTE: Do NOT call discardReplayBatch() on abort after yield.
-		// A newer replay may have already called beginReplayBatch() and
-		// started populating it — discarding here would destroy the new
-		// replay's batch. clearMessages() already sets replayBatch = null.
-		if ((i + 1) % REPLAY_CHUNK_SIZE === 0) {
-			await yieldToEventLoop();
-			if (generation !== replayGeneration) return;
-		}
+		// Drain live events that arrived while the replay was in progress.
+		// These are post-cache events dispatched as normal live events,
+		// continuing the timeline where the cache left off.
+		drainLiveEventBuffer();
+
+		renderDeferredMarkdown();
+	} finally {
+		// Safety: ensure buffer is cleared on any exit path not handled above.
+		// Normal path: drainLiveEventBuffer already set buffer to null.
+		// Abort path: clearMessages hook already set buffer to null.
+		// Error path: discard any un-drained buffer to prevent infinite buffering.
+		liveEventBuffer = null;
 	}
-
-	// Flush any pending debounced render (for mid-stream sessions
-	// where no "done" event has been received yet)
-	flushPendingRender();
-
-	// Single commit: page large replays so only the last 50 messages
-	// render immediately, with older messages buffered for lazy loading.
-	commitReplayFinal(sessionId);
-
-	// Reconcile processing state after replay completes.
-	// During replay, handler functions (handleDone, handleDelta, etc.)
-	// set chatState.phase directly (no longer guarded by "replaying").
-	// phaseEndReplay only needs to handle the edge case where llmActive
-	// is true but phase ended at "idle" (all turns completed during
-	// replay, but server says LLM is still active).
-	phaseEndReplay(llmActive);
-	renderDeferredMarkdown();
 }
 
 // ─── Auxiliary handlers (only called from handleMessage) ────────────────────
