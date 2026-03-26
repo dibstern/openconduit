@@ -125,6 +125,12 @@ const SCENARIOS: ScenarioDefinition[] = [
 		multiTurn: false,
 	},
 	{
+		name: "chat-code-block",
+		prompts: [
+			"Write a single JavaScript function called greet that takes a name parameter and returns a greeting string. Reply with ONLY the code block, no explanation.",
+		],
+	},
+	{
 		name: "chat-tool-call",
 		prompts: [
 			'Read the file package.json and tell me the exact value of the "version" field.',
@@ -283,16 +289,20 @@ function recordTurn(
 				const msg = JSON.parse(String(data)) as MockMessage;
 				events.push(msg);
 
-				// Auto-approve permission requests
+				// Auto-approve permission requests after a short delay.
+				// The delay allows OpenCode's permission.asked SSE event to be
+				// captured in the recording before the approval clears it.
 				if (autoApprovePermissions && msg.type === "permission_request") {
 					const requestId = msg["requestId"] as string;
-					ws.send(
-						JSON.stringify({
-							type: "permission_response",
-							requestId,
-							decision: "allow",
-						}),
-					);
+					setTimeout(() => {
+						ws.send(
+							JSON.stringify({
+								type: "permission_response",
+								requestId,
+								decision: "allow",
+							}),
+						);
+					}, 500);
 				}
 
 				// Auto-approve ask_user questions (answer all with first option or "yes")
@@ -508,12 +518,10 @@ async function main(): Promise<void> {
 					const turns: RecordedTurn[] = [];
 
 					if (scenario.multiTurn) {
-						// Multi-turn: all prompts in the same session
-						// Request a fresh session for this scenario
-						await requestNewSession(ws);
-
-						// Wait for the new session's init to settle
-						await collectMessages(ws, 1_000);
+						// Multi-turn: all prompts in the same session.
+						// The relay's init session is guaranteed fresh by
+						// inter-scenario session cleanup — no need to create
+						// a second session.
 
 						for (let i = 0; i < scenario.prompts.length; i++) {
 							// biome-ignore lint/style/noNonNullAssertion: safe — bounded by length check
