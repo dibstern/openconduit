@@ -170,7 +170,11 @@ export async function createProjectRelay(
 		: join(config.projectDir ?? process.cwd(), ".conduit", "sessions");
 	const messageCache = new MessageCache(cacheDir);
 	await messageCache.loadFromDisk();
-	await messageCache.repairColdSessions();
+	// Fire-and-forget: in-memory repair is synchronous (runs before yielding),
+	// only the disk flush is async. No need to block startup.
+	messageCache
+		.repairColdSessions()
+		.catch((err) => log.warn(`Cold cache repair flush failed: ${err}`));
 
 	const toolContentStore = new ToolContentStore();
 
@@ -440,14 +444,17 @@ export async function createProjectRelay(
 			await sseConsumer.disconnect();
 			pollerManager.stopAll();
 			statusPoller.stop();
-			// 2. Flush all pending cache writes to disk
-			await messageCache.flush();
-			// 3. Clean up remaining resources
-			clearInterval(timeoutTimer);
-			clearInterval(rateLimitCleanupTimer);
-			overrides.dispose();
-			ptyManager.closeAll();
-			wsHandler.close();
+			try {
+				// 2. Flush all pending cache writes to disk
+				await messageCache.flush();
+			} finally {
+				// 3. Clean up remaining resources (must run even if flush fails)
+				clearInterval(timeoutTimer);
+				clearInterval(rateLimitCleanupTimer);
+				overrides.dispose();
+				ptyManager.closeAll();
+				wsHandler.close();
+			}
 		},
 	};
 }

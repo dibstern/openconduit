@@ -618,4 +618,147 @@ describe("repairColdSessions", () => {
 		expect(fileEvents).toHaveLength(1);
 		expect(fileEvents[0]).toEqual({ type: "user_message", text: "hello" });
 	});
+
+	it("removes session entirely when repair produces empty result", async () => {
+		// Session with only streaming events — no user_messages, no terminal
+		const events: RelayMessage[] = [
+			{ type: "delta", text: "orphan" },
+			{ type: "thinking_start" },
+		];
+		const jsonlContent = `${events.map((e) => JSON.stringify(e)).join("\n")}\n`;
+		writeFileSync(join(testDir, "ses_empty.jsonl"), jsonlContent);
+
+		const cache = new MessageCache(testDir);
+		await cache.loadFromDisk();
+		expect(cache.sessionCount()).toBe(1);
+
+		await cache.repairColdSessions();
+
+		// Session should be completely removed from memory
+		expect(cache.has("ses_empty")).toBe(false);
+		expect(cache.sessionCount()).toBe(0);
+		expect(await cache.getEvents("ses_empty")).toBeNull();
+
+		// JSONL file should be deleted
+		expect(existsSync(join(testDir, "ses_empty.jsonl"))).toBe(false);
+	});
+
+	it("repairs in-memory synchronously — safe for fire-and-forget", async () => {
+		// The in-memory mutations happen before the first await (flush).
+		// This is why relay-stack can call repairColdSessions() without await.
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "partial" },
+		];
+		const jsonlContent = `${events.map((e) => JSON.stringify(e)).join("\n")}\n`;
+		writeFileSync(join(testDir, "ses_sync.jsonl"), jsonlContent);
+
+		const cache = new MessageCache(testDir);
+		await cache.loadFromDisk();
+
+		// Fire-and-forget — do NOT await
+		const promise = cache.repairColdSessions();
+
+		// In-memory state should ALREADY be repaired (synchronous mutation)
+		const loaded = await cache.getEvents("ses_sync");
+		expect(loaded).toHaveLength(1);
+		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
+		expect(loaded![0]).toEqual({ type: "user_message", text: "hello" });
+
+		// Clean up the promise
+		await promise;
+	});
+
+	it("flush does not throw when disk writes fail", async () => {
+		// Proves the try/finally in relay-stack stop() is defense-in-depth:
+		// flush() never actually throws because flushSync() has per-write try/catch.
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "partial" },
+		];
+		const jsonlContent = `${events.map((e) => JSON.stringify(e)).join("\n")}\n`;
+		writeFileSync(join(testDir, "ses_fail.jsonl"), jsonlContent);
+
+		const cache = new MessageCache(testDir);
+		await cache.loadFromDisk();
+		await cache.repairColdSessions();
+
+		// Make directory read-only so the pending rewrite fails
+		chmodSync(testDir, 0o444);
+
+		// flush must not throw — flushSync has per-write try/catch
+		await cache.flush();
+
+		// Restore permissions for cleanup
+		chmodSync(testDir, 0o755);
+	});
+
+	it("events recorded after fire-and-forget repair are not lost", async () => {
+		// Simulates the startup sequence: repair fires, then events arrive
+		// before the repair's flush completes.
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "old" },
+			{ type: "delta", text: "stale" },
+		];
+		const jsonlContent = `${events.map((e) => JSON.stringify(e)).join("\n")}\n`;
+		writeFileSync(join(testDir, "ses_live.jsonl"), jsonlContent);
+
+		const cache = new MessageCache(testDir);
+		await cache.loadFromDisk();
+
+		// Fire-and-forget repair
+		const promise = cache.repairColdSessions();
+
+		// New event arrives immediately (before flush completes)
+		cache.recordEvent("ses_live", { type: "delta", text: "fresh" });
+
+		await promise;
+		await cache.flush();
+
+		// Both the repair and the new event should be reflected
+		const loaded = await cache.getEvents("ses_live");
+		expect(loaded).toHaveLength(2);
+		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
+		expect(loaded![0]).toEqual({ type: "user_message", text: "old" });
+		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
+		expect(loaded![1]).toEqual({ type: "delta", text: "fresh" });
+	});
+
+	it("correctly handles mix of complete, incomplete, and empty sessions", async () => {
+		// 3 sessions: one complete, one needing repair, one that empties
+		writeFileSync(
+			join(testDir, "ses_ok.jsonl"),
+			'{"type":"user_message","text":"q"}\n{"type":"done","code":0}\n',
+		);
+		writeFileSync(
+			join(testDir, "ses_broken.jsonl"),
+			'{"type":"user_message","text":"q"}\n{"type":"delta","text":"partial"}\n',
+		);
+		writeFileSync(
+			join(testDir, "ses_ghost.jsonl"),
+			'{"type":"delta","text":"orphan"}\n',
+		);
+
+		const cache = new MessageCache(testDir);
+		await cache.loadFromDisk();
+		expect(cache.sessionCount()).toBe(3);
+
+		await cache.repairColdSessions();
+
+		// Complete session untouched
+		const okEvents = await cache.getEvents("ses_ok");
+		expect(okEvents).toHaveLength(2);
+
+		// Broken session repaired to user_message only
+		const brokenEvents = await cache.getEvents("ses_broken");
+		expect(brokenEvents).toHaveLength(1);
+		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
+		expect(brokenEvents![0]!.type).toBe("user_message");
+
+		// Ghost session removed entirely
+		expect(cache.has("ses_ghost")).toBe(false);
+		expect(cache.sessionCount()).toBe(2);
+		expect(await cache.getEvents("ses_ghost")).toBeNull();
+		expect(existsSync(join(testDir, "ses_ghost.jsonl"))).toBe(false);
+	});
 });

@@ -133,13 +133,18 @@ export class MessageCache {
 		for (const [sessionId, session] of this.sessions) {
 			const { repaired, changed } = repairColdSession(session.events);
 			if (changed) {
-				session.events = repaired;
-				// Recalculate approx bytes from repaired events
-				session.approxBytes = repaired.reduce(
-					(sum, e) => sum + JSON.stringify(e).length * 2,
-					0,
-				);
-				this.rewriteFile(sessionId, repaired);
+				if (repaired.length === 0) {
+					// Nothing survives repair — remove the session entirely
+					this.remove(sessionId);
+				} else {
+					session.events = repaired;
+					// Recalculate approx bytes from repaired events
+					session.approxBytes = repaired.reduce(
+						(sum, e) => sum + JSON.stringify(e).length * 2,
+						0,
+					);
+					this.rewriteFile(sessionId, repaired);
+				}
 				repairedCount++;
 			}
 		}
