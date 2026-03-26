@@ -20,7 +20,8 @@ export interface ScrollController {
 
 const SETTLE_MAX_FRAMES = 60;
 const SETTLE_STABLE_THRESHOLD = 2;
-const SCROLL_THRESHOLD = 100;
+const DETACH_THRESHOLD = 100; // px from bottom to trigger detach via scroll position
+const REFOLLOW_THRESHOLD = 5; // px from bottom to re-follow (must be at the very bottom)
 
 export function createScrollController(
 	getLifecycle: () => LoadLifecycle,
@@ -29,6 +30,7 @@ export function createScrollController(
 	let userDetached = $state(false);
 	let settleRafId: number | null = null;
 	let settleFrameCount = 0;
+	let programmaticScrollPending = false; // guards against false detach from our own scrolls
 
 	function getState(): ScrollState {
 		const lc = getLifecycle();
@@ -40,6 +42,7 @@ export function createScrollController(
 
 	function scrollToBottom(): void {
 		if (!container) return;
+		programmaticScrollPending = true;
 		container.scrollTop = container.scrollHeight;
 	}
 
@@ -110,16 +113,29 @@ export function createScrollController(
 
 	function onScroll(): void {
 		if (!container) return;
+
+		// If we triggered this scroll via scrollToBottom(), skip the detach
+		// check. Without this, a race occurs: scrollToBottom sets scrollTop,
+		// then a new delta arrives and increases scrollHeight before the
+		// scroll event fires, making distFromBottom > DETACH_THRESHOLD and
+		// falsely detaching.
+		if (programmaticScrollPending) {
+			programmaticScrollPending = false;
+			return;
+		}
+
 		const distFromBottom =
 			container.scrollHeight - container.scrollTop - container.clientHeight;
-		// Re-follow when scrolled near bottom
-		if (distFromBottom < SCROLL_THRESHOLD && userDetached) {
+		// Re-follow only when scrolled to the very bottom.
+		// Uses a tight threshold (5px) to avoid undoing wheel/touch detach
+		// for small scrolls. The user must scroll all the way back down.
+		if (distFromBottom < REFOLLOW_THRESHOLD && userDetached) {
 			userDetached = false;
 		}
 		// Detach when scrolled away from bottom (catches keyboard scroll,
-		// programmatic scroll, page search, etc. — not just wheel/touch).
+		// page search, etc. — not wheel/touch which have their own handlers).
 		if (
-			distFromBottom > SCROLL_THRESHOLD &&
+			distFromBottom > DETACH_THRESHOLD &&
 			!userDetached &&
 			getState() === "following"
 		) {
