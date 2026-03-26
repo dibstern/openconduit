@@ -64,14 +64,13 @@ import {
 	handleScanResult,
 } from "./instance.svelte.js";
 import {
-	addRemoteQuestion,
-	clearSessionLocal,
 	handleAskUser,
 	handleAskUserError,
 	handleAskUserResolved,
+	handleNotificationEvent,
 	handlePermissionRequest,
 	handlePermissionResolved,
-	removeRemoteQuestion,
+	onSessionSwitch,
 } from "./permissions.svelte.js";
 import { handleProjectList } from "./project.svelte.js";
 import { getCurrentSlug, replaceRoute } from "./router.svelte.js";
@@ -339,8 +338,7 @@ export function handleMessage(msg: RelayMessage): void {
 			clearMessages();
 			updateContextPercent(0);
 			clearTodoState();
-			clearSessionLocal(previousSessionId); // Keep remote permissions
-			if (msg.id) removeRemoteQuestion(msg.id); // Now viewing this session — no longer remote
+			onSessionSwitch(previousSessionId, msg.id);
 
 			if (msg.events) {
 				// Cache hit: replay raw events through existing chat handlers
@@ -432,7 +430,7 @@ export function handleMessage(msg: RelayMessage): void {
 			handlePermissionResolved(msg);
 			break;
 		case "ask_user":
-			handleAskUser(msg);
+			handleAskUser(msg, sessionState.currentId ?? "");
 			triggerNotifications(msg);
 			break;
 		case "ask_user_resolved":
@@ -565,19 +563,23 @@ export function handleMessage(msg: RelayMessage): void {
 				...(msg.sessionId != null ? { sessionId: msg.sessionId } : {}),
 			} as RelayMessage;
 
-			// Track cross-session question notifications so the
-			// AttentionBanner component can show them.
-			if (msg.eventType === "ask_user" && msg.sessionId) {
-				addRemoteQuestion(msg.sessionId);
-			} else if (msg.eventType === "ask_user_resolved" && msg.sessionId) {
-				removeRemoteQuestion(msg.sessionId);
-			}
+			handleNotificationEvent(msg);
 
-			triggerNotifications(syntheticMsg);
+			// Suppress all frontend notifications for subagent done events.
+			// Server-side notification-policy.ts is the primary defense; this is belt-and-suspenders.
+			const isSubagentDone =
+				msg.eventType === "done" &&
+				msg.sessionId &&
+				findSession(msg.sessionId)?.parentID;
+
+			if (!isSubagentDone) {
+				triggerNotifications(syntheticMsg);
+			}
 
 			// In-app toast for cross-session events — skip for ask_user and
 			// ask_user_resolved since the AttentionBanner already handles those.
 			if (
+				!isSubagentDone &&
 				msg.eventType !== "ask_user" &&
 				msg.eventType !== "ask_user_resolved"
 			) {
