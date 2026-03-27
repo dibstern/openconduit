@@ -318,7 +318,19 @@ export function consumeReplayBuffer(
 	if (!buffer || buffer.length === 0) return [];
 	const page = buffer.splice(buffer.length - count, count);
 	if (buffer.length === 0) replayBuffers.delete(sessionId);
-	return page;
+	// Render deferred markdown on buffered messages before they enter
+	// chatState.messages.  During replay, assistant messages store raw
+	// text in `html` with `needsRender: true` to avoid blocking.  The
+	// initial renderDeferredMarkdown() only processes chatState.messages
+	// (the last INITIAL_PAGE_SIZE), so buffered messages must be rendered
+	// here when they're consumed for display.
+	return page.map((m) => {
+		if (m.type === "assistant" && m.needsRender) {
+			const { needsRender: _, ...rest } = m;
+			return { ...rest, html: renderMarkdown(m.rawText) };
+		}
+		return m;
+	});
 }
 
 export function commitReplayFinal(sessionId: string): void {
