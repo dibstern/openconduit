@@ -92,13 +92,18 @@ export function synthesizeTextPart(
 		if (
 			time?.end !== undefined &&
 			time.end !== null &&
-			snap.textLength > 0 &&
-			currentText.length === prevLength
+			currentText.length > 0
 		) {
-			// Only emit thinking_stop if we already had content and nothing new
-			// (avoids premature stop on first poll)
-			events.push({ type: "thinking_stop", messageId });
-			snap.emittedStop = true;
+			// Emit thinking_stop when the reasoning part is complete:
+			// - First pass (prevLength === 0): part already finished, emit immediately.
+			//   Without this, thinking_stop is deferred to the next poll cycle because
+			//   the old condition (snap.textLength > 0) is always false on first pass.
+			// - Subsequent passes: only emit when text has settled (no new content),
+			//   to avoid premature stop while the part is still streaming.
+			if (prevLength === 0 || currentText.length === prevLength) {
+				events.push({ type: "thinking_stop", messageId });
+				snap.emittedStop = true;
+			}
 		}
 	}
 
@@ -477,6 +482,13 @@ export class MessagePoller extends TrackedService<MessagePollerEvents> {
 	 */
 	private needsReseed = false;
 
+	/**
+	 * True when startPolling() was called without seed messages.
+	 * The first poll will seed the snapshot from REST instead of synthesizing,
+	 * preventing duplicate events when the client already has cached history.
+	 */
+	private needsSeedOnFirstPoll = false;
+
 	constructor(registry: ServiceRegistry, options: MessagePollerOptions) {
 		super(registry);
 		this.client = options.client;
@@ -506,6 +518,7 @@ export class MessagePoller extends TrackedService<MessagePollerEvents> {
 		this.lastSSEEventAt = 0;
 		this.lastContentAt = Date.now(); // Grace period: treat start as "content" to avoid immediate timeout
 		this.needsReseed = false;
+		this.needsSeedOnFirstPoll = false;
 
 		// Seed the snapshot from existing messages so the first poll doesn't
 		// re-emit events for content that SSE already delivered.
@@ -515,6 +528,11 @@ export class MessagePoller extends TrackedService<MessagePollerEvents> {
 				`START session=${sessionId.slice(0, 12)} interval=${this.interval}ms seeded=${seedMessages.length} messages`,
 			);
 		} else {
+			// No seed provided — first poll will build a baseline snapshot from
+			// REST instead of synthesizing events. This prevents re-emitting
+			// the entire history as duplicate events when the client already
+			// has cached events from session_switched.
+			this.needsSeedOnFirstPoll = true;
 			this.log.info(
 				`START session=${sessionId.slice(0, 12)} interval=${this.interval}ms`,
 			);
@@ -618,6 +636,19 @@ export class MessagePoller extends TrackedService<MessagePollerEvents> {
 
 		try {
 			const messages = await this.client.getMessages(sessionId);
+
+			// ── Seed on first poll (no seed provided at startPolling) ──
+			// Build a baseline snapshot from REST instead of synthesizing
+			// events. Without this, the first poll with an empty snapshot
+			// would re-emit the entire history as duplicate events.
+			if (this.needsSeedOnFirstPoll) {
+				this.needsSeedOnFirstPoll = false;
+				this.previousSnapshot = buildSeedSnapshot(messages);
+				this.log.info(
+					`SEEDED session=${sessionId.slice(0, 12)} — first poll baseline (${messages.length} messages)`,
+				);
+				return; // Skip this cycle — snapshot is now current
+			}
 
 			// ── Reseed after SSE silence ─────────────────────────────────
 			// When SSE was active (needsReseed=true) but has now gone silent,

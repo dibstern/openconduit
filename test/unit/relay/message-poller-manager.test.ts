@@ -174,14 +174,16 @@ describe("MessagePollerManager", () => {
 
 	it("emits events with sessionId when poller finds content", async () => {
 		const mockClient = makeMockClient();
-		// Return a message with text content on the first poll
-		mockClient.getMessages.mockResolvedValue([
-			{
-				id: "msg-1",
-				role: "user",
-				parts: [{ id: "p-1", type: "text", text: "Hello" }],
-			},
-		]);
+		// First poll seeds from empty, then a user message appears
+		mockClient.getMessages
+			.mockResolvedValueOnce([]) // first poll: seeds with empty
+			.mockResolvedValue([
+				{
+					id: "msg-1",
+					role: "user",
+					parts: [{ id: "p-1", type: "text", text: "Hello" }],
+				},
+			]); // subsequent polls: new content
 
 		const mgr = new MessagePollerManager(new ServiceRegistry(), {
 			client: mockClient,
@@ -196,8 +198,8 @@ describe("MessagePollerManager", () => {
 
 		mgr.startPolling("sess-1");
 
-		// Wait for at least one poll cycle
-		await new Promise((r) => setTimeout(r, 200));
+		// Wait for at least two poll cycles (first seeds, second detects content)
+		await new Promise((r) => setTimeout(r, 300));
 
 		expect(received.length).toBeGreaterThan(0);
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by prior assertion

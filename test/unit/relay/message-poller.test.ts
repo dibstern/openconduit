@@ -208,18 +208,25 @@ describe("MessagePoller", () => {
 	// ─── Diff + Synthesis ─────────────────────────────────────────────────
 
 	describe("diffAndSynthesize", () => {
-		it("first poll with a text part emits a delta event with the full text", async () => {
-			const msg = makeMessage({
-				id: "msg_1",
-				sessionID: "sess_1",
-				parts: [makeTextPart("p1", "Hello world")],
-			});
-			const client = createMockClient([msg]);
+		it("first poll seeds, second poll with new text emits delta", async () => {
+			// First poll seeds the baseline (no events emitted).
+			// New content on second poll produces events.
+			const client = createMockClient([]);
 			const poller = createPoller(client);
 			const events = collectEvents(poller);
 
 			poller.startPolling("sess_1");
 			await vi.advanceTimersByTimeAsync(0);
+			expect(events).toHaveLength(0); // Seed — no events
+
+			// New content appears
+			const msg = makeMessage({
+				id: "msg_1",
+				sessionID: "sess_1",
+				parts: [makeTextPart("p1", "Hello world")],
+			});
+			client.getMessages.mockResolvedValue([msg]);
+			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
 
 			expect(events).toContainEqual({
 				type: "delta",
@@ -278,11 +285,10 @@ describe("MessagePoller", () => {
 			poller.startPolling("sess_1");
 			await vi.advanceTimersByTimeAsync(0);
 
-			// First poll emits delta
-			expect(events.length).toBeGreaterThan(0);
-			events.length = 0;
+			// First poll seeds — no events emitted
+			expect(events).toHaveLength(0);
 
-			// Same data on second poll
+			// Same data on second poll — still no events
 			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
 			expect(events).toHaveLength(0);
 
@@ -290,18 +296,22 @@ describe("MessagePoller", () => {
 		});
 
 		it("user message (role=user) emits a user_message event", async () => {
+			const client = createMockClient([]);
+			const poller = createPoller(client);
+			const events = collectEvents(poller);
+
+			poller.startPolling("sess_1");
+			await vi.advanceTimersByTimeAsync(0); // Seed from empty
+
+			// New user message appears
 			const msg = makeMessage({
 				id: "msg_u1",
 				sessionID: "sess_1",
 				role: "user",
 				parts: [makeTextPart("p1", "What is 2+2?")],
 			});
-			const client = createMockClient([msg]);
-			const poller = createPoller(client);
-			const events = collectEvents(poller);
-
-			poller.startPolling("sess_1");
-			await vi.advanceTimersByTimeAsync(0);
+			client.getMessages.mockResolvedValue([msg]);
+			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
 
 			expect(events).toContainEqual({
 				type: "user_message",
@@ -312,17 +322,21 @@ describe("MessagePoller", () => {
 		});
 
 		it("reasoning/thinking part emits thinking_start then thinking_delta", async () => {
+			const client = createMockClient([]);
+			const poller = createPoller(client);
+			const events = collectEvents(poller);
+
+			poller.startPolling("sess_1");
+			await vi.advanceTimersByTimeAsync(0); // Seed from empty
+
+			// New reasoning part appears
 			const msg = makeMessage({
 				id: "msg_1",
 				sessionID: "sess_1",
 				parts: [makeReasoningPart("p1", "Let me think...")],
 			});
-			const client = createMockClient([msg]);
-			const poller = createPoller(client);
-			const events = collectEvents(poller);
-
-			poller.startPolling("sess_1");
-			await vi.advanceTimersByTimeAsync(0);
+			client.getMessages.mockResolvedValue([msg]);
+			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
 
 			const thinkingStart = events.find((e) => e.type === "thinking_start");
 			const thinkingDelta = events.find((e) => e.type === "thinking_delta");
@@ -348,17 +362,21 @@ describe("MessagePoller", () => {
 		});
 
 		it("tool part pending → emits tool_start", async () => {
+			const client = createMockClient([]);
+			const poller = createPoller(client);
+			const events = collectEvents(poller);
+
+			poller.startPolling("sess_1");
+			await vi.advanceTimersByTimeAsync(0); // Seed from empty
+
+			// New pending tool appears
 			const msg = makeMessage({
 				id: "msg_1",
 				sessionID: "sess_1",
 				parts: [makeToolPart("t1", "read", "pending")],
 			});
-			const client = createMockClient([msg]);
-			const poller = createPoller(client);
-			const events = collectEvents(poller);
-
-			poller.startPolling("sess_1");
-			await vi.advanceTimersByTimeAsync(0);
+			client.getMessages.mockResolvedValue([msg]);
+			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
 
 			expect(events).toContainEqual({
 				type: "tool_start",
@@ -371,6 +389,14 @@ describe("MessagePoller", () => {
 		});
 
 		it("tool part running → emits tool_executing", async () => {
+			const client = createMockClient([]);
+			const poller = createPoller(client);
+			const events = collectEvents(poller);
+
+			poller.startPolling("sess_1");
+			await vi.advanceTimersByTimeAsync(0); // Seed from empty
+
+			// New running tool appears
 			const msg = makeMessage({
 				id: "msg_1",
 				sessionID: "sess_1",
@@ -380,12 +406,8 @@ describe("MessagePoller", () => {
 					}),
 				],
 			});
-			const client = createMockClient([msg]);
-			const poller = createPoller(client);
-			const events = collectEvents(poller);
-
-			poller.startPolling("sess_1");
-			await vi.advanceTimersByTimeAsync(0);
+			client.getMessages.mockResolvedValue([msg]);
+			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
 
 			expect(events).toContainEqual({
 				type: "tool_executing",
@@ -486,6 +508,14 @@ describe("MessagePoller", () => {
 
 		it("tool part jumps from new to completed → emits tool_start + tool_executing + tool_result (catch-up)", async () => {
 			// Never saw this tool before — it appears already completed
+			const client = createMockClient([]);
+			const poller = createPoller(client);
+			const events = collectEvents(poller);
+
+			poller.startPolling("sess_1");
+			await vi.advanceTimersByTimeAsync(0); // Seed from empty
+
+			// Completed tool appears (skipped pending/running states)
 			const msg = makeMessage({
 				id: "msg_1",
 				sessionID: "sess_1",
@@ -496,12 +526,8 @@ describe("MessagePoller", () => {
 					}),
 				],
 			});
-			const client = createMockClient([msg]);
-			const poller = createPoller(client);
-			const events = collectEvents(poller);
-
-			poller.startPolling("sess_1");
-			await vi.advanceTimersByTimeAsync(0);
+			client.getMessages.mockResolvedValue([msg]);
+			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
 
 			const toolEvents = events.filter(
 				(e) =>
@@ -530,6 +556,14 @@ describe("MessagePoller", () => {
 		});
 
 		it("assistant message with cost/token data emits a result event", async () => {
+			const client = createMockClient([]);
+			const poller = createPoller(client);
+			const events = collectEvents(poller);
+
+			poller.startPolling("sess_1");
+			await vi.advanceTimersByTimeAsync(0); // Seed from empty
+
+			// New assistant message with cost data appears
 			const msg = makeMessage({
 				id: "msg_1",
 				sessionID: "sess_1",
@@ -543,12 +577,8 @@ describe("MessagePoller", () => {
 				},
 				time: { created: 1000, completed: 2000 },
 			});
-			const client = createMockClient([msg]);
-			const poller = createPoller(client);
-			const events = collectEvents(poller);
-
-			poller.startPolling("sess_1");
-			await vi.advanceTimersByTimeAsync(0);
+			client.getMessages.mockResolvedValue([msg]);
+			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
 
 			const resultEvent = events.find((e) => e.type === "result") as Extract<
 				RelayMessage,
@@ -713,14 +743,14 @@ describe("MessagePoller", () => {
 		it("needsReseed is cleared on startPolling", async () => {
 			const client = createMockClient([]);
 			const poller = createPoller(client);
-			const events = collectEvents(poller);
 
 			// Start polling and notify SSE (sets needsReseed = true)
 			poller.startPolling("sess_1");
-			await vi.advanceTimersByTimeAsync(0); // immediate poll
+			await vi.advanceTimersByTimeAsync(0); // immediate poll (seeds)
 			poller.notifySSEEvent("sess_1");
 
-			// Now restart polling for a different session (clears needsReseed)
+			// Now restart polling for a different session (clears needsReseed
+			// AND needsSeedOnFirstPoll, so first poll seeds fresh for new session)
 			const msg = makeMessage({
 				id: "msg_2",
 				sessionID: "sess_2",
@@ -729,15 +759,12 @@ describe("MessagePoller", () => {
 			client.getMessages.mockResolvedValue([msg]);
 
 			poller.startPolling("sess_2");
-			await vi.advanceTimersByTimeAsync(0); // immediate poll
+			await vi.advanceTimersByTimeAsync(0); // immediate poll (seeds for sess_2)
 
-			// Should do normal diffing, NOT a reseed.
-			// Normal diffing emits a delta for the new text since there's no seed.
-			expect(events).toContainEqual({
-				type: "delta",
-				text: "New session content",
-				messageId: "msg_2",
-			});
+			// First poll seeds for the new session (no events on seed poll).
+			// Verify: the poller should fetch messages and build a seed snapshot,
+			// NOT do a reseed (needsReseed was cleared by startPolling).
+			expect(client.getMessages).toHaveBeenLastCalledWith("sess_2");
 
 			poller.stopPolling();
 		});
@@ -1139,7 +1166,7 @@ describe("MessagePoller", () => {
 			poller.stopPolling();
 		});
 
-		it("seeded with empty array behaves like unseeded (backward compatible)", async () => {
+		it("seeded with empty array auto-seeds on first poll (same as unseeded)", async () => {
 			const msg = makeMessage({
 				id: "msg_1",
 				sessionID: "sess_1",
@@ -1149,20 +1176,15 @@ describe("MessagePoller", () => {
 			const poller = createPoller(client);
 			const events = collectEvents(poller);
 
-			// Empty seed — should behave exactly like before
+			// Empty seed — seeds on first poll, no events emitted
 			poller.startPolling("sess_1", []);
 			await vi.advanceTimersByTimeAsync(0);
-
-			expect(events).toContainEqual({
-				type: "delta",
-				text: "Hello",
-				messageId: "msg_1",
-			});
+			expect(events).toHaveLength(0); // Seed — no events
 
 			poller.stopPolling();
 		});
 
-		it("seeded with undefined behaves like unseeded (backward compatible)", async () => {
+		it("unseeded poller auto-seeds on first poll (no events)", async () => {
 			const msg = makeMessage({
 				id: "msg_1",
 				sessionID: "sess_1",
@@ -1172,26 +1194,19 @@ describe("MessagePoller", () => {
 			const poller = createPoller(client);
 			const events = collectEvents(poller);
 
-			// No seed parameter
+			// No seed parameter — first poll seeds, no events emitted
 			poller.startPolling("sess_1");
 			await vi.advanceTimersByTimeAsync(0);
-
-			expect(events).toContainEqual({
-				type: "delta",
-				text: "Hello",
-				messageId: "msg_1",
-			});
+			expect(events).toHaveLength(0); // Seed — no events
 
 			poller.stopPolling();
 		});
 
-		it("unseeded restart after stop re-emits all historical messages (documents why callers must always seed)", async () => {
-			// Documents the behavior that caused the multi-turn TUI bug:
-			// An unseeded poller treats ALL messages as new. Callers (relay-stack.ts,
-			// session.ts) MUST always seed pollers to prevent this.
-			//
-			// The fix is at the caller level: if getMessages() fails, don't start
-			// the poller at all (the status poller retries within 500ms).
+		it("unseeded restart after stop auto-seeds and does NOT re-emit history (prevents duplication)", async () => {
+			// Verifies the fix for the synthesis duplication bug:
+			// An unseeded poller now seeds on first poll instead of treating
+			// ALL messages as new. Only genuinely new content (appearing after
+			// the seed) produces events.
 
 			// Turn 1 messages (already complete)
 			const userMsg1 = makeMessage({
@@ -1214,9 +1229,7 @@ describe("MessagePoller", () => {
 
 			poller.startPolling("sess_1", [userMsg1, assistantMsg1]);
 			await vi.advanceTimersByTimeAsync(0);
-
-			// No events emitted for seeded content
-			expect(events).toHaveLength(0);
+			expect(events).toHaveLength(0); // Seeded — no events
 
 			// Simulate turn 1 complete, poller stopped
 			poller.stopPolling();
@@ -1236,7 +1249,7 @@ describe("MessagePoller", () => {
 				parts: [makeTextPart("p_a2", "The answer is 6.")],
 			});
 
-			// Restart poller WITHOUT seed → demonstrates the re-emission bug
+			// Restart poller WITHOUT seed — first poll auto-seeds (no events)
 			client.getMessages.mockResolvedValue([
 				userMsg1,
 				assistantMsg1,
@@ -1247,18 +1260,14 @@ describe("MessagePoller", () => {
 			poller.startPolling("sess_1"); // No seed!
 			await vi.advanceTimersByTimeAsync(0);
 
-			// With empty snapshot, ALL messages are treated as new.
-			// This is why callers must never start an unseeded poller.
-			const userMessages = events.filter((e) => e.type === "user_message");
-			expect(userMessages).toHaveLength(2); // Includes turn 1 + turn 2
-			expect(userMessages[0]).toEqual({
-				type: "user_message",
-				text: "What is 2+2?",
-			});
-			expect(userMessages[1]).toEqual({
-				type: "user_message",
-				text: "And 3+3?",
-			});
+			// First poll auto-seeds: NO events emitted (fix for the duplication bug)
+			expect(events).toHaveLength(0);
+
+			// New content after the seed would be detected on subsequent polls
+			events.length = 0;
+			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
+			// Same data → still no events
+			expect(events).toHaveLength(0);
 
 			poller.stopPolling();
 		});
