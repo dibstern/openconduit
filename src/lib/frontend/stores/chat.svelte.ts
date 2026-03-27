@@ -376,9 +376,36 @@ export function handleDelta(
 		return;
 	}
 
+	let needsNewMessage = chatState.phase !== "streaming";
+
+	// ── New-turn detection (queued-message boundary) ────────────────────
+	// When we're streaming and a delta's messageId differs from the current
+	// unfinalized assistant message, a new OpenCode response has started
+	// (e.g. the reply to a queued message). OpenCode may not send
+	// session.status:idle between consecutive responses, so the `done`
+	// event that normally finalizes a turn may be absent or late. Detect
+	// the boundary here and finalize the previous response so a fresh
+	// assistant bubble is created for the new turn.
+	if (!needsNewMessage && messageId != null) {
+		const messages = getMessages();
+		for (let i = messages.length - 1; i >= 0; i--) {
+			const m = messages[i];
+			if (m?.type === "assistant" && !m.finalized) {
+				if (m.messageId != null && m.messageId !== messageId) {
+					const finalizedId = flushAndFinalizeAssistant();
+					if (finalizedId) {
+						doneMessageIds.add(finalizedId);
+					}
+					chatState.turnEpoch++;
+					needsNewMessage = true;
+				}
+				break;
+			}
+		}
+	}
+
 	// If no current assistant message, create one.
-	const isCurrentlyStreaming = chatState.phase === "streaming";
-	if (!isCurrentlyStreaming) {
+	if (needsNewMessage) {
 		const uuid = generateUuid();
 		const assistantMsg: AssistantMessage = {
 			type: "assistant",
