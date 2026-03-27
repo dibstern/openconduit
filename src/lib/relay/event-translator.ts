@@ -374,8 +374,18 @@ export function translateSessionStatus(
 	const { properties: props } = event;
 	const statusType = props.status?.type;
 
-	// busy and idle are handled by the status poller (via notifySSEIdle).
-	// Retry messages are still translated here for immediate user feedback.
+	// Produce a done event directly for idle status so it flows through
+	// the normal event pipeline (cache + immediate WebSocket delivery).
+	// The monitoring chain also synthesizes done via notifySSEIdle → poller →
+	// reducer, but that path is unreliable: it misses transitions when the
+	// session completes faster than the poll interval, or when multiple turns
+	// complete within a single busy period.  Direct translation ensures the
+	// browser receives done promptly for every idle transition.
+	if (statusType === "idle") {
+		return { type: "done", code: 0 };
+	}
+
+	// Retry messages are translated for immediate user feedback.
 	if (statusType === "retry") {
 		const attempt = props.status?.attempt ?? 0;
 		const reason = props.status?.message ?? "Retrying";

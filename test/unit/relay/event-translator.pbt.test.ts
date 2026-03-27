@@ -445,7 +445,7 @@ describe("Ticket 1.3 — Event Translator PBT", () => {
 	// ─── P7: Session status mapping ───────────────────────────────────────
 
 	describe("P7: Session status mapping (AC8)", () => {
-		it("property: busy → null, retry → error, idle → null (busy/idle handled by status poller)", () => {
+		it("property: busy → null, retry → error, idle → done", () => {
 			fc.assert(
 				fc.property(sessionStatusEvent, (event) => {
 					const result = translateSessionStatus(event);
@@ -454,7 +454,7 @@ describe("Ticket 1.3 — Event Translator PBT", () => {
 					).status?.type;
 
 					if (statusType === "busy") {
-						// busy is now handled by the status poller, not the translator
+						// busy is handled by the status poller, not the translator
 						expect(result).toBeNull();
 					} else if (statusType === "retry") {
 						// Retry returns only the error message (no processing status)
@@ -465,8 +465,12 @@ describe("Ticket 1.3 — Event Translator PBT", () => {
 							code: "RETRY",
 						});
 					} else if (statusType === "idle") {
-						// idle is now handled by the status poller, not the translator
-						expect(result).toBeNull();
+						// idle translates to done for immediate delivery via the
+						// event pipeline, bypassing the monitoring chain
+						expect(result).toMatchObject({
+							type: "done",
+							code: 0,
+						});
 					}
 				}),
 				{ seed: SEED, numRuns: NUM_RUNS, endOnFailure: true },

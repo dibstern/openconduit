@@ -340,10 +340,10 @@ describe("Server cache pipeline: events survive session switch", () => {
 		expect(result.kind).toBe("cached-events");
 	});
 
-	it("session.status busy/idle no longer produce cached events (handled by status poller)", async () => {
+	it("session.status idle translates to done event (cached immediately)", async () => {
 		let activeSession = "session-a";
 
-		// Processing status — now returns null from translator
+		// Processing status — still returns null from translator (busy handled by poller)
 		const busyResult = processEvent(
 			makeSessionStatus("session-a", "busy"),
 			translator,
@@ -351,13 +351,13 @@ describe("Server cache pipeline: events survive session switch", () => {
 			activeSession,
 			extractSessionId,
 		);
-		expect(busyResult).toHaveLength(0); // busy no longer translated
+		expect(busyResult).toHaveLength(0); // busy not translated
 
 		// Switch to B
 		translator.reset();
 		activeSession = "session-b";
 
-		// Session A completes (idle) — also returns null from translator
+		// Session A completes (idle) — now translates to done
 		const idleResult = processEvent(
 			makeSessionStatus("session-a", "idle"),
 			translator,
@@ -365,12 +365,12 @@ describe("Server cache pipeline: events survive session switch", () => {
 			activeSession,
 			extractSessionId,
 		);
-		expect(idleResult).toHaveLength(0); // idle no longer translated
+		expect(idleResult).toHaveLength(1); // idle → done
+		expect(idleResult[0]).toMatchObject({ type: "done", code: 0 });
 
-		// Verify: no status or done events in cache (handled by status poller now)
+		// Verify: done event is cached for session A
 		const events = await cache.getEvents("session-a");
-		expect(events?.some((e) => e.type === "status")).toBeFalsy();
-		expect(events?.some((e) => e.type === "done")).toBeFalsy();
+		expect(events?.some((e) => e.type === "done")).toBe(true);
 	});
 
 	it("events with missing sessionID fall back to activeSession (recorded to wrong session)", async () => {
@@ -514,7 +514,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 			extractSessionId,
 		);
 
-		// Session A completes — idle no longer produces cached events
+		// Session A completes — idle now translates to done (immediate delivery)
 		processEvent(
 			makeSessionStatus("session-a", "idle"),
 			translator,
@@ -523,7 +523,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 			extractSessionId,
 		);
 
-		// ── VERIFY: Cache should have conversation events (no status/done from translator) ──
+		// ── VERIFY: Cache should have conversation events + done from idle ──
 		// biome-ignore lint/style/noNonNullAssertion: safe — guarded by prior assertion
 		const events = (await cache.getEvents("session-a"))!;
 		expect(events).not.toBeNull();
@@ -533,9 +533,9 @@ describe("Server cache pipeline: events survive session switch", () => {
 		// user_message (manually recorded)
 		expect(byType("user_message")).toHaveLength(1);
 
-		// status/done no longer come from the translator (handled by status poller)
+		// idle now translates to done (cached immediately via event pipeline)
 		expect(byType("status")).toHaveLength(0);
-		expect(byType("done")).toHaveLength(0);
+		expect(byType("done")).toHaveLength(1);
 
 		// deltas: "Hello! " + "I can " + "help you." + " Here is the file."
 		const deltas = byType("delta");
