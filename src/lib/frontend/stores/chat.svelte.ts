@@ -306,6 +306,16 @@ export function discardReplayBatch(): void {
 const INITIAL_PAGE_SIZE = 50;
 const replayBuffers = new Map<string, ChatMessage[]>();
 
+/** Sessions whose event cache was incomplete (eventsHasMore from server).
+ *  When the local replay buffer is exhausted for these sessions, the
+ *  HistoryLoader should fall through to server-based pagination. */
+const eventsHasMoreSessions = new Set<string>();
+
+/** Check if a session's event cache was marked as incomplete by the server. */
+export function isEventsHasMore(sessionId: string): boolean {
+	return eventsHasMoreSessions.has(sessionId);
+}
+
 export function getReplayBuffer(sessionId: string): ChatMessage[] | undefined {
 	return replayBuffers.get(sessionId);
 }
@@ -333,18 +343,36 @@ export function consumeReplayBuffer(
 	});
 }
 
-export function commitReplayFinal(sessionId: string): void {
+/**
+ * @param eventsHasMore - When true, the server's event cache does not cover
+ *   the full session. After the local replay buffer is exhausted, the frontend
+ *   should fall through to server-based pagination for older messages.
+ *   When false (default), buffer exhaustion means "beginning of session".
+ */
+export function commitReplayFinal(
+	sessionId: string,
+	eventsHasMore = false,
+): void {
 	if (replayBatch === null) return;
 	const all = replayBatch;
 	replayBatch = null;
 
 	if (all.length <= INITIAL_PAGE_SIZE) {
 		chatState.messages = all;
+		// Small replay: all messages fit. hasMore only if server says cache
+		// is incomplete (older messages exist beyond what the cache had).
+		historyState.hasMore = eventsHasMore;
 	} else {
 		const cutoff = all.length - INITIAL_PAGE_SIZE;
 		replayBuffers.set(sessionId, all.slice(0, cutoff));
 		chatState.messages = all.slice(cutoff);
+		// hasMore = true: either the buffer has more, or after buffer
+		// exhaustion the server has more (eventsHasMore flag).
 		historyState.hasMore = true;
+	}
+	// Store the flag for HistoryLoader to use when the buffer is exhausted.
+	if (eventsHasMore) {
+		eventsHasMoreSessions.add(sessionId);
 	}
 	chatState.loadLifecycle = "committed";
 }
@@ -431,7 +459,7 @@ export function handleDelta(
 }
 
 export function handleThinkingStart(
-	_msg: Extract<RelayMessage, { type: "thinking_start" }>,
+	msg: Extract<RelayMessage, { type: "thinking_start" }>,
 ): void {
 	thinkingStartTime = Date.now();
 	const uuid = generateUuid();
@@ -440,6 +468,7 @@ export function handleThinkingStart(
 		uuid,
 		text: "",
 		done: false,
+		...(msg.messageId != null && { messageId: msg.messageId }),
 	};
 	setMessages([...getMessages(), thinkingMsg]);
 }
@@ -523,31 +552,40 @@ export function handleResult(
 	msg: Extract<RelayMessage, { type: "result" }>,
 ): void {
 	const { usage, cost, duration } = msg;
+	const messageId = "messageId" in msg ? msg.messageId : undefined;
 
 	// ── Deduplicate result bars ─────────────────────────────────────────
 	// OpenCode sends multiple message.updated events for the same assistant
 	// message (first with cost/tokens, then again with duration). Instead
 	// of appending a new ResultMessage each time, update the existing one
-	// in-place. The last ResultMessage in the array (not separated by a
-	// "done" message) is considered the same turn's result bar.
+	// in-place. Only merge when the last message is a result for the SAME
+	// OpenCode message (or when neither carries a messageId, for backward
+	// compatibility).
 	const currentMessages = getMessages();
 	const lastMsg = currentMessages[currentMessages.length - 1];
 	if (lastMsg?.type === "result") {
-		const messages = [...currentMessages];
-		const dur = duration ?? lastMsg.duration;
-		messages[messages.length - 1] = {
-			...lastMsg,
-			cost: cost ?? lastMsg.cost,
-			...(dur != null && { duration: dur }),
-			inputTokens: usage?.input ?? lastMsg.inputTokens,
-			outputTokens: usage?.output ?? lastMsg.outputTokens,
-			cacheRead: usage?.cache_read ?? lastMsg.cacheRead,
-			cacheWrite: usage?.cache_creation ?? lastMsg.cacheWrite,
-		};
-		setMessages(messages);
-		// Update context usage bar
-		updateContextFromTokens(usage);
-		return;
+		const sameMessage =
+			messageId == null ||
+			lastMsg.messageId == null ||
+			messageId === lastMsg.messageId;
+		if (sameMessage) {
+			const messages = [...currentMessages];
+			const dur = duration ?? lastMsg.duration;
+			messages[messages.length - 1] = {
+				...lastMsg,
+				cost: cost ?? lastMsg.cost,
+				...(dur != null && { duration: dur }),
+				inputTokens: usage?.input ?? lastMsg.inputTokens,
+				outputTokens: usage?.output ?? lastMsg.outputTokens,
+				cacheRead: usage?.cache_read ?? lastMsg.cacheRead,
+				cacheWrite: usage?.cache_creation ?? lastMsg.cacheWrite,
+				...(messageId != null && { messageId }),
+			};
+			setMessages(messages);
+			// Update context usage bar
+			updateContextFromTokens(usage);
+			return;
+		}
 	}
 
 	const uuid = generateUuid();
@@ -560,6 +598,7 @@ export function handleResult(
 		outputTokens: usage?.output,
 		cacheRead: usage?.cache_read,
 		cacheWrite: usage?.cache_creation,
+		...(messageId != null && { messageId }),
 	};
 	setMessages([...getMessages(), resultMsg]);
 	// Update context usage bar

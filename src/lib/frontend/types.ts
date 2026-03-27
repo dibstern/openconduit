@@ -99,6 +99,7 @@ export interface ThinkingMessage {
 	text: string;
 	duration?: number;
 	done: boolean;
+	messageId?: string;
 }
 
 export interface ToolMessage {
@@ -127,6 +128,7 @@ export interface ResultMessage {
 	outputTokens?: number;
 	cacheRead?: number;
 	cacheWrite?: number;
+	messageId?: string;
 }
 
 export type SystemMessageVariant = "info" | "error";

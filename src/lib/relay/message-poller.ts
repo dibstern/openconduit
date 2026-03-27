@@ -283,6 +283,7 @@ function synthesizeResultEvent(msg: Message): RelayMessage | null {
 		cost: msg.cost ?? 0,
 		duration,
 		sessionId: msg.sessionID,
+		...(msg.id != null && { messageId: msg.id }),
 	};
 }
 

@@ -434,6 +434,7 @@ export function translateMessageUpdated(
 	const msg = props.info ?? props.message;
 	if (!msg || msg.role !== "assistant") return null;
 
+	const messageId = msg.id;
 	return {
 		type: "result",
 		usage: {
@@ -448,6 +449,7 @@ export function translateMessageUpdated(
 				? msg.time.completed - msg.time.created
 				: 0,
 		sessionId: props.sessionID ?? "",
+		...(messageId != null && { messageId }),
 	};
 }
 

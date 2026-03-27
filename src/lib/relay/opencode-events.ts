@@ -234,6 +234,7 @@ export function isMessageCreatedEvent(
 // ─── Message Updated ─────────────────────────────────────────────────────────
 
 interface MessagePayload {
+	id?: string;
 	role?: string;
 	cost?: number;
 	tokens?: {

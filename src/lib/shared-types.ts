@@ -304,6 +304,7 @@ export type RelayMessage =
 			cost: number;
 			duration: number;
 			sessionId: string;
+			messageId?: string;
 	  }
 	| { type: "status"; status: string }
 	| { type: "done"; code: number }
@@ -314,6 +315,10 @@ export type RelayMessage =
 			requestId?: RequestId;
 			/** Raw events for client replay (cache hit). */
 			events?: RelayMessage[];
+			/** When true, the event cache does not cover the full session
+			 *  (eviction or late start) and the frontend should fall through
+			 *  to server-based pagination when the replay buffer is exhausted. */
+			eventsHasMore?: boolean;
 			/** Structured messages for REST API fallback (converted to ChatMessages and prepended to chatState). */
 			history?: {
 				messages: HistoryMessage[];
