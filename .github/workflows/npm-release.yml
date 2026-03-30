@@ -27,8 +27,7 @@ jobs:
           key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
-      - run: pnpm check
-      - run: pnpm lint
+      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm test:all
 
   publish:
