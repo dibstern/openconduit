@@ -28,13 +28,25 @@ const PROJECT_URL = "/p/myapp/";
 
 /** Wait for the chat page to be ready (WS connected, input visible). */
 async function waitForChatReady(page: Page): Promise<void> {
-	await page.locator("#input").waitFor({ state: "visible", timeout: 10_000 });
+	// Use the test-level timeout (default 30s) rather than a hardcoded 10s.
+	// The SPA needs to load a ~2.4MB bundle, mount Svelte, connect the
+	// mocked WS, receive init messages, and render — under resource
+	// pressure this can exceed 10s.
+	await page.locator("#input").waitFor({ state: "visible" });
 	// Overlay uses class not id, and it fades out via opacity transition.
 	// Wait for it to be either removed from DOM or have opacity 0 (fadeOut).
-	await page.locator(".connect-overlay").waitFor({
-		state: "hidden",
-		timeout: 10_000,
+	await page.locator(".connect-overlay").waitFor({ state: "hidden" });
+}
+
+/** Navigate and wait for SPA readiness. */
+async function gotoAndWait(
+	page: Page,
+	baseURL: string | undefined,
+): Promise<void> {
+	await page.goto(`${baseURL ?? "http://localhost:4173"}${PROJECT_URL}`, {
+		waitUntil: "networkidle",
 	});
+	await waitForChatReady(page);
 }
 
 /** Set up WS mock with multi-instance init, navigate, wait for ready. */
@@ -48,8 +60,7 @@ async function setupMultiInstance(
 		initDelay: 0,
 		messageDelay: 0,
 	});
-	await page.goto(`${baseURL ?? "http://localhost:4173"}${PROJECT_URL}`);
-	await waitForChatReady(page);
+	await gotoAndWait(page, baseURL);
 	return control;
 }
 
@@ -64,8 +75,7 @@ async function setupSingleInstance(
 		initDelay: 0,
 		messageDelay: 0,
 	});
-	await page.goto(`${baseURL ?? "http://localhost:4173"}${PROJECT_URL}`);
-	await waitForChatReady(page);
+	await gotoAndWait(page, baseURL);
 	return control;
 }
 
@@ -80,8 +90,7 @@ async function setupNoInstances(
 		initDelay: 0,
 		messageDelay: 0,
 	});
-	await page.goto(`${baseURL ?? "http://localhost:4173"}${PROJECT_URL}`);
-	await waitForChatReady(page);
+	await gotoAndWait(page, baseURL);
 	return control;
 }
 
