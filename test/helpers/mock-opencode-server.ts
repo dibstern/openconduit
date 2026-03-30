@@ -103,6 +103,16 @@ export class MockOpenCodeServer {
 	/** Title overrides from PATCH /session/:id. */
 	private renamedSessions = new Map<string, string>();
 
+	/**
+	 * Session IDs that have had a session.status:idle SSE event emitted.
+	 * Used to override GET /session/status responses — once SSE declares
+	 * a session idle, the status endpoint must agree (matching real OpenCode
+	 * behavior). Without this, the status poller consumes stale "busy"
+	 * queue entries and re-injects processing state after SSE already
+	 * delivered "done".
+	 */
+	private sseIdleSessions = new Set<string>();
+
 	/** Counter for generating unique session IDs. */
 	private sessionCounter = 0;
 
@@ -198,6 +208,7 @@ export class MockOpenCodeServer {
 		this.injectedSessions.clear();
 		this.deletedSessionIds.clear();
 		this.renamedSessions.clear();
+		this.sseIdleSessions.clear();
 		this.sessionCounter = 0;
 		this.recordedPromptSessionIds = [];
 		this.buildQueues();
@@ -317,6 +328,7 @@ export class MockOpenCodeServer {
 		this.injectedSessions.clear();
 		this.deletedSessionIds.clear();
 		this.renamedSessions.clear();
+		this.sseIdleSessions.clear();
 		this.sessionCounter = 0;
 		this.recordedPromptSessionIds = [];
 		this.buildQueues();
@@ -684,6 +696,51 @@ export class MockOpenCodeServer {
 			return;
 		}
 
+		// ── GET /session/status: filter out SSE-idle sessions ──────────────
+		// When SSE has emitted session.status:idle for a session, the status
+		// endpoint must agree — the real OpenCode server is consistent. Without
+		// this, the status poller consumes stale "busy" queue entries and
+		// re-injects processing state after SSE already delivered "done".
+		if (method === "GET" && basePath === "/session/status") {
+			const statusQueue =
+				this.getActiveQueue(this.exactQueues, exact) ??
+				this.getActiveQueue(this.normalizedQueues, normalized);
+			if (statusQueue) {
+				const shifted =
+					statusQueue.length > 1 ? statusQueue.shift() : undefined;
+				const statusEntry = shifted ?? statusQueue[0];
+				if (statusEntry && this.sseIdleSessions.size > 0) {
+					const body =
+						typeof statusEntry.responseBody === "object" &&
+						statusEntry.responseBody !== null
+							? { ...(statusEntry.responseBody as Record<string, unknown>) }
+							: statusEntry.responseBody;
+					// Remove sessions that SSE has confirmed idle
+					if (typeof body === "object" && body !== null) {
+						for (const sid of this.sseIdleSessions) {
+							delete (body as Record<string, unknown>)[sid];
+						}
+					}
+					res.writeHead(statusEntry.status, {
+						"Content-Type": "application/json",
+					});
+					res.end(JSON.stringify(body));
+					return;
+				}
+				if (statusEntry) {
+					res.writeHead(statusEntry.status, {
+						"Content-Type": "application/json",
+					});
+					res.end(JSON.stringify(statusEntry.responseBody));
+					return;
+				}
+			}
+			// No queue — return empty status
+			res.writeHead(200, { "Content-Type": "application/json" });
+			res.end(JSON.stringify({}));
+			return;
+		}
+
 		// Look up exact path first, then fall back to normalized (parameterized).
 		// Exact match ensures that requests for a specific session ID get the
 		// correct recorded response. Normalized fallback handles session IDs
@@ -861,6 +918,19 @@ export class MockOpenCodeServer {
 				const properties = sessionIdMap
 					? this.rewriteSessionIds(event.properties, sessionIdMap)
 					: event.properties;
+
+				// Track session.status:idle events so GET /session/status
+				// stays consistent with SSE (prevents stale "busy" queue
+				// entries from re-injecting processing state).
+				if (event.type === "session.status") {
+					const status = properties["status"] as { type?: string } | undefined;
+					const sid = properties["sessionID"] as string | undefined;
+					if (status?.type === "idle" && sid) {
+						this.sseIdleSessions.add(sid);
+					} else if (status?.type === "busy" && sid) {
+						this.sseIdleSessions.delete(sid);
+					}
+				}
 
 				const payload = JSON.stringify({
 					type: event.type,

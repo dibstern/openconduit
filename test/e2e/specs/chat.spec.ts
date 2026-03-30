@@ -60,7 +60,7 @@ test.describe("Chat Flow", () => {
 		await chat.waitForStreamingComplete();
 	});
 
-	test("send button becomes stop button during processing", async ({
+	test("stop button appears during processing and hides after", async ({
 		page,
 		relayUrl,
 	}) => {
@@ -69,21 +69,23 @@ test.describe("Chat Flow", () => {
 		test.skip(!isDesktop, "Chat tests run on desktop viewport only");
 
 		const app = new AppPage(page);
+		const chat = new ChatPage(page);
 		await app.goto(relayUrl);
 
 		await app.sendMessage("Say something");
 
-		// During processing, send button should have the stop class
-		// This may be very brief with mock responses, so we try to catch it
+		// The #stop button is a separate element, conditionally rendered
+		// while processing. Try to catch it — mock responses may arrive
+		// too fast for it to ever appear.
 		try {
-			await expect(app.sendBtn).toHaveClass(/stop/, { timeout: 5_000 });
+			await chat.stopBtn.waitFor({ state: "visible", timeout: 3_000 });
 		} catch {
-			// It's OK if we missed it — mock responses arrive instantly
+			// Mock responses arrive instantly — stop button may never appear.
 		}
 
-		// Eventually returns to normal
-		const chat = new ChatPage(page);
+		// After streaming completes, stop button should be gone
 		await chat.waitForStreamingComplete();
+		await expect(app.sendBtn).toBeVisible();
 	});
 
 	test("assistant response renders in markdown container", async ({
