@@ -54,11 +54,15 @@ export const chatState = $state({
 	phase: "idle" as ChatPhase,
 	/** Tracks the lifecycle of loading session data into the chat store. */
 	loadLifecycle: "empty" as LoadLifecycle,
-	/** Monotonically increasing counter, bumped on each `done` event.
+	/** Monotonically increasing counter, bumped on each turn boundary.
 	 *  Provides an explicit, reliable turn-boundary signal for logic that
 	 *  needs to distinguish "same turn" from "new turn" (e.g. queued-flag
 	 *  clearing, future turn-aware features). Reset to 0 on clearMessages. */
 	turnEpoch: 0,
+	/** The messageId of the current OpenCode response.  When a new event
+	 *  arrives with a different messageId, that's a turn boundary.  Reset
+	 *  to null on clearMessages and done. */
+	currentMessageId: null as string | null,
 });
 
 // ─── Derived phase flags ────────────────────────────────────────────────────
@@ -389,6 +393,40 @@ function setMessages(msgs: ChatMessage[]): void {
 	}
 }
 
+// ─── Turn boundary detection ────────────────────────────────────────────────
+
+/** Detect a turn boundary when a new messageId is seen.
+ *
+ *  Called from `dispatchChatEvent` for every event that carries a
+ *  messageId.  When the id changes, the previous turn is finalized
+ *  (if streaming), turnEpoch is bumped (clearing "Queued" shimmers),
+ *  and the new messageId is recorded.
+ *
+ *  No-op when the messageId is the same as the current one. */
+export function advanceTurnIfNewMessage(messageId: string | undefined): void {
+	if (messageId == null) return;
+	if (messageId === chatState.currentMessageId) return;
+
+	// ── First event of a new turn ──────────────────────────────────────
+	// Finalize any in-progress assistant streaming from the previous turn.
+	if (chatState.phase === "streaming") {
+		const finalizedId = flushAndFinalizeAssistant();
+		if (finalizedId) {
+			doneMessageIds.add(finalizedId);
+		}
+		phaseToProcessing();
+	}
+
+	// Bump turnEpoch — clears "Queued" shimmer on user messages sent
+	// during the previous turn (sentDuringEpoch < turnEpoch).
+	// Only bump if this isn't the very first message in the session.
+	if (chatState.currentMessageId != null) {
+		chatState.turnEpoch++;
+	}
+
+	chatState.currentMessageId = messageId;
+}
+
 // ─── Message handlers ───────────────────────────────────────────────────────
 
 export function handleDelta(
@@ -404,33 +442,10 @@ export function handleDelta(
 		return;
 	}
 
-	let needsNewMessage = chatState.phase !== "streaming";
-
-	// ── New-turn detection (queued-message boundary) ────────────────────
-	// When we're streaming and a delta's messageId differs from the current
-	// unfinalized assistant message, a new OpenCode response has started
-	// (e.g. the reply to a queued message). OpenCode may not send
-	// session.status:idle between consecutive responses, so the `done`
-	// event that normally finalizes a turn may be absent or late. Detect
-	// the boundary here and finalize the previous response so a fresh
-	// assistant bubble is created for the new turn.
-	if (!needsNewMessage && messageId != null) {
-		const messages = getMessages();
-		for (let i = messages.length - 1; i >= 0; i--) {
-			const m = messages[i];
-			if (m?.type === "assistant" && !m.finalized) {
-				if (m.messageId != null && m.messageId !== messageId) {
-					const finalizedId = flushAndFinalizeAssistant();
-					if (finalizedId) {
-						doneMessageIds.add(finalizedId);
-					}
-					chatState.turnEpoch++;
-					needsNewMessage = true;
-				}
-				break;
-			}
-		}
-	}
+	// advanceTurnIfNewMessage (called at the dispatch level) already
+	// finalized streaming and transitioned to "processing" if this delta
+	// belongs to a new turn.  We just need to check the phase.
+	const needsNewMessage = chatState.phase !== "streaming";
 
 	// If no current assistant message, create one.
 	if (needsNewMessage) {
@@ -517,6 +532,8 @@ export function handleToolStart(
 
 	// Finalize current assistant text before inserting tool.
 	// Transition to processing — LLM is still active, just not streaming text.
+	// (advanceTurnIfNewMessage already handles cross-turn finalization, but
+	// same-turn tool calls still need to finalize the text block.)
 	if (chatState.phase === "streaming") {
 		flushAndFinalizeAssistant();
 		phaseToProcessing();
@@ -661,6 +678,7 @@ export function handleDone(
 	}
 
 	chatState.turnEpoch++;
+	chatState.currentMessageId = null;
 	phaseToIdle();
 }
 
@@ -870,6 +888,7 @@ export function clearMessages(): void {
 	chatState.messages = [];
 	chatState.currentAssistantText = "";
 	chatState.turnEpoch = 0;
+	chatState.currentMessageId = null;
 	_pendingHistoryQueuedFallback = false;
 	registry.clear();
 	doneMessageIds.clear();
@@ -895,6 +914,7 @@ interface CachedSession {
 	 *  after restore — without this, turnEpoch resets to 0 and messages
 	 *  with sentDuringEpoch would incorrectly show the "Queued" shimmer. */
 	turnEpoch: number;
+	currentMessageId: string | null;
 	contextPercent: number;
 	historyHasMore: boolean;
 	historyMessageCount: number;
@@ -919,6 +939,7 @@ export function stashSessionMessages(sessionId: string): void {
 	sessionMessageCache.set(sessionId, {
 		messages: $state.snapshot(chatState.messages),
 		turnEpoch: chatState.turnEpoch,
+		currentMessageId: chatState.currentMessageId,
 		contextPercent: uiState.contextPercent,
 		historyHasMore: historyState.hasMore,
 		historyMessageCount: historyState.messageCount,
@@ -932,6 +953,7 @@ export function restoreCachedMessages(sessionId: string): boolean {
 	if (!entry) return false;
 	chatState.messages = entry.messages;
 	chatState.turnEpoch = entry.turnEpoch;
+	chatState.currentMessageId = entry.currentMessageId;
 	updateContextPercent(entry.contextPercent);
 	historyState.hasMore = entry.historyHasMore;
 	historyState.messageCount = entry.historyMessageCount;

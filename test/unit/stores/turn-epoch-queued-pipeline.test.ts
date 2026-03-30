@@ -196,6 +196,90 @@ describe("queued shimmer persists through current-turn deltas", () => {
 		// sentDuringEpoch is still set (write-once, never mutated)
 		expect(userMessages()[0]?.sentDuringEpoch).toBe(0);
 	});
+
+	it("visual queued clears when new assistant message starts (done path)", () => {
+		// Turn 1: assistant streaming
+		handleMessage({ type: "delta", text: "response 1" } as RelayMessage);
+
+		// User queues message at epoch 0
+		addUserMessage("follow-up", undefined, true);
+		// biome-ignore lint/style/noNonNullAssertion: safe — test setup guarantees element
+		expect(isVisuallyQueued(userMessages()[0]!)).toBe(true);
+
+		// done fires — bumps turnEpoch, sets phase to idle
+		handleMessage({ type: "done", code: 0 } as RelayMessage);
+		// biome-ignore lint/style/noNonNullAssertion: safe — test setup guarantees element
+		expect(isVisuallyQueued(userMessages()[0]!)).toBe(false);
+
+		// Response 2 starts (normal done→idle→delta path, no messageId)
+		handleMessage({ type: "delta", text: "response 2" } as RelayMessage);
+
+		// Shimmer stays cleared — done already bumped turnEpoch
+		// biome-ignore lint/style/noNonNullAssertion: safe — test setup guarantees element
+		expect(isVisuallyQueued(userMessages()[0]!)).toBe(false);
+		expect(assistantMessages()).toHaveLength(2);
+	});
+
+	it("visual queued clears when new assistant starts even without done or messageId", () => {
+		// Turn 1: assistant streaming (no messageId on deltas)
+		handleMessage({ type: "delta", text: "response 1" } as RelayMessage);
+
+		// User queues message at epoch 0
+		addUserMessage("follow-up", undefined, true);
+		// biome-ignore lint/style/noNonNullAssertion: safe — test setup guarantees element
+		expect(isVisuallyQueued(userMessages()[0]!)).toBe(true);
+
+		// done fires (this is the normal path — done IS reliable in most cases)
+		handleMessage({ type: "done", code: 0 } as RelayMessage);
+
+		// Next response starts — no messageId. The done already cleared
+		// the shimmer, so this is a verification that it STAYS cleared.
+		handleMessage({ type: "delta", text: "response 2" } as RelayMessage);
+		// biome-ignore lint/style/noNonNullAssertion: safe — test setup guarantees element
+		expect(isVisuallyQueued(userMessages()[0]!)).toBe(false);
+	});
+
+	it("visual queued clears when new-turn detection fires (no done between responses)", () => {
+		// Turn 1: assistant streaming with messageId
+		handleMessage({
+			type: "delta",
+			text: "response 1",
+			messageId: "msg-1",
+		} as RelayMessage);
+		expect(isStreaming()).toBe(true);
+
+		// User queues message at epoch 0
+		addUserMessage("follow-up", undefined, true);
+		// biome-ignore lint/style/noNonNullAssertion: safe — test setup guarantees element
+		expect(isVisuallyQueued(userMessages()[0]!)).toBe(true);
+		expect(chatState.turnEpoch).toBe(0);
+
+		// More deltas from same messageId — shimmer stays
+		handleMessage({
+			type: "delta",
+			text: " more text",
+			messageId: "msg-1",
+		} as RelayMessage);
+		// biome-ignore lint/style/noNonNullAssertion: safe — test setup guarantees element
+		expect(isVisuallyQueued(userMessages()[0]!)).toBe(true);
+
+		// New delta with DIFFERENT messageId (response 2) — no done between.
+		// New-turn detection fires: finalize response 1, bump turnEpoch,
+		// create new assistant message.
+		handleMessage({
+			type: "delta",
+			text: "response 2",
+			messageId: "msg-2",
+		} as RelayMessage);
+
+		// turnEpoch should have advanced past sentDuringEpoch → shimmer clears
+		expect(chatState.turnEpoch).toBe(1);
+		// biome-ignore lint/style/noNonNullAssertion: safe — test setup guarantees element
+		expect(isVisuallyQueued(userMessages()[0]!)).toBe(false);
+
+		// Messages should be properly separated
+		expect(assistantMessages()).toHaveLength(2);
+	});
 });
 
 // ─── Queued message doesn't split assistant ─────────────────────────────────

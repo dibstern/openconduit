@@ -10,7 +10,14 @@ import type { RelayMessage } from "../types.js";
 
 /** Discriminated union describing where session history came from. */
 export type SessionHistorySource =
-	| { readonly kind: "cached-events"; readonly events: readonly RelayMessage[] }
+	| {
+			readonly kind: "cached-events";
+			readonly events: readonly RelayMessage[];
+			/** True when the event cache does not cover the full session
+			 *  (eviction, late relay start). The frontend should fall through
+			 *  to server pagination when the local replay buffer is exhausted. */
+			readonly hasMore: boolean;
+	  }
 	| {
 			readonly kind: "rest-history";
 			readonly history: {
@@ -52,6 +59,7 @@ export interface SessionSwitchDeps {
 			hasMore: boolean;
 			total?: number;
 		}>;
+		seedPaginationCursor(sessionId: string, messageId: string): void;
 	};
 	readonly wsHandler: {
 		sendTo(clientId: string, msg: RelayMessage): void;
@@ -112,6 +120,27 @@ export function countUniqueMessages(events: readonly RelayMessage[]): number {
 }
 
 /**
+ * Extract the oldest OpenCode message ID from cached events.
+ *
+ * Iterates events in chronological order, returning the first `messageId`
+ * found. This is used to seed the pagination cursor so that server-based
+ * history loading can pick up where the event cache leaves off.
+ *
+ * Returns undefined if no events carry a messageId (e.g. only user_message
+ * events with no assistant responses).
+ */
+export function extractOldestMessageId(
+	events: readonly RelayMessage[],
+): string | undefined {
+	for (const e of events) {
+		if ("messageId" in e && typeof e.messageId === "string" && e.messageId) {
+			return e.messageId;
+		}
+	}
+	return undefined;
+}
+
+/**
  * If session is idle and cached events lack a `done` event, append a synthetic one.
  * Matches the shape used by monitoring-wiring.ts and message-poller.ts.
  * Pure function — returns a new source or the original unchanged.
@@ -130,6 +159,7 @@ export function patchMissingDone(
 	return {
 		kind: "cached-events",
 		events: [...source.events, { type: "done", code: 0 }],
+		hasMore: source.hasMore,
 	};
 }
 
@@ -156,6 +186,7 @@ export function buildSessionSwitchedMessage(
 				type: "session_switched",
 				id: sessionId,
 				events: source.events as RelayMessage[],
+				...(source.hasMore ? { eventsHasMore: true } : {}),
 				...optionalFields,
 			};
 		case "rest-history":
@@ -203,7 +234,16 @@ export async function resolveSessionHistory(
 	const classification = classifyHistorySource(events);
 
 	if (classification === "cached-events" && events) {
-		return { kind: "cached-events", events };
+		// Heuristic: if the first event is a user_message, the cache starts
+		// from session creation and covers the full session. If the first
+		// event is mid-conversation (delta, tool_*, etc.), the cache was
+		// truncated (eviction or late relay start) and older messages exist.
+		const cacheAppearsComplete = events[0]?.type === "user_message";
+		return {
+			kind: "cached-events",
+			events,
+			hasMore: !cacheAppearsComplete,
+		};
 	}
 
 	try {
@@ -243,6 +283,15 @@ export async function switchClientToSession(
 
 	// Patch missing done event for idle sessions served from cache
 	const patchedSource = patchMissingDone(source, deps.statusPoller, sessionId);
+
+	// Seed pagination cursor only when the cache is incomplete (hasMore=true).
+	// Complete caches cover the full session — no server fallback needed.
+	if (patchedSource.kind === "cached-events" && patchedSource.hasMore) {
+		const oldestMsgId = extractOldestMessageId(patchedSource.events);
+		if (oldestMsgId) {
+			deps.sessionMgr.seedPaginationCursor(sessionId, oldestMsgId);
+		}
+	}
 
 	// Build and send session_switched
 	const draft = deps.getInputDraft(sessionId);

@@ -332,6 +332,7 @@ describe("Server cache pipeline: events survive session switch", () => {
 			messageCache: cache,
 			sessionMgr: {
 				loadPreRenderedHistory: vi.fn(),
+				seedPaginationCursor: vi.fn(),
 			},
 			log: { info: vi.fn(), warn: vi.fn() },
 		});

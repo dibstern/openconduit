@@ -200,6 +200,23 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 	}
 
 	/**
+	 * Seed a pagination cursor for a session loaded from the event cache.
+	 *
+	 * When a session is served via cached SSE events (not REST history),
+	 * no initial loadHistory() call occurs so no cursor is set. This method
+	 * pre-seeds the cursor from the oldest messageId found in the events so
+	 * that subsequent load_more_history requests can paginate correctly.
+	 *
+	 * Only seeds if no cursor already exists (avoids overwriting a cursor
+	 * from a client that has already paginated further back).
+	 */
+	seedPaginationCursor(sessionId: string, messageId: string): void {
+		if (!this.paginationCursors.has(sessionId)) {
+			this.paginationCursors.set(sessionId, messageId);
+		}
+	}
+
+	/**
 	 * Load a page of message history for a session using paginated API.
 	 *
 	 * Messages are returned in chronological order (oldest first).
@@ -227,17 +244,28 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 				...(before ? { before } : {}),
 			});
 		} catch (err: unknown) {
-			// Stale cursor (rewind/fork deleted the message) → clear and retry without cursor.
-			// OpenCode returns 400 "Invalid cursor" when the before ID doesn't exist.
+			// Stale/unsupported cursor → clear and fall back.
+			// OpenCode returns 400 "Invalid cursor" when the before ID
+			// doesn't exist or when cursor-based pagination is unsupported.
 			if (
 				before &&
 				err instanceof OpenCodeApiError &&
 				err.responseStatus === 400
 			) {
 				this.log.warn(
-					`Stale pagination cursor for ${sessionId.slice(0, 12)} — clearing and retrying`,
+					`Pagination cursor failed for ${sessionId.slice(0, 12)} — falling back to full fetch`,
 				);
 				this.paginationCursors.delete(sessionId);
+
+				if (offset > 0) {
+					// Continuation request: cursor-based pagination failed.
+					// Fall back to fetching all messages and returning only
+					// those older than the cursor boundary.
+					return this.loadHistoryByCursorScan(sessionId, before);
+				}
+
+				// For initial loads (offset = 0), retry without cursor to get
+				// the latest page (e.g. after rewind/fork).
 				page = await this.client.getMessagesPage(sessionId, {
 					limit: this.historyPageSize,
 				});
@@ -255,6 +283,41 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 		return {
 			messages: page as unknown as HistoryMessage[],
 			hasMore: page.length >= this.historyPageSize,
+		};
+	}
+
+	/**
+	 * Fallback when cursor-based pagination fails (e.g. OpenCode version
+	 * doesn't support the `before` parameter).  Fetches all messages in a
+	 * single request and returns only those older than `cursorId`.
+	 *
+	 * Returns ALL older messages at once (not paginated) with hasMore=false
+	 * so the frontend reaches "Beginning of session" in one step.  This is
+	 * less efficient than cursor-based pagination but guarantees the user
+	 * can scroll to the real beginning of the session.
+	 */
+	private async loadHistoryByCursorScan(
+		sessionId: string,
+		cursorId: string,
+	): Promise<HistoryPage> {
+		// Fetch all messages (API returns chronological order, oldest first).
+		const all = await this.client.getMessagesPage(sessionId, {
+			limit: 10_000,
+		});
+
+		// Find cursor position — everything before it is "older" content.
+		const cursorIdx = all.findIndex((m) => m.id === cursorId);
+		if (cursorIdx <= 0) {
+			// Cursor is the first message or not found — nothing older.
+			return { messages: [], hasMore: false };
+		}
+
+		// Return ALL messages before the cursor.  No further pagination
+		// needed — this single response covers everything to the beginning.
+		const olderMessages = all.slice(0, cursorIdx);
+		return {
+			messages: olderMessages as unknown as HistoryMessage[],
+			hasMore: false,
 		};
 	}
 

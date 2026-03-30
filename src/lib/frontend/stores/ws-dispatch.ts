@@ -14,6 +14,7 @@ import { createFrontendLogger } from "../utils/logger.js";
 import { renderMarkdown } from "../utils/markdown.js";
 import {
 	addUserMessage,
+	advanceTurnIfNewMessage,
 	beginReplayBatch,
 	chatState,
 	clearMessages,
@@ -248,6 +249,15 @@ export interface DispatchContext {
  *   never appear in the cache — they're sent via sendToSession, not recordEvent)
  */
 function dispatchChatEvent(event: RelayMessage, ctx: DispatchContext): boolean {
+	// ── Turn boundary detection ─────────────────────────────────────────
+	// When an event carries a messageId that differs from the current one,
+	// a new turn has started.  This single check replaces per-handler
+	// new-turn detection and handles all response shapes (text-first,
+	// tool-first, thinking-first).
+	if ("messageId" in event && event.messageId != null) {
+		advanceTurnIfNewMessage(event.messageId as string);
+	}
+
 	switch (event.type) {
 		case "user_message":
 			addUserMessage(event.text, undefined, ctx.isQueued);
@@ -409,12 +419,10 @@ export function handleMessage(msg: RelayMessage): void {
 				// Cache hit: replay raw events through existing chat handlers
 				// (full fidelity — same code paths as live streaming).
 				// Fire-and-forget — handleMessage stays synchronous.
-				replayEvents(msg.events, msg.id).catch((err) => {
+				const eventsHasMore = msg.eventsHasMore ?? false;
+				replayEvents(msg.events, msg.id, eventsHasMore).catch((err) => {
 					log.warn("Replay error:", err);
 				});
-				// Events cache covers the full session — suppress history loading.
-				// historyState.hasMore stays false (set by clearMessages above),
-				// so the IntersectionObserver can never fire spuriously.
 			} else if (msg.history) {
 				// REST API fallback: convert to ChatMessages and prepend.
 				// REST history has no event-level data, so sentDuringEpoch
@@ -705,6 +713,7 @@ export function handleMessage(msg: RelayMessage): void {
 export async function replayEvents(
 	events: RelayMessage[],
 	sessionId: string,
+	eventsHasMore = false,
 ): Promise<void> {
 	phaseStartReplay();
 	const generation = ++replayGeneration;
@@ -754,7 +763,7 @@ export async function replayEvents(
 
 		// Single commit: page large replays so only the last 50 messages
 		// render immediately, with older messages buffered for lazy loading.
-		commitReplayFinal(sessionId);
+		commitReplayFinal(sessionId, eventsHasMore);
 
 		// Reconcile processing state after replay completes.
 		// During replay, handler functions (handleDone, handleDelta, etc.)

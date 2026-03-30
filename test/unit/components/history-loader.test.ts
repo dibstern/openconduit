@@ -51,8 +51,17 @@ vi.mock("../../../src/lib/frontend/stores/ws.svelte.ts", () => ({
 import HistoryLoader from "../../../src/lib/frontend/components/chat/HistoryLoader.svelte";
 // We need real stores for historyState and sessionState so we can set values
 // and have the component read them.
-import { historyState } from "../../../src/lib/frontend/stores/chat.svelte.js";
+import {
+	beginReplayBatch,
+	chatState,
+	clearMessages,
+	commitReplayFinal,
+	getMessages,
+	getReplayBuffer,
+	historyState,
+} from "../../../src/lib/frontend/stores/chat.svelte.js";
 import { sessionState } from "../../../src/lib/frontend/stores/session.svelte.js";
+import type { ChatMessage } from "../../../src/lib/frontend/types.js";
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
@@ -187,6 +196,116 @@ describe("HistoryLoader component", () => {
 
 		expect(wsSendSpy).toHaveBeenCalledWith(
 			expect.objectContaining({ offset: 150 }),
+		);
+	});
+});
+
+// ─── Buffer exhaustion → server fallback ────────────────────────────────────
+// When a session is loaded from the event cache with >50 messages, older
+// messages go into a local replay buffer. HistoryLoader should consume this
+// buffer first, then fall through to a server request when the buffer is
+// exhausted — the event cache may not cover the full session.
+
+function makeUserMessages(count: number): ChatMessage[] {
+	return Array.from({ length: count }, (_, i) => ({
+		type: "user" as const,
+		uuid: `uuid-${i}`,
+		text: `message-${i}`,
+	}));
+}
+
+describe("HistoryLoader buffer → server fallback", () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		observerCallback = null;
+		observedElements = [];
+		clearMessages();
+		historyState.hasMore = false;
+		historyState.loading = false;
+		historyState.messageCount = 0;
+		sessionState.currentId = "buf-session";
+	});
+
+	afterEach(() => {
+		cleanup();
+		clearMessages();
+	});
+
+	it("sends load_more_history after replay buffer is fully consumed", async () => {
+		// Setup: simulate commitReplayFinal with 100 messages.
+		// This puts 50 in the replay buffer and 50 in chatState.messages.
+		beginReplayBatch();
+		for (const m of makeUserMessages(100)) {
+			getMessages().push(m);
+		}
+		commitReplayFinal("buf-session");
+
+		// Verify initial state
+		expect(chatState.messages).toHaveLength(50);
+		expect(getReplayBuffer("buf-session")).toHaveLength(50);
+		expect(historyState.hasMore).toBe(true);
+
+		// Render the HistoryLoader
+		const sentinel = document.createElement("div");
+		render(HistoryLoader, { props: { sentinelEl: sentinel } });
+		flushSync();
+		await tick();
+
+		// First intersection: consumes 50 from buffer (exactly exhausts it)
+		observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry]);
+
+		// Buffer should be fully consumed now
+		expect(getReplayBuffer("buf-session")).toBeUndefined();
+		// All 100 messages should be displayed
+		expect(chatState.messages).toHaveLength(100);
+
+		// KEY ASSERTION: After buffer exhaustion, HistoryLoader should send
+		// a server request (load_more_history) — NOT just set hasMore=false.
+		// The event cache may not cover the full session.
+		expect(wsSendSpy).toHaveBeenCalledTimes(1);
+		expect(wsSendSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "load_more_history",
+				sessionId: "buf-session",
+			}),
+		);
+		expect(historyState.loading).toBe(true);
+	});
+
+	it("consumes buffer pages before falling through to server", async () => {
+		// Setup: 200 messages → 150 in buffer, 50 displayed
+		beginReplayBatch();
+		for (const m of makeUserMessages(200)) {
+			getMessages().push(m);
+		}
+		commitReplayFinal("buf-session");
+
+		expect(getReplayBuffer("buf-session")).toHaveLength(150);
+
+		const sentinel = document.createElement("div");
+		render(HistoryLoader, { props: { sentinelEl: sentinel } });
+		flushSync();
+		await tick();
+
+		// First intersection: consumes 50 from buffer (100 remaining)
+		observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry]);
+		expect(wsSendSpy).not.toHaveBeenCalled(); // still consuming buffer
+
+		// Second intersection: consumes 50 from buffer (50 remaining)
+		observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry]);
+		expect(wsSendSpy).not.toHaveBeenCalled(); // still consuming buffer
+
+		// Third intersection: consumes last 50 from buffer (exhausted)
+		observerCallback?.([{ isIntersecting: true } as IntersectionObserverEntry]);
+		expect(getReplayBuffer("buf-session")).toBeUndefined();
+
+		// NOW it should fall through to server
+		expect(wsSendSpy).toHaveBeenCalledTimes(1);
+		expect(wsSendSpy).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "load_more_history",
+				sessionId: "buf-session",
+			}),
 		);
 	});
 });

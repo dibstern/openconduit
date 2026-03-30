@@ -65,18 +65,27 @@
 		if (buffer && buffer.length > 0) {
 			const page = consumeReplayBuffer(sessionId, HISTORY_PAGE_SIZE);
 			prependMessages(page);
-			// hasMore: true if buffer still has messages, false otherwise.
-			// When the buffer is exhausted, the server has no additional
-			// history to offer (the replay already covered the full session).
 			const remaining = getReplayBuffer(sessionId);
-			historyState.hasMore =
-				remaining !== undefined && remaining.length > 0;
-			return;
+			if (remaining !== undefined && remaining.length > 0) {
+				// Buffer still has messages — keep paging locally.
+				return;
+			}
+			// Buffer exhausted — always ask the server whether older messages
+			// exist. The event cache may not cover the full session (eviction
+			// at MAX_EVENTS, relay started after session creation, missed SSE
+			// events, etc.). The server is the source of truth: it will return
+			// { messages: [], hasMore: false } when this truly is the beginning.
+			// Ensure offset > 0 so the server uses cursor-based pagination
+			// rather than returning the most recent page (already displayed).
+			if (historyState.messageCount === 0) {
+				historyState.messageCount = 1;
+			}
 		}
 
-		// Fall through to server request when no buffer is available.
+		// Server request for older messages.
 		historyState.loading = true;
-		// offset = number of REST-level messages already loaded (tracked by ws-dispatch)
+		// offset = number of messages already loaded (tracked by ws-dispatch).
+		// For cache→server transitions, messageCount was seeded above.
 		wsSend({
 			type: "load_more_history",
 			sessionId,

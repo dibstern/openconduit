@@ -57,7 +57,11 @@ describe("classifyHistorySource", () => {
 describe("buildSessionSwitchedMessage", () => {
 	it("builds message from cached-events source", () => {
 		const events: RelayMessage[] = [{ type: "user_message", text: "hello" }];
-		const source: SessionHistorySource = { kind: "cached-events", events };
+		const source: SessionHistorySource = {
+			kind: "cached-events",
+			events,
+			hasMore: false,
+		};
 		const msg = buildSessionSwitchedMessage("ses_1", source);
 
 		expect(msg).toEqual({
@@ -143,7 +147,11 @@ describe("buildSessionSwitchedMessage", () => {
 
 	it("includes both draft and requestId with cached-events", () => {
 		const events: RelayMessage[] = [{ type: "delta", text: "hi" }];
-		const source: SessionHistorySource = { kind: "cached-events", events };
+		const source: SessionHistorySource = {
+			kind: "cached-events",
+			events,
+			hasMore: true,
+		};
 		const msg = buildSessionSwitchedMessage("ses_10", source, {
 			draft: "draft text",
 			requestId: "req-xyz" as RequestId,
@@ -153,6 +161,7 @@ describe("buildSessionSwitchedMessage", () => {
 			type: "session_switched",
 			id: "ses_10",
 			events,
+			eventsHasMore: true,
 			inputText: "draft text",
 			requestId: "req-xyz",
 		});
@@ -171,6 +180,7 @@ function createMinimalDeps(
 				messages: [],
 				hasMore: false,
 			}),
+			seedPaginationCursor: vi.fn(),
 		},
 		log: { info: vi.fn(), warn: vi.fn() },
 		...overrides,
@@ -286,6 +296,7 @@ describe("resolveSessionHistory", () => {
 		const deps = createMinimalDeps({
 			sessionMgr: {
 				loadPreRenderedHistory: vi.fn().mockResolvedValue(history),
+				seedPaginationCursor: vi.fn(),
 			},
 		});
 
@@ -306,6 +317,7 @@ describe("resolveSessionHistory", () => {
 			messageCache: { getEvents: vi.fn().mockReturnValue(events) },
 			sessionMgr: {
 				loadPreRenderedHistory: vi.fn().mockResolvedValue(history),
+				seedPaginationCursor: vi.fn(),
 			},
 		});
 
@@ -323,6 +335,7 @@ describe("resolveSessionHistory", () => {
 				loadPreRenderedHistory: vi
 					.fn()
 					.mockRejectedValue(new Error("API down")),
+				seedPaginationCursor: vi.fn(),
 			},
 		});
 
@@ -336,6 +349,7 @@ describe("resolveSessionHistory", () => {
 		const deps = createMinimalDeps({
 			sessionMgr: {
 				loadPreRenderedHistory: vi.fn().mockRejectedValue(new Error("timeout")),
+				seedPaginationCursor: vi.fn(),
 			},
 		});
 
@@ -359,6 +373,7 @@ function createFullDeps(
 				messages: [],
 				hasMore: false,
 			}),
+			seedPaginationCursor: vi.fn(),
 		},
 		wsHandler: {
 			sendTo: vi.fn(),
@@ -413,6 +428,7 @@ describe("switchClientToSession", () => {
 		const deps = createFullDeps({
 			sessionMgr: {
 				loadPreRenderedHistory: vi.fn().mockResolvedValue(history),
+				seedPaginationCursor: vi.fn(),
 			},
 		});
 		await switchClientToSession(deps, "c1", "ses_2");
@@ -431,6 +447,7 @@ describe("switchClientToSession", () => {
 		const deps = createFullDeps({
 			sessionMgr: {
 				loadPreRenderedHistory: vi.fn().mockRejectedValue(new Error("fail")),
+				seedPaginationCursor: vi.fn(),
 			},
 		});
 		await switchClientToSession(deps, "c1", "ses_3");
