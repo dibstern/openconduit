@@ -44,7 +44,7 @@ async function gotoAndWait(
 	baseURL: string | undefined,
 ): Promise<void> {
 	await page.goto(`${baseURL ?? "http://localhost:4173"}${PROJECT_URL}`, {
-		waitUntil: "networkidle",
+		waitUntil: "domcontentloaded",
 	});
 	await waitForChatReady(page);
 }
