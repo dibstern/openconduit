@@ -51,6 +51,8 @@
 		"storybook:build": "storybook build -o dist/storybook",
 		"test:storybook-visual": "pnpm storybook:build && npx playwright test --config test/visual/playwright.config.ts",
 		"test:storybook-visual:update": "pnpm storybook:build && npx playwright test --config test/visual/playwright.config.ts --update-snapshots",
+		"test:storybook-visual:update-all": "bash scripts/update-visual-snapshots.sh",
+		"test:storybook-visual:update-linux": "bash scripts/update-visual-snapshots.sh linux",
 		"generate:media": "tsx scripts/generate-media/index.ts",
 		"check:storybook": "node scripts/check-storybook-health.mjs",
 		"test:all": "bash scripts/test-all.sh",
