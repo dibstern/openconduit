@@ -133,7 +133,7 @@ const SCENARIOS: ScenarioDefinition[] = [
 	{
 		name: "chat-tool-call",
 		prompts: [
-			'Read the file package.json and tell me the exact value of the "version" field.',
+			'Read the file package.json and tell me the exact value of the "name" field.',
 		],
 		needsPermissionApproval: true,
 	},

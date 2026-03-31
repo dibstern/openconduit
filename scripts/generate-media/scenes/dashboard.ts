@@ -2,6 +2,7 @@
 // Generates GENERATE-DASHBOARD.png — Desktop multi-project dashboard showing
 // four project cards with status indicators.
 
+import { getVersion } from "../../../src/lib/version.js";
 import {
 	freezeAnimations,
 	waitForFonts,
@@ -26,7 +27,7 @@ export const dashboardScene: SceneDefinition = {
 					contentType: "application/json",
 					body: JSON.stringify({
 						projects: dashboardProjects,
-						version: "0.1.0",
+						version: getVersion(),
 					}),
 				}),
 			);

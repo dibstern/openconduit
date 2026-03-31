@@ -13,6 +13,7 @@ import { runSetup } from "../lib/cli/cli-setup.js";
 import { getTailscaleIP, hasMkcert } from "../lib/cli/tls.js";
 import { DEFAULT_CONFIG_DIR } from "../lib/env.js";
 import { formatErrorDetail } from "../lib/errors.js";
+import { getVersion } from "../lib/version.js";
 
 import type { InteractiveContext } from "./cli-core.js";
 
@@ -154,7 +155,7 @@ async function launchMainMenu(
 				typeof status["processingCount"] === "number"
 					? status["processingCount"]
 					: 0,
-			version: "0.1.0",
+			version: getVersion(),
 			// When TLS is active, QR should point to the HTTP onboarding server
 			// (port+1) so the phone installs the CA cert before accessing HTTPS.
 			...(ip !== "localhost" && {
