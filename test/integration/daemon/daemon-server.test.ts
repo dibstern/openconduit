@@ -11,7 +11,7 @@
 // - WS upgrade rejection for non-matching URLs
 // - Instance status broadcast and health checking
 
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import http from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

@@ -427,7 +427,7 @@ describe("T3: --status — sends get_status, formats output (AC2)", () => {
 		expect(cli.state.output).toContain("3");
 		expect(cli.state.output).toContain("2");
 		// Also verifies the correct IPC command was sent
-		expect(cli.state.ipcCommands[0]!.cmd).toBe("get_status");
+		expect(cli.state.ipcCommands[0]?.cmd).toBe("get_status");
 	});
 
 	it.each([
