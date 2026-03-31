@@ -90,10 +90,10 @@
 			wsState.statusText === "" ||
 			!wsState.statusText
 		) {
-			return `Connecting to ${instanceName}...`;
+			return `Connecting to ${instanceName} server...`;
 		}
 		if (wsState.statusText === "Disconnected") {
-			return `Reconnecting to ${instanceName}...`;
+			return `Reconnecting to ${instanceName} server...`;
 		}
 		return wsState.statusText;
 	});
