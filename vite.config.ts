@@ -92,6 +92,11 @@ export default defineConfig({
 			},
 		},
 	},
+	// In Vite 6 `preview.proxy` falls back to `server.proxy`. The dev-only
+	// proxy targets (localhost:2633) aren't running during E2E tests that use
+	// `vite preview`, so disable preview-mode proxying to avoid noisy
+	// ECONNREFUSED errors.
+	preview: { proxy: {} },
 	server: {
 		host: "127.0.0.1",
 		// Dev server proxies WS and API to the relay server

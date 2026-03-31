@@ -52,6 +52,10 @@ test.describe("Unified Rendering: No Duplication", () => {
 		page,
 		relayUrl,
 	}) => {
+		// This test sends two messages (double the work of other tests in this
+		// describe block), so the default 30 s timeout can be too tight in CI.
+		test.setTimeout(60_000);
+
 		const viewport = page.viewportSize();
 		const isDesktop = viewport ? viewport.width >= 1440 : false;
 		test.skip(!isDesktop, "Unified rendering tests run on desktop only");
