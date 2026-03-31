@@ -237,23 +237,23 @@ restart loops.
 ## CLI reference
 
 ```
-conduit                                  Interactive setup + main menu
-conduit --add .                          Register current directory
-conduit --add /path                      Register project by path
-conduit --remove                         Unregister current project
-conduit --list                           List registered projects
-conduit --status                         Show daemon status
-conduit --stop                           Stop the daemon
-conduit --pin <PIN>                      Set or update PIN
-conduit --title <name>                   Set project display name
-conduit -p, --port <port>                HTTP port (default: 2633)
-conduit --oc-port <port>                 OpenCode port (default: 4096)
-conduit --no-https                       Disable TLS
-conduit -y, --yes                        Skip prompts, accept defaults
-conduit --dangerously-skip-permissions   Bypass permission prompts (PIN required)
-conduit --foreground                     Run in foreground (dev mode)
-conduit --log-level <level>              error | warn | info | verbose | debug
-conduit --log-format <format>            pretty | json
+npx conduit-code                                  Interactive setup + main menu
+npx conduit-code --add .                          Register current directory
+npx conduit-code --add /path                      Register project by path
+npx conduit-code --remove                         Unregister current project
+npx conduit-code --list                           List registered projects
+npx conduit-code --status                         Show daemon status
+npx conduit-code --stop                           Stop the daemon
+npx conduit-code --pin <PIN>                      Set or update PIN
+npx conduit-code --title <name>                   Set project display name
+npx conduit-code -p, --port <port>                HTTP port (default: 2633)
+npx conduit-code --oc-port <port>                 OpenCode port (default: 4096)
+npx conduit-code --no-https                       Disable TLS
+npx conduit-code -y, --yes                        Skip prompts, accept defaults
+npx conduit-code --dangerously-skip-permissions   Bypass permission prompts (PIN required)
+npx conduit-code --foreground                     Run in foreground (dev mode)
+npx conduit-code --log-level <level>              error | warn | info | verbose | debug
+npx conduit-code --log-format <format>            pretty | json
 ```
 
 Environment variables: `OPENCODE_URL`, `HOST`, `CONDUIT_CONFIG_DIR`,
