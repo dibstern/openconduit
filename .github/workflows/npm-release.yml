@@ -1,12 +1,19 @@
 name: Release to npm
 
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 # ─── Parallelization Strategy ──────────────────────────────────────────────────
@@ -18,6 +25,9 @@ permissions:
 #
 # Critical path: storybook job (~5 min) vs e2e job (~4 min).
 # Previously everything ran serially for ~10 min.
+#
+# After all verification passes, the release job bumps the version, publishes,
+# and creates a GitHub release. Version is only bumped after full CI passes.
 
 jobs:
   # ── Job 1: Static analysis + build ─────────────────────────────────────────
@@ -171,12 +181,17 @@ jobs:
       - run: pnpm storybook:build
       - run: pnpm exec playwright test --config test/visual/playwright.config.ts
 
-  # ── Publish (after all verification passes) ────────────────────────────────
-  publish:
+  # ── Release (after all verification passes) ────────────────────────────────
+  # Bumps version, commits, tags, pushes, publishes to npm, creates GH release.
+  # This only runs after every verification job succeeds.
+  release:
     needs: [lint-and-build, vitest, e2e, storybook]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # full history for gh release --generate-notes
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
@@ -198,11 +213,41 @@ jobs:
           name: dist
           path: dist/
 
-      - name: Set version from tag
+      - name: Configure git
         run: |
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          npm version "$VERSION" --no-git-tag-version --allow-same-version
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - run: pnpm publish --no-git-checks --provenance --ignore-scripts
+      - name: Bump version
+        id: bump
+        run: |
+          npm version ${{ inputs.version }} --no-git-tag-version --ignore-scripts
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=v$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Bumped to $VERSION"
+
+      - name: Commit, tag, and push
+        run: |
+          git add package.json
+          git commit -m "${{ steps.bump.outputs.tag }}"
+          git tag "${{ steps.bump.outputs.tag }}"
+          git push origin main --follow-tags
+
+      - name: Publish to npm
+        run: pnpm publish --no-git-checks --provenance --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        run: gh release create "${{ steps.bump.outputs.tag }}" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Replaces update-major-tag.yml since GITHUB_TOKEN pushes don't trigger
+      # other workflows. Keeps v0, v1, etc. pointing at the latest patch.
+      - name: Update major version tag
+        run: |
+          MAJOR=$(echo "${{ steps.bump.outputs.version }}" | cut -d. -f1)
+          git tag -f "v${MAJOR}" "${{ steps.bump.outputs.tag }}"
+          git push origin "v${MAJOR}" --force

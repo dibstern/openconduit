@@ -1,6 +1,6 @@
 {
 	"name": "conduit-code",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"type": "module",
 	"license": "MIT",
 	"description": "Web UI relay for OpenCode. Access your OpenCode sessions from any device.",
@@ -63,6 +63,8 @@
 		"test:coverage": "vitest run --coverage",
 		"test:record-snapshots": "tsx test/e2e/scripts/record-snapshots.ts",
 		"prepublishOnly": "pnpm test:all",
+		"preversion": "pnpm check && pnpm lint && pnpm test:unit",
+		"postversion": "git push origin main --follow-tags",
 		"prepare": "lefthook install || true"
 	},
 	"dependencies": {
