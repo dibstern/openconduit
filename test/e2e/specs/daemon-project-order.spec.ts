@@ -70,6 +70,10 @@ async function getSwitcherSlugs(
 	await page
 		.locator("[data-testid='project-switcher-dropdown']")
 		.waitFor({ timeout: 5_000 });
+	await page
+		.locator("[data-testid='project-item']")
+		.first()
+		.waitFor({ timeout: 5_000 });
 
 	const slugs = await page
 		.locator("[data-testid='project-item']")
