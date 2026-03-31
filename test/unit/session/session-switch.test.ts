@@ -170,9 +170,9 @@ describe("buildSessionSwitchedMessage", () => {
 
 function createMinimalDeps(
 	overrides?: Partial<
-		Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log">
+		Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log" | "forkMeta">
 	>,
-): Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log"> {
+): Pick<SessionSwitchDeps, "messageCache" | "sessionMgr" | "log" | "forkMeta"> {
 	return {
 		messageCache: { getEvents: vi.fn().mockReturnValue(null) },
 		sessionMgr: {
@@ -358,6 +358,104 @@ describe("resolveSessionHistory", () => {
 		const warnCall = vi.mocked(deps.log.warn).mock.calls[0]?.[0] as string;
 		expect(warnCall).toContain("ses_5");
 		expect(warnCall).toContain("timeout");
+	});
+});
+
+describe("resolveSessionHistory — fork session cache bypass", () => {
+	it("bypasses SSE cache for fork sessions and uses REST", async () => {
+		// SSE cache has events but this is a fork session — should use REST
+		// because the SSE cache only has events from after the fork was opened,
+		// not the inherited parent messages.
+		const events: RelayMessage[] = [
+			{ type: "delta", text: "response", messageId: "msg_1" },
+			{ type: "done", code: 0 },
+		];
+		const history = {
+			messages: [
+				{ id: "m1", role: "user" as const },
+				{ id: "m2", role: "assistant" as const },
+			],
+			hasMore: false,
+		};
+		const deps = createMinimalDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(events) },
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn().mockResolvedValue(history),
+				seedPaginationCursor: vi.fn(),
+			},
+			forkMeta: {
+				getForkEntry: vi.fn().mockReturnValue({
+					forkMessageId: "msg_fork",
+					parentID: "ses_parent",
+				}),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_fork", deps);
+
+		expect(result.kind).toBe("rest-history");
+		expect(deps.sessionMgr.loadPreRenderedHistory).toHaveBeenCalledWith(
+			"ses_fork",
+		);
+	});
+
+	it("uses SSE cache for non-fork sessions with cache hit", async () => {
+		// Same cache content but no fork metadata — should use cache as normal.
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "response", messageId: "msg_1" },
+			{ type: "done", code: 0 },
+		];
+		const deps = createMinimalDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(events) },
+			forkMeta: {
+				getForkEntry: vi.fn().mockReturnValue(undefined),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_normal", deps);
+
+		expect(result.kind).toBe("cached-events");
+		expect(deps.sessionMgr.loadPreRenderedHistory).not.toHaveBeenCalled();
+	});
+
+	it("returns empty when fork session REST fallback fails", async () => {
+		const events: RelayMessage[] = [
+			{ type: "delta", text: "partial", messageId: "msg_1" },
+		];
+		const deps = createMinimalDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(events) },
+			sessionMgr: {
+				loadPreRenderedHistory: vi
+					.fn()
+					.mockRejectedValue(new Error("API down")),
+				seedPaginationCursor: vi.fn(),
+			},
+			forkMeta: {
+				getForkEntry: vi.fn().mockReturnValue({
+					forkMessageId: "msg_fork",
+					parentID: "ses_parent",
+				}),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_fork_fail", deps);
+
+		expect(result.kind).toBe("empty");
+		expect(deps.log.warn).toHaveBeenCalled();
+	});
+
+	it("uses SSE cache when forkMeta is not provided", async () => {
+		// forkMeta is optional — when absent, fork bypass is skipped.
+		const events: RelayMessage[] = [{ type: "user_message", text: "hello" }];
+		const deps = createMinimalDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(events) },
+			// no forkMeta
+		});
+
+		const result = await resolveSessionHistory("ses_no_meta", deps);
+
+		expect(result.kind).toBe("cached-events");
 	});
 });
 

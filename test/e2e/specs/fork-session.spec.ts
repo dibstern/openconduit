@@ -194,4 +194,78 @@ test.describe("Fork Session Rendering", () => {
 		// (it only shows for subagent sessions with parentID but no forkMessageId)
 		await expect(chat.subagentBackBar).not.toBeVisible();
 	});
+
+	test("new messages appear after fork divider, not in inherited block", async ({
+		page,
+		relayUrl,
+	}) => {
+		const app = new AppPage(page);
+		const chat = new ChatPage(page);
+
+		await setupForkSession(page, app, chat, relayUrl);
+
+		// Wait for assistant response to the third prompt to complete.
+		// This proves the response rendered below the fork divider.
+		await chat.waitForStreamingComplete(30_000);
+
+		// The fork divider separates inherited from current messages.
+		// Walk siblings after the divider to find user + assistant messages.
+		const result = await page.evaluate(() => {
+			const messages = document.querySelector("#messages");
+			if (!messages) return { error: "no #messages" };
+
+			const divider = messages.querySelector(".fork-divider");
+			if (!divider) return { error: "no fork-divider" };
+
+			let userAfter = 0;
+			let assistantAfter = 0;
+			let el = divider.nextElementSibling;
+			while (el) {
+				if (el.querySelector(".msg-user")) userAfter++;
+				if (el.querySelector(".msg-assistant")) assistantAfter++;
+				el = el.nextElementSibling;
+			}
+			return { userAfter, assistantAfter };
+		});
+
+		expect(result).not.toHaveProperty("error");
+		const { userAfter, assistantAfter } = result as {
+			userAfter: number;
+			assistantAfter: number;
+		};
+
+		// The third prompt's user message and assistant response must be
+		// AFTER the fork divider — not collapsed into "Prior conversation".
+		expect(userAfter).toBeGreaterThanOrEqual(1);
+		expect(assistantAfter).toBeGreaterThanOrEqual(1);
+	});
+
+	test("inherited messages contain visible assistant text when expanded", async ({
+		page,
+		relayUrl,
+	}) => {
+		const app = new AppPage(page);
+		const chat = new ChatPage(page);
+
+		await setupForkSession(page, app, chat, relayUrl);
+
+		// Expand the prior conversation block
+		const toggle = page.locator(".fork-context-toggle");
+		await toggle.click();
+		const contextMessages = page.locator(".fork-context-messages");
+		await expect(contextMessages).toBeVisible({ timeout: 5_000 });
+
+		// The inherited section must contain at least one assistant message
+		// with actual rendered text content (not just empty containers).
+		// This catches the SSE-cache bug where inherited messages had no
+		// createdAt → no text content rendered (only result bars / thinking).
+		const assistantTextContent = await contextMessages
+			.locator(".msg-assistant .md-content")
+			.evaluateAll((els) =>
+				els
+					.map((el) => (el.textContent ?? "").trim())
+					.filter((t) => t.length > 0),
+			);
+		expect(assistantTextContent.length).toBeGreaterThanOrEqual(1);
+	});
 });

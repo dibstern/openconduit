@@ -3,6 +3,9 @@
 // vs new messages in a forked session.
 
 import type { ChatMessage } from "../types.js";
+import { createFrontendLogger } from "./logger.js";
+
+const log = createFrontendLogger("fork-split");
 
 export interface ForkSplit {
 	/** Messages inherited from the parent session (before and including the fork point). */
@@ -64,8 +67,8 @@ export function splitAtForkPoint(
 
 	if (splitIndex === -1) {
 		if (messages.length > 0) {
-			console.warn(
-				`[fork-split] forkMessageId "${forkMessageId}" not found — all messages treated as inherited`,
+			log.warn(
+				`forkMessageId "${forkMessageId}" not found — all messages treated as inherited`,
 			);
 		}
 		return { inherited: messages, current: [] };
