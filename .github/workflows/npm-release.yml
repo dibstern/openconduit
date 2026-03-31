@@ -79,7 +79,7 @@ jobs:
       - name: Set version from tag
         run: |
           VERSION="${GITHUB_REF#refs/tags/v}"
-          npm version "$VERSION" --no-git-tag-version
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
 
       - run: pnpm publish --no-git-checks --provenance
         env:
