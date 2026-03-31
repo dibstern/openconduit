@@ -44,29 +44,15 @@ async function getDashboardSlugs(
 async function getSwitcherSlugs(
 	page: import("@playwright/test").Page,
 ): Promise<string[]> {
-	// On mobile, open the hamburger menu first to reveal the sidebar
-	const hamburger = page.locator("#hamburger-btn");
-	if (await hamburger.isVisible()) {
-		await hamburger.click();
-		// The sidebar slides in with a 0.25s CSS transition. Elements inside
-		// pass Playwright's "visible" check immediately (non-zero bounding box
-		// at negative coordinates due to overflow:visible), but remain outside
-		// the viewport until the animation completes. Wait for the button's
-		// bounding rect to actually be within the viewport.
-		await page.waitForFunction(
-			() => {
-				const el = document.getElementById("project-switcher-btn");
-				if (!el) return false;
-				const r = el.getBoundingClientRect();
-				return r.left >= 0 && r.right <= window.innerWidth;
-			},
-			null,
-			{ timeout: 5_000 },
-		);
-	}
-
-	// Click the project switcher button to open the dropdown
-	await page.locator("#project-switcher-btn").click();
+	// The project-switcher-btn lives inside the sidebar. On mobile the
+	// sidebar is off-screen (CSS transform), but the element is still in
+	// the DOM. Use dispatchEvent to open the dropdown without requiring
+	// the element to be in-viewport — we only need the DOM nodes for
+	// their data-slug attributes, not visual rendering.
+	await page
+		.locator("#project-switcher-btn")
+		.waitFor({ state: "attached", timeout: 5_000 });
+	await page.locator("#project-switcher-btn").dispatchEvent("click");
 	await page
 		.locator("[data-testid='project-switcher-dropdown']")
 		.waitFor({ timeout: 5_000 });
