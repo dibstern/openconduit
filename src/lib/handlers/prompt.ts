@@ -56,6 +56,17 @@ export async function handleMessage(
 	// Record pending user message so SSE echo can be suppressed
 	deps.pendingUserMessages.record(activeId, text);
 
+	// Send user_message to OTHER clients viewing this session.
+	// The sending client already added the message locally in the frontend,
+	// and the SSE echo from OpenCode is suppressed (sse-wiring.ts) to avoid
+	// duplicates. But other clients need to see the message immediately.
+	const targets = deps.wsHandler.getClientsForSession(activeId);
+	for (const targetId of targets) {
+		if (targetId !== clientId) {
+			deps.wsHandler.sendTo(targetId, { type: "user_message", text });
+		}
+	}
+
 	// Track message activity for session ordering
 	deps.sessionMgr.recordMessageActivity(activeId);
 

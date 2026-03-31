@@ -402,6 +402,31 @@ describe("handleMessage", () => {
 		expect(deps.pendingUserMessages.consume("session-1", "Hello")).toBe(true);
 	});
 
+	it("sends user_message to other clients viewing the same session", async () => {
+		const deps = createMockHandlerDeps();
+		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
+		vi.mocked(deps.wsHandler.getClientsForSession).mockReturnValue([
+			"client-1",
+			"client-2",
+			"client-3",
+		]);
+		await handleMessage(deps, "client-1", { text: "Hello" });
+		// Other clients should receive the user_message
+		expect(deps.wsHandler.sendTo).toHaveBeenCalledWith("client-2", {
+			type: "user_message",
+			text: "Hello",
+		});
+		expect(deps.wsHandler.sendTo).toHaveBeenCalledWith("client-3", {
+			type: "user_message",
+			text: "Hello",
+		});
+		// The sender should NOT receive user_message (they already added it locally)
+		expect(deps.wsHandler.sendTo).not.toHaveBeenCalledWith("client-1", {
+			type: "user_message",
+			text: "Hello",
+		});
+	});
+
 	it("handles send failure gracefully", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
