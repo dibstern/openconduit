@@ -161,42 +161,43 @@ test.afterAll(async () => {
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
 
-test.describe("Project ordering", () => {
-	test("dashboard shows projects ordered by lastUsed descending", async ({
-		page,
-	}) => {
-		// Visit the dashboard (root URL shows multi-project view when >=2 projects)
-		await page.goto(baseUrl);
-		const allSlugs = await getDashboardSlugs(page);
-		const order = filterTestSlugs(allSlugs);
+test.describe
+	.serial("Project ordering", () => {
+		test("dashboard shows projects ordered by lastUsed descending", async ({
+			page,
+		}) => {
+			// Visit the dashboard (root URL shows multi-project view when >=2 projects)
+			await page.goto(baseUrl);
+			const allSlugs = await getDashboardSlugs(page);
+			const order = filterTestSlugs(allSlugs);
 
-		// gamma was added last (highest lastUsed) → first among our test projects
-		// alpha was added first (lowest lastUsed) → last among our test projects
-		expect(order).toEqual(["gamma", "beta", "alpha"]);
+			// gamma was added last (highest lastUsed) → first among our test projects
+			// alpha was added first (lowest lastUsed) → last among our test projects
+			expect(order).toEqual(["gamma", "beta", "alpha"]);
 
-		// gamma should be the very first project overall (most recent)
-		expect(allSlugs[0]).toBe("gamma");
-	});
-
-	test("visiting a project bumps it to the top of both lists", async ({
-		page,
-	}) => {
-		// 1. Navigate to the oldest project (alpha) — WS upgrade triggers touchLastUsed
-		await page.goto(`${baseUrl}/p/alpha/`);
-
-		// Wait for WS connection to establish (connect overlay disappears)
-		await page.locator(".connect-overlay").waitFor({
-			state: "hidden",
-			timeout: 15_000,
+			// gamma should be the very first project overall (most recent)
+			expect(allSlugs[0]).toBe("gamma");
 		});
 
-		// 2. Open the ProjectSwitcher in the sidebar and verify alpha is now first
-		const switcherSlugs = await getSwitcherSlugs(page);
-		expect(switcherSlugs[0]).toBe("alpha");
+		test("visiting a project bumps it to the top of both lists", async ({
+			page,
+		}) => {
+			// 1. Navigate to the oldest project (alpha) — WS upgrade triggers touchLastUsed
+			await page.goto(`${baseUrl}/p/alpha/`);
 
-		// 3. Navigate back to the dashboard and verify alpha is first there too
-		await page.goto(baseUrl);
-		const dashSlugs = await getDashboardSlugs(page);
-		expect(dashSlugs[0]).toBe("alpha");
+			// Wait for WS connection to establish (connect overlay disappears)
+			await page.locator(".connect-overlay").waitFor({
+				state: "hidden",
+				timeout: 15_000,
+			});
+
+			// 2. Open the ProjectSwitcher in the sidebar and verify alpha is now first
+			const switcherSlugs = await getSwitcherSlugs(page);
+			expect(switcherSlugs[0]).toBe("alpha");
+
+			// 3. Navigate back to the dashboard and verify alpha is first there too
+			await page.goto(baseUrl);
+			const dashSlugs = await getDashboardSlugs(page);
+			expect(dashSlugs[0]).toBe("alpha");
+		});
 	});
-});

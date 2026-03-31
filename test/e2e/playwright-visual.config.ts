@@ -8,10 +8,10 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
 	testDir: "./specs",
 	testMatch: "visual-mockup.spec.ts",
-	fullyParallel: false,
+	fullyParallel: true,
 	forbidOnly: !!process.env["CI"],
 	retries: process.env["CI"] ? 1 : 0,
-	workers: 1,
+	workers: "100%",
 	reporter: process.env["CI"]
 		? [["github"], ["html", { open: "never" }]]
 		: "list",
