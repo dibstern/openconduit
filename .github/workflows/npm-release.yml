@@ -9,8 +9,94 @@ permissions:
   contents: read
   id-token: write
 
+# ─── Parallelization Strategy ──────────────────────────────────────────────────
+# Split verification into 4 parallel jobs to cut wall-clock time ~45%:
+#
+#   lint-and-build ──► e2e (needs dist/)
+#   vitest         ──► (independent, needs OpenCode for contract tests)
+#   storybook      ──► (independent, longest at ~5 min)
+#
+# Critical path: storybook job (~5 min) vs e2e job (~4 min).
+# Previously everything ran serially for ~10 min.
+
 jobs:
-  verify:
+  # ── Job 1: Static analysis + build ─────────────────────────────────────────
+  lint-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check
+      - run: pnpm lint
+      - run: pnpm build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 1
+
+  # ── Job 2: Vitest suites (unit + integration + contract) ───────────────────
+  # No build needed — vitest runs from source. Contract tests need OpenCode.
+  vitest:
+    runs-on: ubuntu-latest
+    env:
+      OPENCODE_SERVER_PASSWORD: ci-test-password
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+      - run: pnpm install --frozen-lockfile
+      - name: Install and start OpenCode server
+        run: |
+          OPENCODE_VERSION=$(cat .opencode-version)
+          npm install -g "opencode-ai@${OPENCODE_VERSION}"
+          export OPENCODE_DATA_DIR=$(mktemp -d)
+          opencode serve --port 4096 &
+          for i in $(seq 1 30); do
+            if curl -sf -u "opencode:${OPENCODE_SERVER_PASSWORD}" http://localhost:4096/global/health > /dev/null 2>&1; then
+              echo "OpenCode server healthy on port 4096"
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "OpenCode server failed to start within 30s"
+              exit 1
+            fi
+            sleep 1
+          done
+        env:
+          XDG_DATA_HOME: /tmp/opencode-ci-data
+          XDG_CONFIG_HOME: /tmp/opencode-ci-config
+      - run: vitest run
+      - run: vitest run --config vitest.integration.config.ts
+      - run: vitest run --config vitest.contract.config.ts
+
+  # ── Job 3: E2E Playwright tests ────────────────────────────────────────────
+  # Needs dist/frontend/ from build. Daemon tests need OpenCode.
+  e2e:
+    needs: lint-and-build
     runs-on: ubuntu-latest
     env:
       OPENCODE_SERVER_PASSWORD: ci-test-password
@@ -30,14 +116,17 @@ jobs:
           restore-keys: ${{ runner.os }}-pnpm-
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
       - name: Install and start OpenCode server
         run: |
           OPENCODE_VERSION=$(cat .opencode-version)
           npm install -g "opencode-ai@${OPENCODE_VERSION}"
           export OPENCODE_DATA_DIR=$(mktemp -d)
           opencode serve --port 4096 &
-          # Wait for OpenCode to become healthy (auth required)
           for i in $(seq 1 30); do
             if curl -sf -u "opencode:${OPENCODE_SERVER_PASSWORD}" http://localhost:4096/global/health > /dev/null 2>&1; then
               echo "OpenCode server healthy on port 4096"
@@ -52,18 +141,39 @@ jobs:
         env:
           XDG_DATA_HOME: /tmp/opencode-ci-data
           XDG_CONFIG_HOME: /tmp/opencode-ci-config
+      - run: pnpm exec playwright test --config test/e2e/playwright-replay.config.ts
+      - run: pnpm exec playwright test --config test/e2e/playwright-daemon.config.ts
+      - run: pnpm exec playwright test --config test/e2e/playwright-multi-instance.config.ts
+      - run: pnpm exec playwright test --config test/e2e/playwright-subagent.config.ts
+      - run: pnpm exec playwright test --config test/e2e/playwright-visual.config.ts
 
-      - run: pnpm test:all
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+  # ── Job 4: Storybook build + visual tests ──────────────────────────────────
+  # Completely independent — no build or OpenCode needed.
+  # This is the slowest suite (~5 min) so running it in parallel is critical.
+  storybook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
-          name: dist
-          path: dist/
-          retention-days: 1
+          node-version: '24'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest
+      - name: Cache pnpm store
+        uses: actions/cache@v5
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm storybook:build
+      - run: pnpm exec playwright test --config test/visual/playwright.config.ts
 
+  # ── Publish (after all verification passes) ────────────────────────────────
   publish:
-    needs: verify
+    needs: [lint-and-build, vitest, e2e, storybook]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6

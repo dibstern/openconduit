@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 # Run all test suites, continuing past failures so you see every broken suite.
 # Exits non-zero if ANY step failed.
+#
+# Ordering is optimized: vitest suites run before the build since they don't
+# need build output. The build runs just before E2E tests that need dist/.
+# Heavy parallelism is left to the GitHub Actions workflow (npm-release.yml).
 
 set -uo pipefail
 
@@ -22,22 +26,26 @@ run() {
   fi
 }
 
-# --- Prerequisites (build must succeed for later steps) ---
-# check + lint + build are prerequisites — if they fail, tests can't run meaningfully,
-# but we still continue so you see if the failure is just types/lint or also tests.
+# --- Static analysis ---
 run "Type check"       pnpm check
 run "Lint"             pnpm lint
-run "Build"            pnpm build
 
-# --- Test suites ---
+# --- Vitest suites (no build needed) ---
 run "Unit tests"               vitest run
 run "Integration tests"        vitest run --config vitest.integration.config.ts
 run "Contract tests"           vitest run --config vitest.contract.config.ts
+
+# --- Build (needed by E2E and storybook visual tests below) ---
+run "Build"            pnpm build
+
+# --- E2E tests ---
 run "E2E replay tests"         pnpm exec playwright test --config test/e2e/playwright-replay.config.ts
 run "E2E daemon tests"         pnpm exec playwright test --config test/e2e/playwright-daemon.config.ts
 run "E2E multi-instance tests" pnpm exec playwright test --config test/e2e/playwright-multi-instance.config.ts
 run "E2E subagent tests"       pnpm exec playwright test --config test/e2e/playwright-subagent.config.ts
 run "E2E visual tests"         pnpm exec playwright test --config test/e2e/playwright-visual.config.ts
+
+# --- Storybook ---
 run "Storybook build"          pnpm storybook:build
 run "Storybook visual tests"   pnpm exec playwright test --config test/visual/playwright.config.ts
 
