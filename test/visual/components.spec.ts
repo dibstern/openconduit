@@ -105,6 +105,15 @@ if (stories.length > 0) {
 		"overlays-connectoverlay--connected",
 	]);
 
+	// Stories with non-deterministic rendering (e.g. Mermaid SVGs whose dimensions
+	// depend on font metrics) need a relaxed diff threshold compared to the global
+	// 0.01 default.  The SVG viewBox is computed from text measurements that vary
+	// slightly between environments (Docker emulation vs native CI runners), which
+	// causes consistent ~6 px height differences (≈ 0.06-0.07 ratio).
+	const RELAXED_THRESHOLD_STORIES: Record<string, number> = {
+		"chat-assistantmessage--with-mermaid": 0.1,
+	};
+
 	for (const [title, componentStories] of byTitle) {
 		test.describe(title, () => {
 			for (const story of componentStories) {
@@ -123,11 +132,22 @@ if (stories.length > 0) {
 					// Detect zero-height root (fixed-position content escapes flow)
 					const root = page.locator("#storybook-root");
 					const box = await root.boundingBox();
+					const relaxedRatio = RELAXED_THRESHOLD_STORIES[story.id];
+					const screenshotOpts =
+						relaxedRatio !== undefined
+							? { maxDiffPixelRatio: relaxedRatio }
+							: {};
 					if (box && box.height > 0) {
-						await expect(root).toHaveScreenshot(`${story.id}.png`);
+						await expect(root).toHaveScreenshot(
+							`${story.id}.png`,
+							screenshotOpts,
+						);
 					} else {
 						// Fall back to full-page screenshot for overlays/modals
-						await expect(page).toHaveScreenshot(`${story.id}.png`);
+						await expect(page).toHaveScreenshot(
+							`${story.id}.png`,
+							screenshotOpts,
+						);
 					}
 				});
 			}
