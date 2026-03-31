@@ -49,15 +49,14 @@ test.describe("Chat Flow", () => {
 
 		await app.sendMessage("Ping");
 
-		// Wait for assistant response with actual content to appear
+		// Wait for the full response — streaming must finish before we
+		// can assert on content (otherwise we may read a partial token).
 		await chat.waitForAssistantMessage();
+		await chat.waitForStreamingComplete();
 
-		// Get the text — the first turn response should contain "pong"
+		// The completed response should contain "pong"
 		const text = await chat.getLastAssistantText();
 		expect(text.toLowerCase()).toContain("pong");
-
-		// Wait for streaming to complete
-		await chat.waitForStreamingComplete();
 	});
 
 	test("stop button appears during processing and hides after", async ({
