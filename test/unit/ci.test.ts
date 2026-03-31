@@ -34,10 +34,10 @@ describe("Ticket 0.6 — CI/CD Pipeline", () => {
 			expect(content).toContain("actions/checkout@v6");
 		});
 
-		it("ci.yml uses actions/setup-node@v6 with node 22", () => {
+		it("ci.yml uses actions/setup-node@v6 with node 24", () => {
 			const content = readFile(".github/workflows/ci.yml");
 			expect(content).toContain("actions/setup-node@v6");
-			expect(content).toContain("node-version: '22'");
+			expect(content).toContain("node-version: '24'");
 		});
 
 		it("ci.yml uses pnpm/action-setup@v5", () => {
