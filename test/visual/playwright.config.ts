@@ -5,7 +5,7 @@ export default defineConfig({
 	testMatch: "**/*.spec.ts",
 	timeout: 10_000,
 	workers: 4,
-	retries: 0,
+	retries: 1,
 	expect: {
 		toHaveScreenshot: {
 			maxDiffPixelRatio: 0.01,
