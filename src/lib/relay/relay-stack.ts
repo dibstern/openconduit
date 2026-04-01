@@ -170,6 +170,7 @@ export async function createProjectRelay(
 		: join(config.projectDir ?? process.cwd(), ".conduit", "sessions");
 	const messageCache = new MessageCache(cacheDir);
 	await messageCache.loadFromDisk();
+	messageCache.loadMeta();
 	// Fire-and-forget: in-memory repair is synchronous (runs before yielding),
 	// only the disk flush is async. No need to block startup.
 	messageCache

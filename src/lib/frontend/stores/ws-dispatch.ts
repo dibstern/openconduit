@@ -123,11 +123,10 @@ const log = createFrontendLogger("ws");
 // A user_message that appears while llmActive is true gets `sentDuringEpoch`
 // set, so the UI can derive the "Queued" shimmer reactively.
 
-const LLM_CONTENT_START_TYPES: ReadonlySet<RelayMessage["type"]> = new Set([
-	"delta",
-	"thinking_start",
-	"tool_start",
-] as const);
+// LLM content start types — canonical source is event-classify.ts (shared
+// between server and frontend). Import from there so the turn-boundary
+// definition stays in sync with patchMissingDone and isLastTurnActive.
+import { LLM_CONTENT_START_TYPES } from "../../event-classify.js";
 
 function isLlmContentStart(type: string): boolean {
 	return LLM_CONTENT_START_TYPES.has(type as RelayMessage["type"]);

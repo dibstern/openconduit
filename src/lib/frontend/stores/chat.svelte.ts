@@ -755,6 +755,17 @@ export function handleStatus(
 			_pendingHistoryQueuedFallback = false;
 			ensureSentDuringEpochOnLastUnrespondedUser();
 		}
+	} else if (msg.status === "idle") {
+		// Defense-in-depth: the server's status is authoritative. If the
+		// server says idle, clear "processing" phase. This catches edge
+		// cases where replay sets phase to "processing" from a stale cache
+		// but the session actually completed (e.g. post-restart).
+		//
+		// Don't clear "streaming" — that phase is data-driven (delta events
+		// are actively arriving) and should only be cleared by a done/error.
+		if (chatState.phase === "processing") {
+			phaseToIdle();
+		}
 	}
 }
 

@@ -137,6 +137,8 @@ function createMockMessageCache(): HandlerDeps["messageCache"] {
 		remove: vi.fn(),
 		evictOldestSession: vi.fn().mockReturnValue(null),
 		sessionCount: vi.fn().mockReturnValue(0),
+		setOpenCodeUpdatedAt: vi.fn(),
+		getOpenCodeUpdatedAt: vi.fn().mockReturnValue(undefined),
 	} as unknown as HandlerDeps["messageCache"];
 }
 

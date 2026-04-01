@@ -9,6 +9,7 @@
 			"!.worktrees",
 			"!docs/**/*.html",
 			"!.opencode",
+			"!.conduit",
 			"!test/e2e/fixtures/recorded/*.json"
 		]
 	},

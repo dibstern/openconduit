@@ -182,7 +182,13 @@ export function handleSSEEvent(
 	// Record the timestamp of any message-related event so sessions are
 	// ordered by actual conversation activity, not metadata updates.
 	if (eventSessionId && event.type.startsWith("message.")) {
-		sessionMgr.recordMessageActivity(eventSessionId);
+		const now = Date.now();
+		sessionMgr.recordMessageActivity(eventSessionId, now);
+		// Keep openCodeUpdatedAt in sync with lastMessageAt. Both use
+		// Date.now() during live operation. On next restart, the stored
+		// openCodeUpdatedAt is compared against the fresh session.time.updated
+		// from OpenCode — if they differ, the cache is stale.
+		messageCache.setOpenCodeUpdatedAt(eventSessionId, now);
 	}
 	// ── Permission / question bridge routing ──────────────────────────────
 

@@ -7,7 +7,13 @@
 //   - Append-only JSONL files (crash-safe, O(1) per event)
 //   - Fallback chain: memory → file → null (caller uses REST API)
 
-import { appendFileSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+	appendFileSync,
+	mkdirSync,
+	readFileSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { RelayMessage } from "../types.js";
@@ -159,6 +165,80 @@ export class MessageCache {
 		return session !== undefined && session.events.length > 0;
 	}
 
+	// ─── OpenCode timestamp tracking (stale-tail detection) ───────────
+	// Tracks the last known session.time.updated from OpenCode per session.
+	// Persisted in cache-meta.json alongside the JSONL event files.
+	// On restart, the stored value is compared against the fresh value from
+	// sessionMgr.initialize() — a mismatch means events happened while
+	// conduit was down and the cache is stale.
+
+	private openCodeUpdatedAt = new Map<string, number>();
+	private static readonly META_FILE = "cache-meta.json";
+
+	private metaFilePath(): string {
+		return join(this.cacheDir, MessageCache.META_FILE);
+	}
+
+	/** Load persisted metadata from disk. Called once after loadFromDisk(). */
+	loadMeta(): void {
+		try {
+			const content = readFileSync(this.metaFilePath(), "utf8");
+			const parsed = JSON.parse(content) as Record<
+				string,
+				{ openCodeUpdatedAt?: number }
+			>;
+			for (const [sessionId, meta] of Object.entries(parsed)) {
+				if (typeof meta.openCodeUpdatedAt === "number") {
+					this.openCodeUpdatedAt.set(sessionId, meta.openCodeUpdatedAt);
+				}
+			}
+		} catch {
+			// File doesn't exist or is corrupt — start fresh.
+		}
+	}
+
+	/** Persist metadata to disk. Called during flush cycle. */
+	private saveMeta(): void {
+		const data: Record<string, { openCodeUpdatedAt: number }> = {};
+		for (const [sessionId, ts] of this.openCodeUpdatedAt) {
+			// Only persist metadata for sessions that still have cached events.
+			if (this.sessions.has(sessionId)) {
+				data[sessionId] = { openCodeUpdatedAt: ts };
+			}
+		}
+		try {
+			writeFileSync(this.metaFilePath(), JSON.stringify(data));
+		} catch {
+			// Best-effort
+		}
+	}
+
+	/**
+	 * Record that OpenCode's session.time.updated for a session is `timestamp`.
+	 * Called from relay-stack wiring when SSE events arrive or sessions are seeded.
+	 */
+	setOpenCodeUpdatedAt(sessionId: string, timestamp: number): void {
+		const existing = this.openCodeUpdatedAt.get(sessionId);
+		if (!existing || timestamp > existing) {
+			this.openCodeUpdatedAt.set(sessionId, timestamp);
+			this.markMetaDirty();
+		}
+	}
+
+	/**
+	 * Get the last known session.time.updated for a session, as recorded
+	 * during the previous conduit run. Returns undefined if unknown.
+	 */
+	getOpenCodeUpdatedAt(sessionId: string): number | undefined {
+		return this.openCodeUpdatedAt.get(sessionId);
+	}
+
+	private metaDirty = false;
+	private markMetaDirty(): void {
+		this.metaDirty = true;
+		this.ensureFlushTimer();
+	}
+
 	/** Number of sessions currently cached. */
 	sessionCount(): number {
 		return this.sessions.size;
@@ -289,6 +369,12 @@ export class MessageCache {
 			}
 		}
 		this.pendingAppends.clear();
+
+		// Flush metadata if dirty
+		if (this.metaDirty) {
+			this.saveMeta();
+			this.metaDirty = false;
+		}
 	}
 
 	private appendToFileSerialized(sessionId: string, serialized: string): void {
@@ -308,6 +394,7 @@ export class MessageCache {
 	/** Remove all data (memory + file). Called on session delete. */
 	remove(sessionId: string): void {
 		this.sessions.delete(sessionId);
+		this.openCodeUpdatedAt.delete(sessionId);
 		this.pendingAppends.delete(sessionId);
 		this.pendingRewrites.delete(sessionId);
 		try {

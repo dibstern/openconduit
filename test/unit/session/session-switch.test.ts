@@ -513,9 +513,10 @@ describe("switchClientToSession", () => {
 			([, msg]) => (msg as { type: string }).type === "session_switched",
 		);
 		expect(switchMsg).toBeDefined();
-		// Session is idle and cache has no done — synthetic done is appended
+		// Session is idle and cache has only user_message (no LLM content started)
+		// — no synthetic done needed since the last turn is not active.
 		const sentEvents = (switchMsg?.[1] as { events?: RelayMessage[] }).events;
-		expect(sentEvents).toEqual([...events, { type: "done", code: 0 }]);
+		expect(sentEvents).toEqual(events);
 	});
 
 	it("sends session_switched with REST history on cache miss", async () => {
@@ -762,7 +763,7 @@ describe("switchClientToSession", () => {
 		expect(doneEvents).toHaveLength(0);
 	});
 
-	it("does NOT append done when cache already has one", async () => {
+	it("does NOT append done when last turn already ended with done", async () => {
 		const events: RelayMessage[] = [
 			{ type: "user_message", text: "hello" },
 			{ type: "delta", text: "hi" },
@@ -782,6 +783,34 @@ describe("switchClientToSession", () => {
 		const payload = switchMsg?.[1] as { events?: RelayMessage[] };
 		const doneEvents = payload.events?.filter((e) => e.type === "done") ?? [];
 		expect(doneEvents).toHaveLength(1); // Original only, no duplicate
+	});
+
+	it("appends synthetic done when earlier turn has done but last turn is active", async () => {
+		// This is the key bug fix: cache has done from turn 1, but turn 2
+		// ends mid-stream. patchMissingDone must use per-turn tracking.
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "q1" },
+			{ type: "delta", text: "a1" },
+			{ type: "done", code: 0 },
+			{ type: "user_message", text: "q2" },
+			{ type: "delta", text: "a2 partial..." },
+		];
+		const deps = createFullDeps({
+			messageCache: { getEvents: vi.fn().mockReturnValue(events) },
+			statusPoller: { isProcessing: vi.fn().mockReturnValue(false) },
+		});
+
+		await switchClientToSession(deps, "c1", "ses_1");
+
+		const calls = vi.mocked(deps.wsHandler.sendTo).mock.calls;
+		const switchMsg = calls.find(
+			([, msg]) => (msg as { type: string }).type === "session_switched",
+		);
+		const payload = switchMsg?.[1] as { events?: RelayMessage[] };
+		const lastEvent = payload.events?.[payload.events.length - 1];
+		expect(lastEvent).toEqual({ type: "done", code: 0 });
+		const doneEvents = payload.events?.filter((e) => e.type === "done") ?? [];
+		expect(doneEvents).toHaveLength(2); // Original turn 1 done + synthetic turn 2 done
 	});
 
 	it("appends synthetic done when statusPoller is undefined (assumes idle)", async () => {
@@ -875,5 +904,200 @@ describe("resolveSessionHistory — repaired cold cache regression", () => {
 
 		// null cache → REST fallback
 		expect(result.kind).toBe("rest-history");
+	});
+});
+
+describe("resolveSessionHistory — stale cache tail detection", () => {
+	it("falls through to REST when OpenCode updated session after cache's stored timestamp", async () => {
+		// Cache stored session.time.updated=1000 (from previous conduit run).
+		// Fresh sessionMgr says session.time.updated=2000.
+		// The gap means events happened while conduit was down → cache is stale.
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "response" },
+			{ type: "done", code: 0 },
+		];
+		const history = {
+			messages: [
+				{ id: "m1", role: "user" as const, parts: [] },
+				{ id: "m2", role: "assistant" as const, parts: [] },
+				{ id: "m3", role: "user" as const, parts: [] },
+				{ id: "m4", role: "assistant" as const, parts: [] },
+			],
+			hasMore: false,
+		};
+		const deps = createMinimalDeps({
+			messageCache: {
+				getEvents: vi.fn().mockReturnValue(events),
+				getOpenCodeUpdatedAt: vi.fn().mockReturnValue(1000),
+			},
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn().mockResolvedValue(history),
+				seedPaginationCursor: vi.fn(),
+				getLastMessageAtMap: vi
+					.fn()
+					.mockReturnValue(new Map([["ses_stale", 2000]])),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_stale", deps);
+
+		expect(result.kind).toBe("rest-history");
+		expect(deps.sessionMgr.loadPreRenderedHistory).toHaveBeenCalledWith(
+			"ses_stale",
+		);
+	});
+
+	it("serves cache when stored timestamp is newer than OpenCode (normal live operation)", async () => {
+		// During live operation, setOpenCodeUpdatedAt is called as events arrive,
+		// so the cache's timestamp may be equal to or ahead of the session list's.
+		// This is the normal case — serve cache.
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "response" },
+			{ type: "done", code: 0 },
+		];
+		const deps = createMinimalDeps({
+			messageCache: {
+				getEvents: vi.fn().mockReturnValue(events),
+				getOpenCodeUpdatedAt: vi.fn().mockReturnValue(2000),
+			},
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn(),
+				seedPaginationCursor: vi.fn(),
+				getLastMessageAtMap: vi
+					.fn()
+					.mockReturnValue(new Map([["ses_fresh", 1000]])),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_fresh", deps);
+
+		expect(result.kind).toBe("cached-events");
+		expect(deps.sessionMgr.loadPreRenderedHistory).not.toHaveBeenCalled();
+	});
+
+	it("serves cache when stored timestamp matches current OpenCode timestamp", async () => {
+		const events: RelayMessage[] = [{ type: "user_message", text: "hello" }];
+		const deps = createMinimalDeps({
+			messageCache: {
+				getEvents: vi.fn().mockReturnValue(events),
+				getOpenCodeUpdatedAt: vi.fn().mockReturnValue(1000),
+			},
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn(),
+				seedPaginationCursor: vi.fn(),
+				getLastMessageAtMap: vi
+					.fn()
+					.mockReturnValue(new Map([["ses_exact", 1000]])),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_exact", deps);
+
+		expect(result.kind).toBe("cached-events");
+	});
+
+	it("falls through to REST when no stored timestamp exists (bootstrap)", async () => {
+		// First run with this feature — no stored openCodeUpdatedAt.
+		// One-time REST validation to establish the baseline.
+		const events: RelayMessage[] = [{ type: "user_message", text: "hello" }];
+		const history = {
+			messages: [{ id: "m1", role: "user" as const, parts: [] }],
+			hasMore: false,
+		};
+		const deps = createMinimalDeps({
+			messageCache: {
+				getEvents: vi.fn().mockReturnValue(events),
+				getOpenCodeUpdatedAt: vi.fn().mockReturnValue(undefined),
+				setOpenCodeUpdatedAt: vi.fn(),
+			},
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn().mockResolvedValue(history),
+				seedPaginationCursor: vi.fn(),
+				getLastMessageAtMap: vi
+					.fn()
+					.mockReturnValue(new Map([["ses_bootstrap", 2000]])),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_bootstrap", deps);
+
+		expect(result.kind).toBe("rest-history");
+		expect(deps.sessionMgr.loadPreRenderedHistory).toHaveBeenCalledWith(
+			"ses_bootstrap",
+		);
+	});
+
+	it("serves cache when getLastMessageAtMap is not available", async () => {
+		const events: RelayMessage[] = [{ type: "user_message", text: "hello" }];
+		const deps = createMinimalDeps({
+			messageCache: {
+				getEvents: vi.fn().mockReturnValue(events),
+				getOpenCodeUpdatedAt: vi.fn().mockReturnValue(1000),
+			},
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn(),
+				seedPaginationCursor: vi.fn(),
+				// No getLastMessageAtMap
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_no_map", deps);
+
+		expect(result.kind).toBe("cached-events");
+	});
+
+	it("serves cache when session has no entry in lastMessageAtMap", async () => {
+		const events: RelayMessage[] = [{ type: "user_message", text: "hello" }];
+		const deps = createMinimalDeps({
+			messageCache: {
+				getEvents: vi.fn().mockReturnValue(events),
+				getOpenCodeUpdatedAt: vi.fn().mockReturnValue(1000),
+			},
+			sessionMgr: {
+				loadPreRenderedHistory: vi.fn(),
+				seedPaginationCursor: vi.fn(),
+				getLastMessageAtMap: vi.fn().mockReturnValue(
+					new Map(), // Empty — no entry for this session
+				),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_unknown", deps);
+
+		expect(result.kind).toBe("cached-events");
+	});
+
+	it("falls back to stale cache when REST fails for stale session", async () => {
+		// Cache is stale but REST also fails — serve stale cache rather than nothing.
+		const events: RelayMessage[] = [
+			{ type: "user_message", text: "hello" },
+			{ type: "delta", text: "response" },
+		];
+		const deps = createMinimalDeps({
+			messageCache: {
+				getEvents: vi.fn().mockReturnValue(events),
+				getOpenCodeUpdatedAt: vi.fn().mockReturnValue(1000),
+			},
+			sessionMgr: {
+				loadPreRenderedHistory: vi
+					.fn()
+					.mockRejectedValue(new Error("API down")),
+				seedPaginationCursor: vi.fn(),
+				getLastMessageAtMap: vi
+					.fn()
+					.mockReturnValue(new Map([["ses_stale_fail", 2000]])),
+			},
+		});
+
+		const result = await resolveSessionHistory("ses_stale_fail", deps);
+
+		// Should fall back to stale cache, not empty
+		expect(result.kind).toBe("cached-events");
+		if (result.kind === "cached-events") {
+			expect(result.events).toEqual(events);
+		}
+		expect(deps.log.warn).toHaveBeenCalled();
 	});
 });

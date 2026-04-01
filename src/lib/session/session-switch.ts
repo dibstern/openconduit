@@ -3,6 +3,7 @@
 // Single entry point for all session switches. Handlers delegate here instead
 // of constructing session_switched messages manually.
 
+import { isLastTurnActive } from "../event-classify.js";
 import type { HistoryMessage, RequestId } from "../shared-types.js";
 import type { RelayMessage } from "../types.js";
 
@@ -49,6 +50,8 @@ export interface SwitchClientOptions {
 export interface SessionSwitchDeps {
 	readonly messageCache: {
 		getEvents(sessionId: string): Promise<RelayMessage[] | null>;
+		getOpenCodeUpdatedAt?(sessionId: string): number | undefined;
+		setOpenCodeUpdatedAt?(sessionId: string, timestamp: number): void;
 	};
 	readonly sessionMgr: {
 		loadPreRenderedHistory(
@@ -60,6 +63,7 @@ export interface SessionSwitchDeps {
 			total?: number;
 		}>;
 		seedPaginationCursor(sessionId: string, messageId: string): void;
+		getLastMessageAtMap?(): ReadonlyMap<string, number>;
 	};
 	readonly wsHandler: {
 		sendTo(clientId: string, msg: RelayMessage): void;
@@ -147,8 +151,13 @@ export function extractOldestMessageId(
 }
 
 /**
- * If session is idle and cached events lack a `done` event, append a synthetic one.
- * Matches the shape used by monitoring-wiring.ts and message-poller.ts.
+ * If session is idle and the cached event stream ends with an active
+ * (unterminated) LLM turn, append a synthetic `done`.
+ *
+ * Uses {@link isLastTurnActive} — the canonical shared function for LLM turn
+ * boundary detection. This ensures the server's patch logic matches the
+ * frontend's `llmActive` tracking in `replayEvents()`.
+ *
  * Pure function — returns a new source or the original unchanged.
  */
 export function patchMissingDone(
@@ -159,8 +168,7 @@ export function patchMissingDone(
 	if (source.kind !== "cached-events") return source;
 	if (statusPoller?.isProcessing(sessionId)) return source;
 
-	const hasDone = source.events.some((e) => e.type === "done");
-	if (hasDone) return source;
+	if (!isLastTurnActive(source.events)) return source;
 
 	return {
 		kind: "cached-events",
@@ -223,12 +231,12 @@ export function buildSessionSwitchedMessage(
  * Resolve session history from cache or REST API.
  * Impure — reads from cache and may call REST.
  *
- * When the cache has chat content, it is served directly WITHOUT a validation
- * fetch. The cache may be stale (missing older messages), but:
- * - SSE events continuously fill the cache with new activity
- * - Users can load older messages via the "load more" pagination
- * - cold-cache-repair cleans up incomplete turns on restart
+ * When the cache has chat content, it is validated against OpenCode's
+ * session.time.updated timestamp. If OpenCode updated the session after
+ * the cache was last written (e.g. session continued while conduit was
+ * down), the cache is stale and we fall through to REST for full history.
  *
+ * When the cache is fresh, it is served directly WITHOUT a full REST fetch.
  * This avoids fetching all messages (which can be 40MB+ for large sessions)
  * and prevents OOM when many project relays are loaded.
  */
@@ -262,11 +270,54 @@ export async function resolveSessionHistory(
 			}
 		}
 
+		// Stale-tail detection: compare the session.time.updated stored when
+		// the cache was last active against the fresh value from OpenCode
+		// (fetched during sessionMgr.initialize()). The stored value is set
+		// by the SSE wiring (Date.now() at event receipt, always >= OpenCode's
+		// time.updated). If the fresh value is greater, events happened while
+		// conduit was down → cache is stale.
+		//
+		// When no stored timestamp exists (first run with this feature, or
+		// new session), treat as potentially stale — one-time REST validation
+		// to establish the baseline.
+		const cachedUpdatedAt = deps.messageCache.getOpenCodeUpdatedAt?.(sessionId);
+		const freshUpdatedAt = deps.sessionMgr
+			.getLastMessageAtMap?.()
+			?.get(sessionId);
+		const cacheIsStale =
+			freshUpdatedAt != null &&
+			(cachedUpdatedAt == null || freshUpdatedAt > cachedUpdatedAt);
+		if (cacheIsStale) {
+			deps.log.info(
+				`Session ${sessionId.slice(0, 16)}: cache stale (cached updatedAt ${cachedUpdatedAt}, fresh ${freshUpdatedAt}) — using REST`,
+			);
+			try {
+				const history = await deps.sessionMgr.loadPreRenderedHistory(sessionId);
+				// Update stored timestamp so subsequent switches to this session
+				// don't re-detect staleness and re-fetch REST.
+				deps.messageCache.setOpenCodeUpdatedAt?.(sessionId, freshUpdatedAt);
+				return { kind: "rest-history", history };
+			} catch (err) {
+				deps.log.warn(
+					`Failed to load fresh history for ${sessionId}: ${err instanceof Error ? err.message : err} — falling back to stale cache`,
+				);
+				// Fall through to serve stale cache rather than showing nothing
+			}
+		}
+
 		// Heuristic: if the first event is a user_message, the cache starts
 		// from session creation and covers the full session. If the first
 		// event is mid-conversation (delta, tool_*, etc.), the cache was
 		// truncated (eviction or late relay start) and older messages exist.
 		const cacheAppearsComplete = events[0]?.type === "user_message";
+
+		// Update stored timestamp with the fresh value for the NEXT restart.
+		// This ensures that if the session has new activity before the next
+		// restart, the stored value will be older than the new time.updated.
+		if (freshUpdatedAt != null) {
+			deps.messageCache.setOpenCodeUpdatedAt?.(sessionId, freshUpdatedAt);
+		}
+
 		return {
 			kind: "cached-events",
 			events,
