@@ -217,7 +217,7 @@ describe("ScrollController", () => {
 		ctrl.detach();
 	});
 
-	it("does NOT re-follow when distFromBottom is exactly at REFOLLOW_THRESHOLD (50px)", () => {
+	it("does NOT re-follow when distFromBottom is exactly at REFOLLOW_THRESHOLD (5px)", () => {
 		const ctrl = makeController();
 		lifecycle = "ready";
 		const div = document.createElement("div");
@@ -237,8 +237,8 @@ describe("ScrollController", () => {
 		ctrl.attach(div);
 		div.dispatchEvent(new Event("scroll"));
 		expect(ctrl.isDetached).toBe(true);
-		// distFromBottom = 2000 - 1450 - 500 = 50 (exactly at threshold → NOT re-follow)
-		div.scrollTop = 1450;
+		// distFromBottom = 2000 - 1495 - 500 = 5 (exactly at threshold → NOT re-follow)
+		div.scrollTop = 1495;
 		div.dispatchEvent(new Event("scroll"));
 		expect(ctrl.isDetached).toBe(true);
 		ctrl.detach();
@@ -264,8 +264,8 @@ describe("ScrollController", () => {
 		ctrl.attach(div);
 		div.dispatchEvent(new Event("scroll"));
 		expect(ctrl.isDetached).toBe(true);
-		// distFromBottom = 2000 - 1451 - 500 = 49 (inside threshold → re-follow)
-		div.scrollTop = 1451;
+		// distFromBottom = 2000 - 1496 - 500 = 4 (inside threshold → re-follow)
+		div.scrollTop = 1496;
 		div.dispatchEvent(new Event("scroll"));
 		expect(ctrl.isDetached).toBe(false);
 		ctrl.detach();

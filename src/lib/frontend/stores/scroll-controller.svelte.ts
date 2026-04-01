@@ -21,7 +21,7 @@ export interface ScrollController {
 const SETTLE_MAX_FRAMES = 60;
 const SETTLE_STABLE_THRESHOLD = 2;
 const DETACH_THRESHOLD = 100; // px from bottom to trigger detach via scroll position
-const REFOLLOW_THRESHOLD = 50; // px from bottom to re-follow (industry standard ~50px)
+const REFOLLOW_THRESHOLD = 5; // px from bottom to re-follow (tight to prevent accidental re-follow from casual scrolling)
 
 export function createScrollController(
 	getLifecycle: () => LoadLifecycle,
@@ -107,9 +107,9 @@ export function createScrollController(
 
 		const distFromBottom =
 			container.scrollHeight - container.scrollTop - container.clientHeight;
-		// Re-follow when scrolled near the bottom (within 50px).
-		// Industry standard: generous enough that scrolling "to the bottom"
-		// re-engages auto-follow without requiring pixel-perfect precision.
+		// Re-follow only when scrolled to the very bottom (within 5px).
+		// Tight threshold prevents accidental re-follow from casual scrolling
+		// near the bottom. The "↓ Latest" button provides an explicit re-follow.
 		if (distFromBottom < REFOLLOW_THRESHOLD && userDetached) {
 			userDetached = false;
 		}
