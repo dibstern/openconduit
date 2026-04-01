@@ -30,8 +30,8 @@ export function createScrollController(
 	let userDetached = $state(false);
 	let settleRafId: number | null = null;
 	let settleFrameCount = 0;
-	let programmaticScrollCount = 0; // counter (not boolean) — prevents false detach when multiple scrollToBottom() calls queue up in the same frame
-	let resetRafScheduled = false; // guards against scheduling multiple rAF resets
+	let programmaticScrollCount = 0; // counter — prevents false detach from our own scrolls
+	let resetTimerScheduled = false; // guards against scheduling multiple reset timers
 
 	function getState(): ScrollState {
 		const lc = getLifecycle();
@@ -45,17 +45,21 @@ export function createScrollController(
 		if (!container) return;
 		programmaticScrollCount++;
 		container.scrollTop = container.scrollHeight;
-		// Safety net: if the scroll position didn't actually change (container
-		// already at bottom or empty), no scroll event fires and the counter
-		// stays inflated — eating future user scroll events and preventing
-		// detach. Schedule a rAF cleanup so the counter resets after all scroll
-		// events for this frame have been processed.
-		if (!resetRafScheduled) {
-			resetRafScheduled = true;
-			requestAnimationFrame(() => {
+		// Safety reset: setTimeout(0) fires in the NEXT task, which is after
+		// the current rendering cycle (scroll events + rAF). This means:
+		//   scrollToBottom() → scroll events fire → rAF fires → setTimeout fires
+		// By the time the timer fires, all scroll events from this
+		// scrollToBottom() call have been processed and have consumed their
+		// counter slots. The reset cleans up any unconsumed slots (e.g. when
+		// scrollToBottom() didn't change position and no event fired).
+		// Unlike rAF, setTimeout(0) won't fire BETWEEN scroll events, so
+		// it can't zero the counter while events are still pending.
+		if (!resetTimerScheduled) {
+			resetTimerScheduled = true;
+			setTimeout(() => {
 				programmaticScrollCount = 0;
-				resetRafScheduled = false;
-			});
+				resetTimerScheduled = false;
+			}, 0);
 		}
 	}
 
@@ -99,14 +103,16 @@ export function createScrollController(
 			settleRafId = null;
 		}
 	}
-
 	function onScroll(): void {
 		if (!container) return;
 
-		// Track whether this was a programmatic scroll (from scrollToBottom).
-		const isProgrammatic = programmaticScrollCount > 0;
-		if (isProgrammatic) {
+		// If we triggered this scroll via scrollToBottom(), skip the detach
+		// check. Uses a counter so that multiple scrollToBottom() calls in
+		// the same frame each consume one slot instead of the second scroll
+		// event bypassing the guard entirely.
+		if (programmaticScrollCount > 0) {
 			programmaticScrollCount--;
+			return;
 		}
 
 		// Skip detach/re-follow logic if content doesn't overflow the
@@ -117,24 +123,14 @@ export function createScrollController(
 		const distFromBottom =
 			container.scrollHeight - container.scrollTop - container.clientHeight;
 
-		// Re-follow only when scrolled to the very bottom (within 5px) AND
-		// the scroll was user-initiated. Skip for programmatic scrolls so
-		// that scrollToBottom() doesn't accidentally clear userDetached.
-		if (
-			!isProgrammatic &&
-			distFromBottom < REFOLLOW_THRESHOLD &&
-			userDetached
-		) {
+		// Re-follow when scrolled to the very bottom (within 5px).
+		// All programmatic scrolls early-returned above, so this is
+		// always a user-initiated scroll.
+		if (distFromBottom < REFOLLOW_THRESHOLD && userDetached) {
 			userDetached = false;
 		}
-		// Detach when scrolled away from bottom — only for user-initiated
-		// scrolls. Programmatic scrolls can land with a stale position when
-		// content grows between the scrollToBottom() call and the scroll
-		// event, causing false detach. If the user scrolls up while a
-		// programmatic scroll is in-flight, the user's own scroll generates
-		// a separate non-programmatic event that will trigger detach.
+		// Detach when scrolled away from bottom.
 		if (
-			!isProgrammatic &&
 			distFromBottom > DETACH_THRESHOLD &&
 			!userDetached &&
 			getState() === "following"

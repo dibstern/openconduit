@@ -904,6 +904,16 @@ export function addUserMessage(
 			chatState.phase,
 		);
 	}
+
+	// A user message should always scroll to bottom — it's a direct user
+	// action, never a background event. When the session is idle (e.g.
+	// between turns), isProcessing() is false and the content-change
+	// effect guard would skip the scroll without this request.
+	// Skip during replay — the settle loop handles replay scrolling.
+	if (chatState.loadLifecycle !== "loading") {
+		requestScrollOnNextContent();
+	}
+
 	setMessages([...getMessages(), msg]);
 }
 
