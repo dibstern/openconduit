@@ -4,7 +4,8 @@
 <!-- Preserves #messages ID for E2E. -->
 
 <script lang="ts">
-	import { chatState, historyState, isProcessing } from "../../stores/chat.svelte.js";
+	import { untrack } from "svelte";
+	import { chatState, historyState, isProcessing, consumeScrollRequest } from "../../stores/chat.svelte.js";
 	import { findSession, sessionState } from "../../stores/session.svelte.js";
 	import { splitAtForkPoint } from "../../utils/fork-split.js";
 	import ForkContextBlock from "./ForkContextBlock.svelte";
@@ -74,17 +75,24 @@
 	// Auto-scroll when content changes (messages, permissions, questions).
 	// Guards:
 	// - Skip during prepend (scroll preservation handles that case).
-	// - The scroll controller's own state machine (following/detached) provides
-	//   protection against unwanted scrolling: user must scroll >50px from
-	//   bottom to detach, and must scroll back within 5px to re-follow.
-	//   No additional processing/settling guard is needed — error messages,
-	//   session switches to idle sessions, and background events all scroll
-	//   correctly as long as the user is "following".
+	// - Only auto-scroll when session is actively producing content
+	//   (processing or streaming) OR when the scroll controller is settling
+	//   (post-replay, deferred markdown rendering) OR when an explicit
+	//   scroll request was made (e.g. error messages set this before
+	//   phaseToIdle kills the isProcessing guard). On inactive sessions,
+	//   background events (cross-tab user_message, permission state) must
+	//   NOT snap to bottom.
+	// NOTE: isProcessing() and consumeScrollRequest() are checked via
+	// untrack() so they act as guards (checked but not tracked). The effect
+	// only re-runs when actual content changes — not on every toggle.
 	$effect(() => {
 		const _len = chatState.messages.length;
 		const _permLen = permissionsState.pendingPermissions.length;
 		const _qLen = permissionsState.pendingQuestions.length;
-		if (!awaitingPrepend) {
+		const isActive = untrack(() => isProcessing());
+		const isSettling = untrack(() => scrollCtrl.state === "settling");
+		const scrollRequested = untrack(() => consumeScrollRequest());
+		if (!awaitingPrepend && (isActive || isSettling || scrollRequested)) {
 			scrollCtrl.onNewContent();
 		}
 	});

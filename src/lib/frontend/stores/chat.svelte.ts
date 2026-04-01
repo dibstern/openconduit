@@ -798,6 +798,30 @@ function ensureSentDuringEpochOnLastUnrespondedUser(): void {
 	}
 }
 
+// ─── Scroll request flag ────────────────────────────────────────────────────
+// One-shot flag consumed by the MessageList content-change $effect.
+// Used when content is added that MUST trigger auto-scroll even though the
+// session phase has already transitioned to idle (e.g. error messages call
+// phaseToIdle synchronously, so by the time the batched effect fires,
+// isProcessing() is false and the normal guard would skip the scroll).
+let _scrollRequestPending = false;
+
+/** Request that the next content-change effect triggers auto-scroll.
+ *  Call before adding content that should scroll but won't be covered
+ *  by the isProcessing/isSettling guard. */
+export function requestScrollOnNextContent(): void {
+	_scrollRequestPending = true;
+}
+
+/** Consume and clear the scroll request. Returns true if a request was pending. */
+export function consumeScrollRequest(): boolean {
+	if (_scrollRequestPending) {
+		_scrollRequestPending = false;
+		return true;
+	}
+	return false;
+}
+
 export function handleError(
 	msg: Extract<RelayMessage, { type: "error" }>,
 ): void {
@@ -809,10 +833,14 @@ export function handleError(
 	};
 
 	if (code === "RETRY") {
-		// Subtle retry message
+		// Subtle retry message — request scroll before adding so the
+		// content-change effect scrolls even though phase stays unchanged.
+		requestScrollOnNextContent();
 		addSystemMessage(message, "info");
 	} else {
-		// Prominent error
+		// Prominent error — request scroll before phaseToIdle kills the
+		// isProcessing guard that the content-change effect relies on.
+		requestScrollOnNextContent();
 		addSystemMessage(message, "error", errorMeta);
 		phaseToIdle();
 	}

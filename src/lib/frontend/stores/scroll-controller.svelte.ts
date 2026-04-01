@@ -31,6 +31,7 @@ export function createScrollController(
 	let settleRafId: number | null = null;
 	let settleFrameCount = 0;
 	let programmaticScrollCount = 0; // counter (not boolean) — prevents false detach when multiple scrollToBottom() calls queue up in the same frame
+	let resetRafScheduled = false; // guards against scheduling multiple rAF resets
 
 	function getState(): ScrollState {
 		const lc = getLifecycle();
@@ -44,6 +45,18 @@ export function createScrollController(
 		if (!container) return;
 		programmaticScrollCount++;
 		container.scrollTop = container.scrollHeight;
+		// Safety net: if the scroll position didn't actually change (container
+		// already at bottom or empty), no scroll event fires and the counter
+		// stays inflated — eating future user scroll events and preventing
+		// detach. Schedule a rAF cleanup so the counter resets after all scroll
+		// events for this frame have been processed.
+		if (!resetRafScheduled) {
+			resetRafScheduled = true;
+			requestAnimationFrame(() => {
+				programmaticScrollCount = 0;
+				resetRafScheduled = false;
+			});
+		}
 	}
 
 	function startSettle(): void {
