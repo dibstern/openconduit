@@ -21,7 +21,7 @@ export interface ScrollController {
 const SETTLE_MAX_FRAMES = 60;
 const SETTLE_STABLE_THRESHOLD = 2;
 const DETACH_THRESHOLD = 100; // px from bottom to trigger detach via scroll position
-const REFOLLOW_THRESHOLD = 5; // px from bottom to re-follow (must be at the very bottom)
+const REFOLLOW_THRESHOLD = 50; // px from bottom to re-follow (industry standard ~50px)
 
 export function createScrollController(
 	getLifecycle: () => LoadLifecycle,
@@ -30,7 +30,7 @@ export function createScrollController(
 	let userDetached = $state(false);
 	let settleRafId: number | null = null;
 	let settleFrameCount = 0;
-	let programmaticScrollPending = false; // guards against false detach from our own scrolls
+	let programmaticScrollCount = 0; // counter (not boolean) — prevents false detach when multiple scrollToBottom() calls queue up in the same frame
 
 	function getState(): ScrollState {
 		const lc = getLifecycle();
@@ -42,7 +42,7 @@ export function createScrollController(
 
 	function scrollToBottom(): void {
 		if (!container) return;
-		programmaticScrollPending = true;
+		programmaticScrollCount++;
 		container.scrollTop = container.scrollHeight;
 	}
 
@@ -91,12 +91,12 @@ export function createScrollController(
 		if (!container) return;
 
 		// If we triggered this scroll via scrollToBottom(), skip the detach
-		// check. Without this, a race occurs: scrollToBottom sets scrollTop,
-		// then a new delta arrives and increases scrollHeight before the
-		// scroll event fires, making distFromBottom > DETACH_THRESHOLD and
-		// falsely detaching.
-		if (programmaticScrollPending) {
-			programmaticScrollPending = false;
+		// check. Uses a counter instead of a boolean so that multiple
+		// scrollToBottom() calls in the same frame (e.g. content-change
+		// effect + "ready" effect) each consume one slot instead of the
+		// second scroll event bypassing the guard entirely.
+		if (programmaticScrollCount > 0) {
+			programmaticScrollCount--;
 			return;
 		}
 
@@ -107,9 +107,9 @@ export function createScrollController(
 
 		const distFromBottom =
 			container.scrollHeight - container.scrollTop - container.clientHeight;
-		// Re-follow only when scrolled to the very bottom.
-		// Uses a tight threshold (5px) to avoid undoing detach for small
-		// scrolls. The user must scroll all the way back down.
+		// Re-follow when scrolled near the bottom (within 50px).
+		// Industry standard: generous enough that scrolling "to the bottom"
+		// re-engages auto-follow without requiring pixel-perfect precision.
 		if (distFromBottom < REFOLLOW_THRESHOLD && userDetached) {
 			userDetached = false;
 		}
@@ -151,6 +151,9 @@ export function createScrollController(
 		resetForSession(): void {
 			userDetached = false;
 			stopSettle();
+			// Scroll immediately so the first paint of the new session is at the
+			// bottom, not at whatever scroll position the previous session had.
+			scrollToBottom();
 		},
 
 		requestFollow(): void {
@@ -168,6 +171,10 @@ export function createScrollController(
 				// jitter during streaming (snap-down-then-back-up on each delta).
 				scrollToBottom();
 			} else if (s === "settling") {
+				// Scroll synchronously first to avoid a one-frame paint at scrollTop=0,
+				// then start the rAF settle loop for any subsequent height changes
+				// (deferred markdown rendering, lazy images, etc.).
+				scrollToBottom();
 				startSettle();
 			}
 		},

@@ -4,7 +4,6 @@
 <!-- Preserves #messages ID for E2E. -->
 
 <script lang="ts">
-	import { untrack } from "svelte";
 	import { chatState, historyState, isProcessing } from "../../stores/chat.svelte.js";
 	import { findSession, sessionState } from "../../stores/session.svelte.js";
 	import { splitAtForkPoint } from "../../utils/fork-split.js";
@@ -75,21 +74,17 @@
 	// Auto-scroll when content changes (messages, permissions, questions).
 	// Guards:
 	// - Skip during prepend (scroll preservation handles that case).
-	// - Only auto-scroll when session is actively producing content
-	//   (processing or streaming) OR when the scroll controller is settling
-	//   (post-replay, deferred markdown rendering). On inactive sessions,
-	//   background events (cross-tab user_message, permission state) must
-	//   NOT snap to bottom.
-	// NOTE: isProcessing() is checked via untrack() so it acts as a guard
-	// (checked but not tracked). The effect only re-runs when actual content
-	// changes — not on every processing/streaming toggle.
+	// - The scroll controller's own state machine (following/detached) provides
+	//   protection against unwanted scrolling: user must scroll >100px from
+	//   bottom to detach, and must scroll back within 50px to re-follow.
+	//   No additional processing/settling guard is needed — error messages,
+	//   session switches to idle sessions, and background events all scroll
+	//   correctly as long as the user is "following".
 	$effect(() => {
 		const _len = chatState.messages.length;
 		const _permLen = permissionsState.pendingPermissions.length;
 		const _qLen = permissionsState.pendingQuestions.length;
-		const isActive = untrack(() => isProcessing());
-		const isSettling = untrack(() => scrollCtrl.state === "settling");
-		if (!awaitingPrepend && (isActive || isSettling)) {
+		if (!awaitingPrepend) {
 			scrollCtrl.onNewContent();
 		}
 	});
