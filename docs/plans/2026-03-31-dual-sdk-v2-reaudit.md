@@ -313,3 +313,24 @@ All 22 Amend Plan findings and 8 Ask User findings resolved. Amendments appended
 | C8 (SessionDetail shape) | 9 | A9.1: Nested time, correct SDK fields |
 | H1-H15 | various | See plan document amendments section |
 | U1-U8 | various | Resolved per user decisions, see Design Decisions v3 table |
+
+---
+
+## Re-audit Results (v3.1)
+
+Re-audit dispatched 4 auditors to verify v3 amendments. Found 5 remaining issues, all resolved in "Re-audit Amendments v3.1" appended to the plan.
+
+| Finding | Source | Resolution |
+|---------|--------|------------|
+| A3.1 not inlined into code block | Tasks 1-3 auditor | A3.1-FIX: Inlined try/finally with correct code |
+| A8.4 content_block_stop missing `type` field + emits for all blocks | Task 8 auditor | A8.4-FIX: Stateful translator with block type tracking |
+| A8.3 test expectations not updated | Task 8 auditor | A8.3-FIX: Updated test expectations |
+| Code blocks systemically not updated (Tasks 9-11) | Tasks 9-11 auditor | A9.2-FIX: Substitution table for implementer |
+| `contentToParts()` undefined | Tasks 9-11 auditor | A9.4-FIX: Defined helper method |
+| `getActiveSessionForPermission()` undefined | Tasks 9-11 auditor | A11.1-FIX: Per-query closure pattern |
+| Warmup query underspecified | Tasks 9-11 auditor | A9.6-FIX: maxTurns:0, persistSession:false |
+| `initialize()` not idempotent for D12 | Tasks 14-15 auditor | A14.1-FIX: Idempotency guard |
+| Session list merge needs HandlerDeps closure | Tasks 14-15 auditor | A14.4-FIX: listAllSessions closure |
+| Init metadata transport incomplete | Task 8 auditor | A8.8-FIX: Defer metadata, emit status only |
+
+**Status: All Amend Plan findings resolved. 4 known limitations documented (non-blocking). Plan ready for execution.**

@@ -14,6 +14,7 @@
 - v1 → v2: 57 amendments (see "Audit Amendments v1 → v2" below)
 - v2 audit: 117 findings (see "Audit Amendments v2 audit" below)
 - v2 → v3: 30 amendments from re-audit (see "Audit Amendments v3" at bottom)
+- v3 re-audit: 5 fixes + known limitations (see "Re-audit Amendments v3.1" at bottom)
 
 **Reference impl:** `~/src/personal/opencode-relay/claude-relay/lib/sdk-bridge.js` (Clay)
 
@@ -4167,3 +4168,259 @@ if (msg.capabilities) {
 | SDK API fallback | Verified — SDK exports exist; JSONL fallback if functions change | Belt and suspenders |
 | Discovery before query | Warmup query | Captures agent/command/model lists at init |
 | Per-message cost | Use `result.total_cost_usd` only | Accurate; intermediate messages show 0 |
+
+---
+
+## Re-audit Amendments v3.1 (Post-Re-audit Fixes)
+
+These amendments fix issues found during the re-audit of v3. They further override prior v3 amendments where specified.
+
+### A3.1-FIX — Inline try/finally into OpenCodeBackend subscribeEvents
+
+The v3 amendment A3.1 was NOT inlined into the Task 3 code block. The inline code at Task 3 Step 3 (lines ~764-779) MUST be replaced with:
+```typescript
+async *subscribeEvents(signal: AbortSignal): AsyncIterable<BackendEvent> {
+    if (!this.sseConsumer) return;
+    const channel = new AsyncEventChannel<BackendEvent>();
+    const handler = (event: BackendEvent) => { channel.push(event); };  // A3.2: push directly
+    this.sseConsumer.on("event", handler);
+    signal.addEventListener("abort", () => { channel.close(); }, { once: true });
+    try {
+        yield* channel;
+    } finally {
+        this.sseConsumer.off("event", handler);
+        channel.close();
+    }
+}
+```
+
+### A8.3-FIX — Update translateResult test expectations
+
+A8.3 removed `session.status` idle from `translateResult`, but the test at lines ~1300-1318 still expects it as the first event. The test MUST be updated:
+- Success result: expect 1 event (`message.updated` with cost/tokens), NOT 2
+- Error result: expect 2 events (`message.updated` + `session.error`), NOT 3
+
+### A8.4-FIX — Stateful content_block_stop translation
+
+The original A8.4 is broken: the `part` object lacks a `type` field required by EventTranslator's `isPartUpdatedEvent` guard, and it emits for ALL block types (including text) causing data corruption.
+
+**Required changes:**
+
+1. **Make `translateSdkMessage` stateful.** Add a session state parameter:
+```typescript
+interface TranslatorSessionState {
+    blockTypes: Map<number, string>; // index → "text" | "tool_use" | "thinking"
+}
+
+export function translateSdkMessage(
+    msg: SDKMessage,
+    state: TranslatorSessionState,
+): BackendEvent | BackendEvent[] | null;
+```
+
+2. **On `content_block_start`:** Record the block type in state:
+```typescript
+if (event.type === "content_block_start") {
+    state.blockTypes.set(event.index, event.content_block?.type ?? "unknown");
+    // ... existing translation logic ...
+}
+```
+
+3. **On `content_block_stop`:** Look up block type, only emit for tool_use:
+```typescript
+if (event.type === "content_block_stop") {
+    const blockType = state.blockTypes.get(event.index);
+    if (blockType === "tool_use") {
+        return {
+            type: "message.part.updated",
+            properties: {
+                messageID: msg.uuid,
+                partID: `part-${event.index}`,
+                part: {
+                    id: `part-${event.index}`,
+                    type: "tool",  // REQUIRED by isPartUpdatedEvent guard
+                    state: { status: "running" },
+                    time: { start: Date.now() },
+                },
+            },
+        };
+    }
+    return null; // Ignore content_block_stop for text/thinking blocks
+}
+```
+
+4. **In `processQueryStream` (Task 10):** Create state per query:
+```typescript
+const translatorState: TranslatorSessionState = { blockTypes: new Map() };
+// In the for-await loop:
+const translated = translateSdkMessage(msg, translatorState);
+```
+
+### A8.8-FIX — Busy handler: emit status only, defer init metadata
+
+The existing `status` RelayMessage type is `{ type: "status"; status: string }` — it has no fields for tools/model/mcpServers. For now, emit only the status change. Init metadata transport is deferred:
+```typescript
+// In EventTranslator's translateSessionStatus:
+if (status.type === "busy") {
+    return { type: "status", status: "busy" };
+}
+```
+Init metadata (tools, model, MCP servers from system/init) will be handled via the warmup query cache (D13/A9.6) and `initializationResult()` on the Query object, not via the event pipeline.
+
+### A9.2-FIX — Systemic: code blocks not inlined
+
+**CRITICAL:** The v3 amendments for Tasks 9, 10, 11 were appended as prose directives but the actual code blocks the implementer would copy were NOT updated. The following substitutions MUST be applied when implementing these tasks:
+
+| Original code pattern | Replace with | Tasks affected |
+|---|---|---|
+| `private readonly channel = new AsyncEventChannel<BackendEvent>()` | `private readonly subscribers = new Set<AsyncEventChannel<BackendEvent>>()` | 9 |
+| `this.channel.push(event)` | `this.broadcastEvent(event)` | 9, 10, 11 |
+| `this.channel[Symbol.asyncIterator]()` + Promise.race pattern | Fan-out `subscribeEvents()` per A9.2 | 9 |
+| `private readonly sessionIdMap = new Map<...>()` | Remove entirely (use `cliSessionIds` only) | 9 |
+| `this.sessionIdMap.set/get/delete(...)` | `this.cliSessionIds.set/get/delete(...)` | 9, 10 |
+| `Deferred<QuestionAnswer>` | `Deferred<QuestionResult>` | 11 |
+| `{ rejected: true } as unknown as QuestionAnswer` | `{ type: "rejected" }` | 10, 11 |
+| `(answer as unknown as { rejected?: boolean }).rejected` | `answer.type === "rejected"` | 11 |
+| `(sdkMsg as any)` | Typed access per A9.4 | 9 |
+
+### A9.4-FIX — Define contentToParts helper
+
+The `contentToParts()` method referenced in A9.4 was never defined. Add to `ClaudeAgentBackend`:
+```typescript
+private contentToParts(content?: unknown[]): Array<{ id: string; type: string; [key: string]: unknown }> {
+    if (!content || !Array.isArray(content)) return [];
+    return content.map((block, i) => {
+        const b = block as { type?: string; text?: string; id?: string; name?: string; input?: unknown; thinking?: string };
+        switch (b.type) {
+            case "text":
+                return { id: `part-${i}`, type: "text", text: b.text ?? "" };
+            case "tool_use":
+                return { id: `part-${i}`, type: "tool", callID: b.id, tool: b.name, input: b.input };
+            case "tool_result":
+                return { id: `part-${i}`, type: "tool-result", callID: b.id };
+            case "thinking":
+                return { id: `part-${i}`, type: "reasoning", text: b.thinking ?? "" };
+            default:
+                return { id: `part-${i}`, type: b.type ?? "unknown" };
+        }
+    });
+}
+```
+
+### A9.6-FIX — Specify warmup query options
+
+The warmup query MUST use safe options to prevent side effects:
+```typescript
+async initialize(): Promise<void> {
+    if (this.initialized) return;  // A14.1-FIX idempotency
+    this.initialized = true;
+
+    try {
+        const warmupAbort = new AbortController();
+        const warmup = sdkQuery({
+            prompt: "",
+            options: {
+                cwd: this.cwd,
+                maxTurns: 0,              // No tool execution
+                persistSession: false,     // Ephemeral — won't appear in listSessions
+                abortController: warmupAbort,
+            },
+        });
+        for await (const msg of warmup) {
+            if (msg.type === "system" && msg.subtype === "init") {
+                this.cachedTools = msg.tools ?? [];
+                this.cachedModel = msg.model;
+                this.cachedMcpServers = msg.mcp_servers ?? [];
+                // Extract agents/commands from initializationResult()
+                try {
+                    const initResult = await warmup.initializationResult();
+                    this.cachedAgents = initResult.agents ?? [];
+                    this.cachedCommands = initResult.commands ?? [];
+                    this.cachedModels = initResult.models ?? [];
+                } catch { /* ignore if not available */ }
+                warmupAbort.abort();
+                break;
+            }
+        }
+    } catch (err) {
+        // SDK unavailable — fall back to empty discovery results
+        this.log?.warn?.("Warmup query failed, discovery will be empty", err);
+    }
+}
+```
+
+### A11.1-FIX — Per-query closure for handleCanUseTool
+
+The SDK `CanUseTool` callback does NOT receive `sessionId` in its options. Use a per-query closure (Clay's pattern) instead of `getActiveSessionForPermission()`:
+```typescript
+// In startQuery() / processQueryStream setup:
+const sessionId = relaySessionId;
+const queryOptions = {
+    canUseTool: (toolName: string, input: Record<string, unknown>, opts?: unknown) =>
+        this.handleCanUseToolForSession(sessionId, toolName, input, opts),
+    // ...
+};
+
+// Renamed method with explicit sessionId parameter:
+private async handleCanUseToolForSession(
+    sessionId: string,
+    toolName: string,
+    toolInput: Record<string, unknown>,
+    opts?: unknown,
+): Promise<PermissionResult> {
+    // Check always-allowed cache
+    const allowed = this.alwaysAllowedTools.get(sessionId);
+    if (allowed?.has(toolName)) {
+        return { behavior: "allow", updatedInput: toolInput };
+    }
+    // ... create deferred with sessionId tag per A10.2/A11.3 ...
+}
+```
+Remove `getActiveSessionForPermission()` reference from A11.1.
+
+### A14.1-FIX — Idempotent initialize()
+
+Both backend `initialize()` methods must be idempotent since D12 keeps both alive and `swap()` calls `initialize()`:
+```typescript
+// Add to both OpenCodeBackend and ClaudeAgentBackend:
+private initialized = false;
+
+async initialize(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
+    // ... existing init logic ...
+}
+```
+
+### A14.4-FIX — Session list merge via HandlerDeps closure
+
+The merge function needs both backends, which aren't on HandlerDeps. Add a closure (same pattern as A14.5):
+```typescript
+// In HandlerDeps (types.ts):
+listAllSessions?: (options?: { roots?: boolean }) => Promise<SessionDetail[]>;
+
+// In relay-stack handler deps construction:
+listAllSessions: async (options) => {
+    const [ocResult, caResult] = await Promise.allSettled([
+        opencodeBackend.listSessions(options),
+        claudeAgentBackend.listSessions(options),
+    ]);
+    const results: SessionDetail[] = [];
+    if (ocResult.status === "fulfilled")
+        results.push(...ocResult.value.map(s => ({ ...s, backendType: "opencode" as const })));
+    if (caResult.status === "fulfilled")
+        results.push(...caResult.value.map(s => ({ ...s, backendType: "claude-agent" as const })));
+    return results.sort((a, b) => (b.time?.updated ?? 0) - (a.time?.updated ?? 0));
+}
+```
+Session handlers use `deps.listAllSessions?.(options) ?? deps.sessionBackend.listSessions(options)`.
+
+### Known Limitations (documented, not blocking)
+
+1. **Event gap during swap:** Sub-millisecond gap between aborting old event consumer and subscribing to new one. Events during this gap are lost. Swaps happen during idle periods so impact is negligible.
+
+2. **In-flight queries during swap:** If a query is actively streaming when the backend swaps, the streaming response stops appearing in the UI. The query continues running server-side. Users should wait for the current query to complete before switching models.
+
+3. **Init metadata transport:** The `status` RelayMessage type (`{ type: "status"; status: string }`) cannot carry init metadata (tools, model, MCP servers). Init metadata is provided via warmup query cache (D13/A9.6) and `listAgents()`/`listCommands()` methods. Frontend displays based on cached data, not live events.
+
+4. **content_block_stop for non-tool blocks:** Silently ignored (returns null). No UI impact since text/thinking blocks don't have a "running" state concept.
