@@ -39,6 +39,8 @@ Default verification path for most changes:
 pnpm check
 pnpm lint
 pnpm test:unit
+# Needs to be logged since the output is large and gets truncated.
+pnpm test:all > test-output.log 2>&1 || (echo "Tests failed, see test-output.log" && exit 1)
 ```
 
 Read `docs/agent-guide/testing.md` before choosing broader verification. Use the narrowest integration, E2E, daemon, multi-instance, or visual command that matches the changed surface.
