@@ -89,15 +89,16 @@ The daemon stays running after the terminal closes — sessions survive.
 
 ## Why Conduit?
 
-| | tmux / SSH | ntfy / Pushover hooks | ngrok / tunnel | Clay | **Conduit** |
-|---|---|---|---|---|---|
-| Mobile UI | ❌ Raw terminal | ❌ Alert only | ❌ Raw terminal | ✅ Full GUI | ✅ Full GUI |
-| Push notifications | ❌ | ✅ | ❌ | ✅ | ✅ |
-| One-tap approval | ❌ | ❌ No action UI | ❌ | ✅ | ✅ |
-| Stays on your network | ✅ | ✅ | ❌ Third-party relay | ✅ | ✅ |
-| Multi-project | ❌ | ❌ | ❌ | ❌ | ✅ |
-| PWA / home screen | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Works with any model | ❌ | ❌ | ❌ | ❌ Claude only | ✅ |
+| | tmux / SSH | ntfy / Pushover hooks | ngrok / tunnel | OpenCode Web | Clay | **Conduit** |
+|---|---|---|---|---|---|---|
+| Mobile UI | ❌ Raw terminal | ❌ Alert only | ❌ Raw terminal | ✅ Full GUI | ✅ Full GUI | ✅ Full GUI |
+| Push notifications | ❌ | ✅ | ❌ | ❌ | ✅ | ✅ |
+| One-tap approval | ❌ | ❌ No action UI | ❌ | ❌ | ✅ | ✅ |
+| Stays on your network | ✅ | ✅ | ❌ Third-party relay | ✅ | ✅ | ✅ |
+| Multi-project | ❌ | ❌ | ❌ | ✅ | ✅ | ✅ |
+| Quick auth | N/A | N/A | N/A | ❌ Password each visit | N/A | ✅ PIN once |
+| PWA / home screen | ❌ | ❌ | ❌ | ❌ | ✅ | ✅ |
+| Works with any model | ❌ | ❌ | ❌ | ✅ | ❌ Claude only | ✅ |
 
 <details>
 <summary>Detailed comparisons</summary>
@@ -118,6 +119,18 @@ or Tailscale — nothing routes through an external service.
 **Why not SSH + terminal on mobile?**
 Raw terminal, no approval UI, no push notifications, no mobile-optimised
 interface. You end up checking manually instead of getting notified.
+
+**What about OpenCode's built-in web UI?**
+OpenCode ships a web interface via `opencode web` that covers the core
+experience well — sessions, model switching, multi-project with a project
+picker, terminal attachment — and works with any model.
+
+Where Conduit adds to the experience: push notifications, one-tap permission
+approvals, and PWA install. On authentication, `opencode web` uses HTTP Basic
+Auth — with a strong password this means re-entering credentials on every
+visit, which gets tedious on mobile. Conduit uses a numeric PIN entered once
+at startup, then stays authenticated. If you mostly work at your desk and
+want a browser view, `opencode web` may be all you need.
 
 **What about Clay (claude-relay)?**
 Conduit exists because of [Clay](https://github.com/chadbyte/clay). I loved
