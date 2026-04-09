@@ -19,7 +19,13 @@ export async function handleGetToolContent(
 		return;
 	}
 
-	const content = deps.toolContentStore.get(toolId);
+	// Phase 4a: Check SQLite via ReadAdapter when toolContent flag is "sqlite".
+	// Falls through to ToolContentStore when readAdapter is absent or returns undefined.
+	const sqliteContent = deps.readAdapter?.getToolContent(toolId);
+	const content =
+		sqliteContent !== undefined
+			? sqliteContent
+			: deps.toolContentStore.get(toolId);
 	if (content !== undefined) {
 		deps.wsHandler.sendTo(clientId, {
 			type: "tool_content",
