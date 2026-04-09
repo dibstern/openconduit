@@ -16,8 +16,6 @@ import { OpenCodeClient } from "../instance/opencode-client.js";
 import { createLogger, type Logger } from "../logger.js";
 import { DualWriteHook } from "../persistence/dual-write-hook.js";
 import type { PersistenceLayer } from "../persistence/persistence-layer.js";
-import { ReadAdapter } from "../persistence/read-adapter.js";
-import { createReadFlags } from "../persistence/read-flags.js";
 import { ReadQueryService } from "../persistence/read-query-service.js";
 import {
 	createOrchestrationLayer,
@@ -301,15 +299,10 @@ export async function createProjectRelay(
 		WebSocketClass,
 	};
 
-	// ── Phase 4: Read switchover (ReadQueryService + ReadFlags + ReadAdapter) ──
+	// ── SQLite read query service (reads from projected tables) ──
 	const readQuery = config.persistence
 		? new ReadQueryService(config.persistence.db)
 		: undefined;
-	const readFlags = config.persistence
-		? createReadFlags(config.readFlags)
-		: undefined;
-	const readAdapter =
-		readQuery && readFlags ? new ReadAdapter(readQuery, readFlags) : undefined;
 
 	// ── Handler deps wiring (G1: client init, message queue, rate limiter) ──
 	const { rateLimiter } = wireHandlerDeps({
@@ -326,7 +319,7 @@ export async function createProjectRelay(
 		registry,
 		pollerManager,
 		ptyDeps,
-		...(readAdapter != null && { readAdapter }),
+		...(readQuery != null && { readQuery }),
 		orchestrationLayer: orchestration,
 	});
 
@@ -338,13 +331,12 @@ export async function createProjectRelay(
 		log: sseLog,
 	});
 
-	// ── Dual-write hook (Phase 2) ────────────────────────────────────────
+	// ── Dual-write hook (SSE → SQLite event store) ──────────────────────
 	let dualWriteHook: DualWriteHook | undefined;
-	if (config.persistence && config.dualWriteEnabled !== false) {
+	if (config.persistence) {
 		dualWriteHook = new DualWriteHook({
 			persistence: config.persistence,
 			log: log.child("dual-write"),
-			enabled: true,
 		});
 	}
 

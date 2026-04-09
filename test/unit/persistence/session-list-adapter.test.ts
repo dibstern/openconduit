@@ -1,11 +1,7 @@
 // test/unit/persistence/session-list-adapter.test.ts
 import { describe, expect, it } from "vitest";
 import type { SessionRow } from "../../../src/lib/persistence/read-query-service.js";
-import {
-	compareSessionLists,
-	sessionRowsToSessionInfoList,
-} from "../../../src/lib/persistence/session-list-adapter.js";
-import type { SessionInfo } from "../../../src/lib/shared-types.js";
+import { sessionRowsToSessionInfoList } from "../../../src/lib/persistence/session-list-adapter.js";
 
 // ─── Fixtures ──────────────────────────────────────────────────────────────
 
@@ -120,57 +116,5 @@ describe("sessionRowsToSessionInfoList", () => {
 
 	it("returns empty array for empty input", () => {
 		expect(sessionRowsToSessionInfoList([])).toEqual([]);
-	});
-});
-
-// ─── compareSessionLists ──────────────────────────────────────────────────
-
-describe("compareSessionLists", () => {
-	it("returns no differences for identical lists", () => {
-		const a: SessionInfo[] = [{ id: "s1", title: "Test", updatedAt: 1000 }];
-		const b: SessionInfo[] = [{ id: "s1", title: "Test", updatedAt: 1000 }];
-		const diff = compareSessionLists(a, b);
-		expect(diff.missingInSqlite).toEqual([]);
-		expect(diff.missingInRest).toEqual([]);
-		expect(diff.titleMismatches).toEqual([]);
-	});
-
-	it("detects sessions missing from SQLite", () => {
-		const rest: SessionInfo[] = [
-			{ id: "s1", title: "Test" },
-			{ id: "s2", title: "Other" },
-		];
-		const sqlite: SessionInfo[] = [{ id: "s1", title: "Test" }];
-
-		const diff = compareSessionLists(rest, sqlite);
-		expect(diff.missingInSqlite).toEqual(["s2"]);
-	});
-
-	it("detects sessions missing from REST", () => {
-		const rest: SessionInfo[] = [{ id: "s1", title: "Test" }];
-		const sqlite: SessionInfo[] = [
-			{ id: "s1", title: "Test" },
-			{ id: "s2", title: "Extra" },
-		];
-
-		const diff = compareSessionLists(rest, sqlite);
-		expect(diff.missingInRest).toEqual(["s2"]);
-	});
-
-	it("detects title mismatches", () => {
-		const rest: SessionInfo[] = [{ id: "s1", title: "REST Title" }];
-		const sqlite: SessionInfo[] = [{ id: "s1", title: "SQLite Title" }];
-
-		const diff = compareSessionLists(rest, sqlite);
-		expect(diff.titleMismatches).toEqual([
-			{ id: "s1", rest: "REST Title", sqlite: "SQLite Title" },
-		]);
-	});
-
-	it("handles empty lists without errors", () => {
-		const diff = compareSessionLists([], []);
-		expect(diff.missingInSqlite).toEqual([]);
-		expect(diff.missingInRest).toEqual([]);
-		expect(diff.titleMismatches).toEqual([]);
 	});
 });

@@ -19,9 +19,9 @@ export async function handleGetToolContent(
 		return;
 	}
 
-	// Read tool content from SQLite via ReadAdapter.
-	// Returns NOT_FOUND when readAdapter is absent (persistence not configured).
-	const content = deps.readAdapter?.getToolContent(toolId);
+	// Read tool content from SQLite via ReadQueryService.
+	// Returns NOT_FOUND when readQuery is absent (persistence not configured).
+	const content = deps.readQuery?.getToolContent(toolId);
 	if (content !== undefined) {
 		deps.wsHandler.sendTo(clientId, {
 			type: "tool_content",
