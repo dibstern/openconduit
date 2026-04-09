@@ -778,3 +778,23 @@
 - **Two timing scenarios both work**: (1) Effect fires before proactive data → resets and requests via loadMore, proactive data arrives and is applied. (2) Proactive data arrives first → handleHistoryPage resets and applies data, effect runs later and sees data is already loaded → no-op.
 - **Regression tests**: 5 new tests in `regression-session-switch-history.test.ts` (wrong session dispatch, normalized format verification, switch-back-and-forth scenario) + 2 new tests in `svelte-history-logic.test.ts` (groupIntoTurns with OpenCode normalized format)
 - All 1481 unit tests passing (57 test files), type-check clean, lint clean
+
+### 2026-04-09 — Orchestrator Task 50.5 (Strip MessageCache/ToolContentStore/PendingUserMessages from test fixtures)
+- **Goal**: Remove all in-memory store references from test files in preparation for Task 51 deletion
+- **Files modified** (12 test files + 1 deleted):
+  - `test/unit/session/session-switch.test.ts` — removed 27+ `messageCache` mock fields from `createMinimalDeps()`, deleted broken placeholder describe blocks (584-839 lines), removed all `messageCache.getEvents` assertions
+  - `test/unit/relay/event-pipeline.test.ts` — removed `toolContentStore`/`messageCache` from `makeDeps()`, deleted 5 tests that verified in-memory store writes
+  - `test/unit/relay/per-tab-routing-e2e.test.ts` — deleted "SSE events are cached even when no client views that session" test
+  - `test/unit/daemon/project-registry.test.ts` — removed unused `ProjectRelay` import
+  - 9 other test files with minor `messageCache`/`toolContentStore` field removals from mock factories
+  - `test/unit/relay/regression-deduplication-e2e.test.ts` — deleted (MessageCache-coupled)
+- **Commit**: `33e0909` — 15 files changed, 81 insertions, 1125 deletions; 243 test files, 4389 tests
+
+### 2026-04-10 — Orchestrator Task 51 (Remove MessageCache + JSONL files — replaced by SQLite event store)
+- **Source files deleted**: `src/lib/relay/message-cache.ts` (411 lines), `src/lib/relay/cold-cache-repair.ts` (69 lines)
+- **New file**: `src/lib/persistence/eviction.ts` — `EventStoreEviction` class with `evictSync()`, `evictAsync()` (yields between batches via `setImmediate`), `cascadeProjections()` (FK-safe cleanup of fully-evicted sessions)
+- **Wiring**: `PersistenceLayer` gets `readonly eviction: EventStoreEviction`; `ProjectRelay` interface gets `persistence?: PersistenceLayer`; `ProjectRegistry.evictOldestSessions()` now calls `relay.persistence?.eviction.evictSync()` per relay; daemon low-disk-space handler logs eviction summaries
+- **Rename**: `CACHEABLE_EVENT_TYPES` → `PERSISTED_EVENT_TYPES`, `CacheableEventType` → `PersistedEventType` (deprecated aliases kept); updated `cache-events.ts`, `dispatch-coverage.test.ts`, `ws-dispatch.ts`, `regression-mid-stream-switch.test.ts`
+- **Test files deleted** (5): `message-cache.test.ts`, `cold-cache-repair.test.ts`, `cache-replay-contract.test.ts`, `regression-server-cache-pipeline.test.ts`, `daemon-eviction-chain.test.ts`
+- **New test file**: `test/unit/persistence/eviction.test.ts` — 12 tests covering sync/async batching, yield counts, receipt cleanup, cascade projections
+- **Commit**: `d7c7042` — 19 files changed (+ 2 new, 7 deleted); 239 test files, 4330 tests passing
