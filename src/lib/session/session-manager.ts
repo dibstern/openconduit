@@ -16,13 +16,8 @@ import type {
 	SessionStatus,
 } from "../instance/opencode-client.js";
 import { createSilentLogger, type Logger } from "../logger.js";
-import type { ReadFlags } from "../persistence/read-flags.js";
-import { isActive } from "../persistence/read-flags.js";
 import type { ReadQueryService } from "../persistence/read-query-service.js";
-import {
-	compareSessionLists,
-	sessionRowsToSessionInfoList,
-} from "../persistence/session-list-adapter.js";
+import { sessionRowsToSessionInfoList } from "../persistence/session-list-adapter.js";
 import type { HistoryMessage } from "../shared-types.js";
 import type { RelayMessage, SessionInfo } from "../types.js";
 
@@ -40,9 +35,7 @@ export interface SessionManagerOptions {
 	getStatuses?: () => Record<string, SessionStatus>;
 	/** Config directory for fork metadata persistence */
 	configDir?: string;
-	/** Phase 4b: Read flags for SQLite read switchover (optional — absent before Phase 4) */
-	readFlags?: ReadFlags;
-	/** Phase 4b: SQLite read query service (optional — absent before Phase 4) */
+	/** SQLite read query service (optional — absent when persistence is not configured) */
 	readQuery?: ReadQueryService;
 }
 
@@ -74,7 +67,6 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 	private readonly directory: string | undefined;
 	private readonly getStatuses: (() => Record<string, SessionStatus>) | null;
 	private readonly configDir: string | undefined;
-	private readonly readFlags: ReadFlags | undefined;
 	private readonly readQuery: ReadQueryService | undefined;
 
 	/**
@@ -126,7 +118,6 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 		this.directory = options.directory;
 		this.getStatuses = options.getStatuses ?? null;
 		this.configDir = options.configDir;
-		this.readFlags = options.readFlags;
 		this.readQuery = options.readQuery;
 		this.forkMeta = loadForkMetadata(options.configDir);
 	}
@@ -164,9 +155,8 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 		statuses?: Record<string, SessionStatus> | undefined;
 		roots?: boolean;
 	}): Promise<SessionInfo[]> {
-		// Phase 4c: Read from SQLite when flag is active (shadow or sqlite mode).
-		// (C1) CRITICAL: use isActive(), not truthy check on the flag.
-		if (isActive(this.readFlags?.sessionList) && this.readQuery) {
+		// SQLite is the sole read path when persistence is configured.
+		if (this.readQuery) {
 			const sqOpts =
 				options?.roots !== undefined ? { roots: options.roots } : undefined;
 			const rows = this.readQuery.listSessions(sqOpts);
@@ -188,35 +178,6 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 					}
 				}
 			}
-
-			// Fire-and-forget comparison with legacy REST for transition validation.
-			// Non-fatal: a failure here never affects the SQLite result returned above.
-			const clientOpts =
-				options?.roots !== undefined ? { roots: options.roots } : undefined;
-			this.client
-				.listSessions(clientOpts)
-				.then((restSessions) => {
-					const legacyResult = toSessionInfoList(
-						restSessions,
-						resolvedStatuses,
-						this.lastMessageAt,
-						this.forkMeta,
-						this.pendingQuestionCounts,
-					);
-					const diff = compareSessionLists(legacyResult, sqliteResult);
-					if (
-						diff.missingInSqlite.length > 0 ||
-						diff.missingInRest.length > 0 ||
-						diff.titleMismatches.length > 0
-					) {
-						this.log.warn(
-							`session-list-diff: missing_in_sqlite=${diff.missingInSqlite.length} missing_in_rest=${diff.missingInRest.length} title_mismatches=${diff.titleMismatches.length}`,
-						);
-					}
-				})
-				.catch(() => {
-					// Comparison failure is non-fatal — do not affect the caller
-				});
 
 			return sqliteResult;
 		}
@@ -543,9 +504,8 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 
 	/** Look up fork-point metadata for a session. Returns undefined if not a fork. */
 	getForkEntry(sessionId: string): ForkEntry | undefined {
-		// Phase 4b: Read from SQLite when flag is active (shadow or sqlite mode).
-		// (C1) CRITICAL: use isActive(), not truthy check on the flag.
-		if (isActive(this.readFlags?.forkMetadata) && this.readQuery) {
+		// SQLite is the sole read path when persistence is configured.
+		if (this.readQuery) {
 			const meta = this.readQuery.getForkMetadata(sessionId);
 			if (meta) {
 				return {

@@ -1,7 +1,6 @@
 // src/lib/persistence/session-list-adapter.ts
 // ─── Session List Adapter ────────────────────────────────────────────────────
 // Converts SQLite SessionRow[] → SessionInfo[] for the frontend.
-// Also provides comparison utilities for transition validation.
 
 import type { SessionInfo } from "../shared-types.js";
 import type { SessionRow } from "./read-query-service.js";
@@ -52,50 +51,4 @@ export function sessionRowsToSessionInfoList(
 
 		return info;
 	});
-}
-
-export interface SessionListDiff {
-	missingInSqlite: string[];
-	missingInRest: string[];
-	titleMismatches: Array<{ id: string; rest: string; sqlite: string }>;
-}
-
-/**
- * Compare REST-sourced and SQLite-sourced session lists for transition validation.
- * Identifies discrepancies to help diagnose projection gaps during Phase 4c rollout.
- */
-export function compareSessionLists(
-	restList: SessionInfo[],
-	sqliteList: SessionInfo[],
-): SessionListDiff {
-	const restMap = new Map(restList.map((s) => [s.id, s]));
-	const sqliteMap = new Map(sqliteList.map((s) => [s.id, s]));
-
-	const missingInSqlite: string[] = [];
-	const missingInRest: string[] = [];
-	const titleMismatches: Array<{ id: string; rest: string; sqlite: string }> =
-		[];
-
-	for (const [id, restSession] of restMap) {
-		const sqliteSession = sqliteMap.get(id);
-		if (!sqliteSession) {
-			missingInSqlite.push(id);
-			continue;
-		}
-		if (restSession.title !== sqliteSession.title) {
-			titleMismatches.push({
-				id,
-				rest: restSession.title,
-				sqlite: sqliteSession.title,
-			});
-		}
-	}
-
-	for (const id of sqliteMap.keys()) {
-		if (!restMap.has(id)) {
-			missingInRest.push(id);
-		}
-	}
-
-	return { missingInSqlite, missingInRest, titleMismatches };
 }

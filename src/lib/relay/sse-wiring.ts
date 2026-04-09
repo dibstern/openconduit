@@ -173,7 +173,7 @@ export function handleSSEEvent(
 	const eventSessionId = extractSessionId(event);
 	log.verbose(`event=${event.type} session=${eventSessionId ?? "?"}`);
 
-	// ── Dual-write to SQLite event store (Phase 2) ─────────────────────
+	// ── Write to SQLite event store ─────────────────────────────────────
 	if (deps.dualWriteHook) {
 		deps.dualWriteHook.onSSEEvent(event, eventSessionId);
 	}

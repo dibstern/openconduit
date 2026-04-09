@@ -1,8 +1,7 @@
 // src/lib/session/session-status-sqlite.ts
 // ─── Session Status SQLite Reader ───────────────────────────────────────────
 // Reads session status from the projected `sessions.status` column instead
-// of polling the OpenCode REST API. Used when the `sessionStatus` read flag
-// is enabled (Phase 4d).
+// of polling the OpenCode REST API.
 //
 // This replaces the raw status fetch in SessionStatusPoller. The poller's
 // augmentation logic (subagent propagation, message-activity) still runs

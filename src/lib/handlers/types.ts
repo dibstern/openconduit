@@ -8,7 +8,7 @@ import type {
 	PromptOptions,
 } from "../instance/opencode-client.js";
 import type { Logger } from "../logger.js";
-import type { ReadAdapter } from "../persistence/read-adapter.js";
+import type { ReadQueryService } from "../persistence/read-query-service.js";
 import type { OrchestrationEngine } from "../provider/orchestration-engine.js";
 import type { MessagePollerManager } from "../relay/message-poller-manager.js";
 import type { PtyManager } from "../relay/pty-manager.js";
@@ -92,8 +92,8 @@ export interface HandlerDeps {
 	projectMgmt?: ProjectManagementDeps;
 	/** Port scan capability (optional — only available in daemon mode) */
 	scanDeps?: ScanDeps;
-	/** Phase 4: Read adapter for SQLite read switchover (optional — only available when persistence is configured) */
-	readAdapter?: ReadAdapter;
+	/** SQLite read query service (optional — only available when persistence is configured) */
+	readQuery?: ReadQueryService;
 	/**
 	 * Phase 5: OrchestrationEngine for routing prompts through provider adapters.
 	 * When set, handleMessage() dispatches through the engine instead of calling

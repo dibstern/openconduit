@@ -25,7 +25,7 @@ export type DualWriteResult =
 	| { ok: true; eventsWritten: number; sessionSeeded: boolean }
 	| {
 			ok: false;
-			reason: "disabled" | "no-session" | "not-translatable" | "error";
+			reason: "no-session" | "not-translatable" | "error";
 			error?: string;
 	  };
 
@@ -43,8 +43,6 @@ export interface DualWriteStats {
 export interface DualWriteHookOptions {
 	persistence: PersistenceLayer;
 	log: DualWriteLog;
-	/** Set to false to disable the hook without removing it. Defaults to true. */
-	enabled?: boolean;
 }
 
 // ─── Hook ───────────────────────────────────────────────────────────────────
@@ -54,9 +52,6 @@ export class DualWriteHook {
 	private readonly log: DualWriteLog;
 	private readonly translator: CanonicalEventTranslator;
 	private readonly seeder: SessionSeeder;
-
-	/** Set to false to disable the hook without removing it. */
-	enabled = true;
 
 	// Stats
 	private stats: DualWriteStats = {
@@ -71,9 +66,6 @@ export class DualWriteHook {
 	constructor(opts: DualWriteHookOptions) {
 		this.persistence = opts.persistence;
 		this.log = opts.log;
-		if (opts.enabled !== undefined) {
-			this.enabled = opts.enabled;
-		}
 		this.translator = new CanonicalEventTranslator();
 		this.seeder = new SessionSeeder(opts.persistence.db);
 	}
@@ -93,11 +85,6 @@ export class DualWriteHook {
 		sessionId: string | undefined,
 	): DualWriteResult {
 		this.stats.eventsReceived++;
-
-		if (!this.enabled) {
-			this.stats.eventsSkipped++;
-			return { ok: false, reason: "disabled" };
-		}
 
 		if (!sessionId) {
 			this.stats.eventsSkipped++;

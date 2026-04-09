@@ -4,14 +4,10 @@
 // of constructing session_switched messages manually.
 
 import { isLastTurnActive } from "../event-classify.js";
-import type { ReadFlagMode, ReadFlags } from "../persistence/read-flags.js";
-import { isActive } from "../persistence/read-flags.js";
 import type { ReadQueryService } from "../persistence/read-query-service.js";
 import { messageRowsToHistory } from "../persistence/session-history-adapter.js";
 import type { HistoryMessage, RequestId } from "../shared-types.js";
 import type { RelayMessage } from "../types.js";
-// Re-export for callers that need the mode type without a separate import.
-export type { ReadFlagMode };
 
 // ─── Pure data types ────────────────────────────────────────────────────────
 
@@ -80,10 +76,8 @@ export interface SessionSwitchDeps {
 		warn(...args: unknown[]): void;
 	};
 	readonly getInputDraft: (sessionId: string) => string | undefined;
-	/** Phase 4e: SQLite read query service (optional, for gradual rollout). */
+	/** SQLite read query service (optional — absent when persistence is not configured). */
 	readonly readQuery?: ReadQueryService;
-	/** Phase 4e: Read path feature flags (optional, for gradual rollout). */
-	readonly readFlags?: ReadFlags;
 }
 
 // ─── Pure functions ─────────────────────────────────────────────────────────
@@ -224,7 +218,7 @@ export function buildSessionSwitchedMessage(
 	}
 }
 
-// ─── SQLite history path (Phase 4e) ─────────────────────────────────────────
+// ─── SQLite history path ─────────────────────────────────────────────────────
 
 /**
  * Resolve session history from the SQLite projection.
@@ -261,30 +255,22 @@ export function resolveSessionHistoryFromSqlite(
  * Resolve session history from SQLite or REST API.
  * Impure — may call REST.
  *
- * Phase 4e: When `readFlags.sessionHistory` is active ("shadow" or "sqlite")
- * and `readQuery` is available, reads from SQLite (synchronous, always fresh).
+ * SQLite is the sole source of truth for history. When `readQuery` is
+ * available (persistence configured), reads from SQLite synchronously.
  * Otherwise falls back to REST API via loadPreRenderedHistory.
- *
- * The in-memory MessageCache path has been removed — SQLite is the source of
- * truth for history. See Task 50.5 in the implementation plan.
  */
 export async function resolveSessionHistory(
 	sessionId: string,
-	deps: Pick<
-		SessionSwitchDeps,
-		"sessionMgr" | "log" | "readQuery" | "readFlags"
-	>,
+	deps: Pick<SessionSwitchDeps, "sessionMgr" | "log" | "readQuery">,
 ): Promise<SessionHistorySource> {
-	// Phase 4e: Read from SQLite when flag is active (shadow or sqlite mode).
-	// (C1) CRITICAL: use isActive(), not truthy check — "legacy" is a non-empty
-	// string and would activate the SQLite path with a plain `if (flags.xxx)`.
-	if (isActive(deps.readFlags?.sessionHistory) && deps.readQuery) {
+	// Read from SQLite when available (sole read path).
+	if (deps.readQuery) {
 		return resolveSessionHistoryFromSqlite(sessionId, deps.readQuery, {
 			pageSize: 50,
 		});
 	}
 
-	// Fallback: REST API
+	// Fallback: REST API (persistence not configured)
 	try {
 		const history = await deps.sessionMgr.loadPreRenderedHistory(sessionId);
 		return { kind: "rest-history", history };

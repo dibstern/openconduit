@@ -197,28 +197,7 @@ describe("DualWriteHook", () => {
 		expect(log.warn.mock.calls[0]?.[0]).toContain("dual-write");
 	});
 
-	// ─── 7. Returns disabled when enabled=false ───────────────────────────
-
-	it("returns { ok: false, reason: 'disabled' } when enabled=false", () => {
-		hook.enabled = false;
-
-		const event = makeSSEEvent("message.created", {
-			sessionID: SESSION_ID,
-			messageID: "msg-001",
-			info: { role: "assistant", parts: [] },
-		});
-
-		const result = hook.onSSEEvent(event, SESSION_ID);
-
-		expect(result.ok).toBe(false);
-		if (result.ok) return;
-		expect(result.reason).toBe("disabled");
-
-		const stored = layer.eventStore.readFromSequence(0);
-		expect(stored).toHaveLength(0);
-	});
-
-	// ─── 8. Tool lifecycle events across updates ──────────────────────────
+	// ─── 7. Tool lifecycle events across updates ──────────────────────────
 
 	it("handles tool lifecycle: started -> running -> completed", () => {
 		// First, create a message
@@ -374,19 +353,16 @@ describe("DualWriteHook", () => {
 			expect(hook.getStats().eventsSkipped).toBe(2);
 		});
 
-		it("tracks eventsSkipped for disabled and no-session", () => {
+		it("tracks eventsSkipped for no-session", () => {
 			const event = makeSSEEvent("message.created", {
 				sessionID: SESSION_ID,
 				messageID: "msg-001",
 				info: { role: "assistant", parts: [] },
 			});
 
-			hook.enabled = false;
-			hook.onSSEEvent(event, SESSION_ID);
-			hook.enabled = true;
 			hook.onSSEEvent(event, undefined);
 
-			expect(hook.getStats().eventsSkipped).toBe(2);
+			expect(hook.getStats().eventsSkipped).toBe(1);
 		});
 
 		it("tracks errors", () => {

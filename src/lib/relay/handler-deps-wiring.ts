@@ -14,7 +14,7 @@ import { dispatchMessage, type HandlerDeps } from "../handlers/index.js";
 import type { OpenCodeClient } from "../instance/opencode-client.js";
 import type { Logger } from "../logger.js";
 import { type LogLevel, setLogLevel } from "../logger.js";
-import type { ReadAdapter } from "../persistence/read-adapter.js";
+import type { ReadQueryService } from "../persistence/read-query-service.js";
 import type { OrchestrationLayer } from "../provider/orchestration-wiring.js";
 import { ClientMessageQueue } from "../server/client-message-queue.js";
 import { RateLimiter } from "../server/rate-limiter.js";
@@ -45,8 +45,8 @@ export interface HandlerDepsWiringDeps {
 	registry: SessionRegistry;
 	pollerManager: MessagePollerManager;
 	ptyDeps: PtyUpstreamDeps;
-	/** Phase 4: Read adapter for SQLite read switchover (optional). */
-	readAdapter?: ReadAdapter;
+	/** SQLite read query service (optional — only when persistence is configured). */
+	readQuery?: ReadQueryService;
 	/** Phase 5: Orchestration layer for provider adapter routing (optional). */
 	orchestrationLayer?: OrchestrationLayer;
 }
@@ -78,7 +78,7 @@ export function wireHandlerDeps(
 		registry,
 		pollerManager,
 		ptyDeps,
-		readAdapter,
+		readQuery,
 		orchestrationLayer,
 	} = deps;
 
@@ -163,7 +163,7 @@ export function wireHandlerDeps(
 		...(config.triggerScan != null && {
 			scanDeps: { triggerScan: config.triggerScan },
 		}),
-		...(readAdapter != null && { readAdapter }),
+		...(readQuery != null && { readQuery }),
 		...(orchestrationLayer != null && {
 			orchestrationEngine: orchestrationLayer.engine,
 		}),

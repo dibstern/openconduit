@@ -15,8 +15,6 @@ import type {
 	SessionStatus,
 } from "../instance/opencode-client.js";
 import { createSilentLogger, type Logger } from "../logger.js";
-import type { ReadFlagMode } from "../persistence/read-flags.js";
-import { isActive } from "../persistence/read-flags.js";
 import { computeAugmentedStatuses } from "./status-augmentation.js";
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -49,10 +47,8 @@ export interface SessionStatusPollerOptions {
 	 * If not provided, subagent propagation is disabled.
 	 */
 	getSessionParentMap?: () => Map<string, string>;
-	/** Phase 4d: Optional SQLite status reader — replaces REST polling when flag is on */
+	/** Optional SQLite status reader — replaces REST polling when available */
 	sqliteReader?: { getSessionStatuses(): Record<string, SessionStatus> };
-	/** Phase 4d: Read flags — controls whether SQLite is authoritative for session status */
-	readFlags?: { sessionStatus: ReadFlagMode };
 }
 
 export type SessionStatusPollerEvents = {
@@ -73,7 +69,6 @@ export class SessionStatusPoller extends TrackedService<SessionStatusPollerEvent
 	private readonly sqliteReader:
 		| { getSessionStatuses(): Record<string, SessionStatus> }
 		| undefined;
-	private readonly readFlags: { sessionStatus: ReadFlagMode } | undefined;
 	private timer: ReturnType<typeof setInterval> | null = null;
 	private previous: Record<string, SessionStatus> = {};
 	private previousRaw: Record<string, SessionStatus> = {};
@@ -114,7 +109,6 @@ export class SessionStatusPoller extends TrackedService<SessionStatusPollerEvent
 		this.log = options.log ?? createSilentLogger();
 		this.getSessionParentMap = options.getSessionParentMap;
 		this.sqliteReader = options.sqliteReader;
-		this.readFlags = options.readFlags;
 	}
 
 	/**
@@ -213,12 +207,10 @@ export class SessionStatusPoller extends TrackedService<SessionStatusPollerEvent
 		this.polling = true;
 
 		try {
-			// Phase 4d: Read from SQLite when flag is active (shadow or sqlite mode).
-			// (C1) CRITICAL: use isActive(), not truthy check on the flag.
-			const raw =
-				isActive(this.readFlags?.sessionStatus) && this.sqliteReader
-					? this.sqliteReader.getSessionStatuses()
-					: await this.client.getSessionStatuses();
+			// SQLite is the sole read path when available.
+			const raw = this.sqliteReader
+				? this.sqliteReader.getSessionStatuses()
+				: await this.client.getSessionStatuses();
 			const current = await this.augmentStatuses(raw);
 
 			if (!this.initialized) {

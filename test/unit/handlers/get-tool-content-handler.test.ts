@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import type { PayloadMap } from "../../../src/lib/handlers/payloads.js";
 import { handleGetToolContent } from "../../../src/lib/handlers/tool-content.js";
-import type { ReadAdapter } from "../../../src/lib/persistence/read-adapter.js";
+import type { ReadQueryService } from "../../../src/lib/persistence/read-query-service.js";
 import { createMockHandlerDeps } from "../../helpers/mock-factories.js";
 
 describe("handleGetToolContent", () => {
-	it("returns stored content for a known toolId via readAdapter", async () => {
-		const readAdapter = {
+	it("returns stored content for a known toolId via readQuery", async () => {
+		const readQuery = {
 			getToolContent: vi.fn().mockReturnValue("full content here"),
-		} as unknown as ReadAdapter;
-		const deps = createMockHandlerDeps({ readAdapter });
+		} as unknown as ReadQueryService;
+		const deps = createMockHandlerDeps({ readQuery });
 
 		await handleGetToolContent(deps, "client-1", {
 			toolId: "tool-1",
@@ -66,17 +66,17 @@ describe("handleGetToolContent", () => {
 		});
 	});
 
-	// ─── SQLite read adapter tests ────────────────────────────────────────────
+	// ─── SQLite read query tests ─────────────────────────────────────────────
 
-	it("uses readAdapter.getToolContent when it returns a value", async () => {
-		const readAdapter = {
+	it("uses readQuery.getToolContent when it returns a value", async () => {
+		const readQuery = {
 			getToolContent: vi.fn().mockReturnValue("sqlite content"),
-		} as unknown as ReadAdapter;
-		const deps = createMockHandlerDeps({ readAdapter });
+		} as unknown as ReadQueryService;
+		const deps = createMockHandlerDeps({ readQuery });
 
 		await handleGetToolContent(deps, "client-1", { toolId: "tool-1" });
 
-		expect(readAdapter.getToolContent).toHaveBeenCalledWith("tool-1");
+		expect(readQuery.getToolContent).toHaveBeenCalledWith("tool-1");
 		expect(deps.wsHandler.sendTo).toHaveBeenCalledWith("client-1", {
 			type: "tool_content",
 			toolId: "tool-1",
@@ -84,11 +84,11 @@ describe("handleGetToolContent", () => {
 		});
 	});
 
-	it("returns NOT_FOUND when readAdapter returns undefined", async () => {
-		const readAdapter = {
+	it("returns NOT_FOUND when readQuery returns undefined", async () => {
+		const readQuery = {
 			getToolContent: vi.fn().mockReturnValue(undefined),
-		} as unknown as ReadAdapter;
-		const deps = createMockHandlerDeps({ readAdapter });
+		} as unknown as ReadQueryService;
+		const deps = createMockHandlerDeps({ readQuery });
 
 		await handleGetToolContent(deps, "client-1", { toolId: "missing" });
 
@@ -99,9 +99,9 @@ describe("handleGetToolContent", () => {
 		});
 	});
 
-	it("returns NOT_FOUND when no readAdapter is configured", async () => {
+	it("returns NOT_FOUND when no readQuery is configured", async () => {
 		const deps = createMockHandlerDeps();
-		// No readAdapter — readAdapter is absent, content cannot be retrieved
+		// No readQuery — persistence is not configured, content cannot be retrieved
 
 		await handleGetToolContent(deps, "client-1", { toolId: "tool-x" });
 

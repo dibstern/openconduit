@@ -297,10 +297,6 @@ export interface ProjectRelayConfig {
 	 * Standalone/test usage works without it.
 	 */
 	registry?: import("./daemon/service-registry.js").ServiceRegistry;
-	/** Optional: shared PersistenceLayer for dual-write to SQLite event store. */
+	/** Optional: shared PersistenceLayer for SQLite event store. */
 	persistence?: import("./persistence/persistence-layer.js").PersistenceLayer;
-	/** Feature flag: enable dual-write to SQLite. Defaults to true (opt-out). */
-	dualWriteEnabled?: boolean;
-	/** Phase 4: Read flag overrides for read switchover (per sub-phase). */
-	readFlags?: import("./persistence/read-flags.js").ReadFlagConfig;
 }
