@@ -313,12 +313,5 @@ describe("ClaudeAdapter lifecycle", () => {
 		});
 	});
 
-	describe("sendTurn()", () => {
-		it("throws not-implemented error", async () => {
-			const adapter = new ClaudeAdapter({ workspaceRoot: workspace });
-			await expect(adapter.sendTurn({} as never)).rejects.toThrow(
-				"not implemented",
-			);
-		});
-	});
+	// sendTurn() tests are in claude-adapter-send-turn.test.ts
 });

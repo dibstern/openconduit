@@ -5,21 +5,19 @@
  *
  * Architectural notes:
  * - One SDK query() per conduit session, not per turn.
+ * - First sendTurn() creates a PromptQueue + calls query() + starts a
+ *   background stream consumer. Subsequent turns enqueue into the existing
+ *   PromptQueue.
  * - Discovery is filesystem + hardcoded: the SDK does not expose a models
  *   or commands API, so we enumerate ~/.claude/ and <workspace>/.claude/
  *   directories for user/project commands and skills.
  * - Shutdown is graceful: close every session's prompt queue, call the
  *   runtime's close(), then clear the session map.
- *
- * NOTE: The Claude Agent SDK is not yet available as a published npm
- * package. sendTurn() and related methods throw "not implemented" errors.
- * The types, structure, and interface contracts are correct for when the
- * SDK becomes available. All other methods (discover, shutdown, interrupt,
- * resolvePermission, resolveQuestion) have working implementations.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
+import { query as sdkQuery } from "@anthropic-ai/claude-agent-sdk";
 import { createLogger } from "../../logger.js";
 import { canonicalEvent } from "../../persistence/events.js";
 import type {
@@ -32,8 +30,16 @@ import type {
 	SendTurnInput,
 	TurnResult,
 } from "../types.js";
+import { ClaudeEventTranslator } from "./claude-event-translator.js";
 import { ClaudePermissionBridge } from "./claude-permission-bridge.js";
-import type { ClaudeSessionContext } from "./types.js";
+import { PromptQueue } from "./prompt-queue.js";
+import type {
+	ClaudeSessionContext,
+	Query,
+	Options as SDKOptions,
+	SDKResultMessage,
+	SDKUserMessage,
+} from "./types.js";
 
 const log = createLogger("claude-adapter");
 
@@ -162,10 +168,46 @@ function enumerateSkills(
 	return out;
 }
 
+// ─── Result classification ─────────────────────────────────────────────────
+
+function isInterruptedResult(result: SDKResultMessage): boolean {
+	if (result.subtype === "success") return false;
+	const errors = result.errors.join(" ").toLowerCase();
+	if (errors.includes("interrupt") || errors.includes("aborted")) return true;
+	return (
+		result.subtype === "error_during_execution" &&
+		!result.is_error &&
+		(errors.includes("cancel") || errors.includes("user"))
+	);
+}
+
+// ─── Turn deferred ─────────────────────────────────────────────────────────
+
+interface TurnDeferred {
+	readonly resolve: (result: TurnResult) => void;
+	readonly reject: (error: unknown) => void;
+	readonly promise: Promise<TurnResult>;
+}
+
+function createTurnDeferred(): TurnDeferred {
+	let resolve!: (result: TurnResult) => void;
+	let reject!: (error: unknown) => void;
+	const promise = new Promise<TurnResult>((res, rej) => {
+		resolve = res;
+		reject = rej;
+	});
+	return { resolve, reject, promise };
+}
+
 // ─── Adapter Config ────────────────────────────────────────────────────────
 
 export interface ClaudeAdapterDeps {
 	readonly workspaceRoot: string;
+	/** Injectable factory for the SDK's query() function. Defaults to the real SDK. */
+	readonly queryFactory?: (params: {
+		prompt: AsyncIterable<SDKUserMessage>;
+		options?: SDKOptions;
+	}) => Query;
 }
 
 // ─── ClaudeAdapter ─────────────────────────────────────────────────────────
@@ -176,10 +218,23 @@ export class ClaudeAdapter implements ProviderAdapter {
 	/** Active SDK sessions, keyed by conduit sessionId. */
 	protected readonly sessions = new Map<string, ClaudeSessionContext>();
 
+	/** Per-session mutex: prevents duplicate session creation on concurrent sendTurn(). */
+	private readonly sessionLocks = new Map<string, Promise<TurnResult>>();
+
+	/** Per-session queue of deferreds for in-flight turns. */
+	private readonly turnDeferredQueues = new Map<string, TurnDeferred[]>();
+
 	/** Permission bridge instance (shared across sessions). */
 	private permissionBridge: ClaudePermissionBridge | undefined;
 
-	constructor(private readonly deps: ClaudeAdapterDeps) {}
+	/** Injectable query factory (defaults to real SDK). */
+	private readonly queryFactory: NonNullable<ClaudeAdapterDeps["queryFactory"]>;
+
+	constructor(private readonly deps: ClaudeAdapterDeps) {
+		this.queryFactory =
+			deps.queryFactory ??
+			(sdkQuery as NonNullable<ClaudeAdapterDeps["queryFactory"]>);
+	}
 
 	// ─── discover ─────────────────────────────────────────────────────────
 
@@ -214,19 +269,302 @@ export class ClaudeAdapter implements ProviderAdapter {
 
 	// ─── sendTurn ─────────────────────────────────────────────────────────
 
-	async sendTurn(_input: SendTurnInput): Promise<TurnResult> {
-		// The Claude Agent SDK (@anthropic-ai/claude-agent-sdk) is not yet
-		// available as a published npm package. This method is a typed stub
-		// that will be completed when the SDK is available.
-		//
-		// When implemented, this method will:
-		// 1. Create a PromptQueue and SDK query() on first turn
-		// 2. Enqueue into existing prompt queue on subsequent turns
-		// 3. Run a background stream consumer feeding ClaudeEventTranslator
-		// 4. Handle session resumption with fallback to history preamble
-		throw new Error(
-			"ClaudeAdapter.sendTurn not implemented -- Claude Agent SDK not available",
-		);
+	async sendTurn(input: SendTurnInput): Promise<TurnResult> {
+		const { sessionId } = input;
+
+		// Per-session mutex: prevent duplicate session creation
+		const pending = this.sessionLocks.get(sessionId);
+		if (pending) {
+			await pending;
+			return this.sendTurn(input);
+		}
+
+		const existingCtx = this.sessions.get(sessionId);
+		if (existingCtx) {
+			return this.enqueueTurn(existingCtx, input);
+		}
+
+		return this.createSessionAndSendTurn(input);
+	}
+
+	// ─── createSessionAndSendTurn ─────────────────────────────────────────
+
+	private async createSessionAndSendTurn(
+		input: SendTurnInput,
+	): Promise<TurnResult> {
+		const { sessionId } = input;
+
+		// Create a deferred for this turn
+		const deferred = createTurnDeferred();
+		this.pushTurnDeferred(sessionId, deferred);
+
+		// Set session lock synchronously before any await
+		this.sessionLocks.set(sessionId, deferred.promise);
+
+		try {
+			// 1. Create prompt queue
+			const promptQueue = new PromptQueue();
+
+			// 2. Build initial user message and enqueue
+			const userMessage = this.buildUserMessage(input);
+			promptQueue.enqueue(userMessage);
+
+			// 3. Build query options
+			const abortController = new AbortController();
+			// Wire the input's abort signal to our abort controller
+			if (input.abortSignal) {
+				if (input.abortSignal.aborted) {
+					abortController.abort();
+				} else {
+					input.abortSignal.addEventListener(
+						"abort",
+						() => abortController.abort(),
+						{ once: true },
+					);
+				}
+			}
+
+			// Ensure the permission bridge is initialized for this sink.
+			// The bridge is stored on the adapter and used by resolvePermission().
+			this.getOrCreatePermissionBridge(input.eventSink);
+
+			const resumeSessionId =
+				typeof input.providerState["resumeSessionId"] === "string"
+					? input.providerState["resumeSessionId"]
+					: undefined;
+
+			const options: SDKOptions = {
+				cwd: input.workspaceRoot,
+				abortController,
+				includePartialMessages: true,
+				...(input.model ? { model: input.model.modelId } : {}),
+				...(resumeSessionId ? { resume: resumeSessionId } : {}),
+				...(input.agent ? { agent: input.agent } : {}),
+			};
+
+			// 4. Call query factory
+			const query = this.queryFactory({
+				prompt: promptQueue,
+				options,
+			});
+
+			// 5. Create session context
+			const ctx: ClaudeSessionContext = {
+				sessionId,
+				workspaceRoot: input.workspaceRoot,
+				startedAt: new Date().toISOString(),
+				promptQueue,
+				query,
+				pendingApprovals: new Map(),
+				pendingQuestions: new Map(),
+				inFlightTools: new Map(),
+				streamConsumer: undefined,
+				currentTurnId: input.turnId,
+				currentModel: input.model?.modelId,
+				resumeSessionId,
+				lastAssistantUuid: undefined,
+				turnCount: 0,
+				stopped: false,
+			};
+
+			// 6. Store session
+			this.sessions.set(sessionId, ctx);
+
+			// 7. Start background stream consumer
+			const translator = new ClaudeEventTranslator({
+				sink: input.eventSink,
+			});
+			ctx.streamConsumer = this.runStreamConsumer(ctx, translator);
+		} catch (err) {
+			// Clean up on failure
+			this.sessionLocks.delete(sessionId);
+			this.turnDeferredQueues.delete(sessionId);
+			throw err;
+		} finally {
+			// Clear the lock (but keep the deferred -- it resolves via the stream)
+			this.sessionLocks.delete(sessionId);
+		}
+
+		return deferred.promise;
+	}
+
+	// ─── enqueueTurn ──────────────────────────────────────────────────────
+
+	private enqueueTurn(
+		ctx: ClaudeSessionContext,
+		input: SendTurnInput,
+	): Promise<TurnResult> {
+		const deferred = createTurnDeferred();
+		this.pushTurnDeferred(ctx.sessionId, deferred);
+
+		// Update turn id on context
+		ctx.currentTurnId = input.turnId;
+
+		// Build and enqueue the user message
+		const userMessage = this.buildUserMessage(input);
+		ctx.promptQueue.enqueue(userMessage);
+
+		return deferred.promise;
+	}
+
+	// ─── runStreamConsumer ────────────────────────────────────────────────
+
+	private async runStreamConsumer(
+		ctx: ClaudeSessionContext,
+		translator: ClaudeEventTranslator,
+	): Promise<void> {
+		try {
+			for await (const message of ctx.query) {
+				await translator.translate(ctx, message);
+				if (message.type === "result") {
+					this.resolveTurn(ctx, message as unknown as SDKResultMessage);
+				}
+			}
+		} catch (err) {
+			await translator.translateError(ctx, err);
+			this.rejectTurn(ctx, err);
+		} finally {
+			this.rejectTurnIfPending(
+				ctx,
+				new Error("SDK stream ended without result"),
+			);
+		}
+	}
+
+	// ─── Turn resolution ──────────────────────────────────────────────────
+
+	private pushTurnDeferred(sessionId: string, deferred: TurnDeferred): void {
+		let queue = this.turnDeferredQueues.get(sessionId);
+		if (!queue) {
+			queue = [];
+			this.turnDeferredQueues.set(sessionId, queue);
+		}
+		queue.push(deferred);
+	}
+
+	private shiftTurnDeferred(sessionId: string): TurnDeferred | undefined {
+		const queue = this.turnDeferredQueues.get(sessionId);
+		if (!queue || queue.length === 0) return undefined;
+		const deferred = queue.shift();
+		if (queue.length === 0) {
+			this.turnDeferredQueues.delete(sessionId);
+		}
+		return deferred;
+	}
+
+	private resolveTurn(
+		ctx: ClaudeSessionContext,
+		result: SDKResultMessage,
+	): void {
+		const deferred = this.shiftTurnDeferred(ctx.sessionId);
+		if (!deferred) return;
+		ctx.turnCount++;
+		deferred.resolve(this.sdkResultToTurnResult(ctx, result));
+	}
+
+	private rejectTurn(ctx: ClaudeSessionContext, err: unknown): void {
+		const deferred = this.shiftTurnDeferred(ctx.sessionId);
+		if (!deferred) return;
+
+		// Build an error TurnResult rather than rejecting the promise,
+		// so the caller gets a structured response.
+		const errorMsg = err instanceof Error ? err.message : String(err);
+		deferred.resolve({
+			status: "error",
+			cost: 0,
+			tokens: { input: 0, output: 0 },
+			durationMs: 0,
+			error: { code: "provider_error", message: errorMsg },
+			providerStateUpdates: [],
+		});
+	}
+
+	private rejectTurnIfPending(ctx: ClaudeSessionContext, err: Error): void {
+		const deferred = this.shiftTurnDeferred(ctx.sessionId);
+		if (!deferred) return;
+		deferred.reject(err);
+	}
+
+	// ─── sdkResultToTurnResult ────────────────────────────────────────────
+
+	private sdkResultToTurnResult(
+		ctx: ClaudeSessionContext,
+		result: SDKResultMessage,
+	): TurnResult {
+		const isSuccess = result.subtype === "success";
+		const isInterrupted = !isSuccess && isInterruptedResult(result);
+		return {
+			status: isSuccess ? "completed" : isInterrupted ? "interrupted" : "error",
+			cost: result.total_cost_usd ?? 0,
+			tokens: {
+				input: result.usage?.input_tokens ?? 0,
+				output: result.usage?.output_tokens ?? 0,
+				...(result.usage?.cache_read_input_tokens != null
+					? { cacheRead: result.usage.cache_read_input_tokens }
+					: {}),
+			},
+			durationMs: result.duration_ms ?? 0,
+			...(!isSuccess && !isInterrupted && "errors" in result
+				? {
+						error: {
+							code: result.subtype,
+							message:
+								(
+									result as unknown as {
+										errors?: string[];
+									}
+								).errors?.join("; ") ?? "Unknown error",
+						},
+					}
+				: {}),
+			providerStateUpdates: [
+				...(ctx.resumeSessionId
+					? [
+							{
+								key: "resumeSessionId",
+								value: ctx.resumeSessionId,
+							},
+						]
+					: []),
+				...(ctx.lastAssistantUuid
+					? [
+							{
+								key: "lastAssistantUuid",
+								value: ctx.lastAssistantUuid,
+							},
+						]
+					: []),
+				{ key: "turnCount", value: ctx.turnCount },
+			],
+		};
+	}
+
+	// ─── buildUserMessage ─────────────────────────────────────────────────
+
+	private buildUserMessage(input: SendTurnInput): SDKUserMessage {
+		const content: Array<{
+			type: string;
+			text?: string;
+			source?: unknown;
+		}> = [];
+		if (input.images) {
+			for (const img of input.images) {
+				content.push({
+					type: "image",
+					source: {
+						type: "base64",
+						media_type: "image/png",
+						data: img,
+					},
+				});
+			}
+		}
+		content.push({ type: "text", text: input.prompt });
+		return {
+			type: "user",
+			message: { role: "user", content },
+			parent_tool_use_id: null,
+		} as unknown as SDKUserMessage;
 	}
 
 	// ─── interruptTurn ────────────────────────────────────────────────────
