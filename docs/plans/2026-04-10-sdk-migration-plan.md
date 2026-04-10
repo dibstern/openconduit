@@ -378,6 +378,12 @@ export interface SdkFactoryOptions {
 	retry?: RetryFetchOptions;
 }
 
+export interface SdkFactoryResult {
+	client: OpencodeClient;
+	/** The auth-wrapped retryFetch — reuse for GapEndpoints so they share auth. */
+	fetch: typeof fetch;
+}
+
 /**
  * Create a configured OpencodeClient from the SDK.
  *
@@ -385,8 +391,11 @@ export interface SdkFactoryOptions {
  * - retryFetch as the transport (unless a custom fetch is provided)
  * - Basic Auth headers from options or env vars
  * - x-opencode-directory header for project scoping
+ *
+ * Returns both the SDK client and the configured fetch so GapEndpoints
+ * can reuse the same auth-wrapped transport.
  */
-export function createSdkClient(options: SdkFactoryOptions): OpencodeClient {
+export function createSdkClient(options: SdkFactoryOptions): SdkFactoryResult {
 	const baseFetch = options.fetch ?? createRetryFetch({
 		retries: options.retry?.retries,
 		retryDelay: options.retry?.retryDelay,
@@ -406,11 +415,13 @@ export function createSdkClient(options: SdkFactoryOptions): OpencodeClient {
 			}
 		: baseFetch;
 
-	return createOpencodeClient({
+	const client = createOpencodeClient({
 		baseUrl: options.baseUrl,
 		fetch: authFetch as any,
 		directory: options.directory,
 	});
+
+	return { client, fetch: authFetch };
 }
 ```
 
@@ -434,7 +445,9 @@ git commit -m "feat: add SDK factory with auth and retry-fetch injection"
 - Create: `src/lib/instance/gap-endpoints.ts`
 - Create: `test/unit/instance/gap-endpoints.test.ts`
 
-These are the ~6 endpoints not in the SDK. They use the same retryFetch for consistency.
+These are the ~6 endpoints not in the SDK. They use the same authenticated `retryFetch` from the SDK factory for consistency — this ensures auth headers are applied to gap endpoint calls too.
+
+> **Audit fix #1:** GapEndpoints must receive the auth-wrapped fetch from sdk-factory. Without it, gap endpoints (GET /permission, GET /question, etc.) return 401. The `GapEndpoints` constructor accepts a `fetch` option — the relay-stack must pass the same authenticated fetch used by the SDK client. Task 3's `createSdkClient` should also export the configured fetch so GapEndpoints can reuse it.
 
 **Step 1: Write the failing tests**
 
@@ -823,6 +836,10 @@ import type { GapEndpoints } from "./gap-endpoints.js";
 export interface OpenCodeAPIOptions {
 	sdk: OpencodeClient;
 	gapEndpoints: GapEndpoints;
+	/** Base URL for PTY upstream WebSocket connections (Audit fix #5). */
+	baseUrl: string;
+	/** Auth headers for PTY upstream connections (Audit fix #5). */
+	authHeaders?: Record<string, string>;
 }
 
 export interface PromptInput {
@@ -848,6 +865,8 @@ export class OpenCodeAPI {
 	constructor(options: OpenCodeAPIOptions) {
 		this.sdk = options.sdk;
 		this.gapEndpoints = options.gapEndpoints;
+		this.baseUrl = options.baseUrl;
+		this.authHeaders = options.authHeaders ?? {};
 	}
 
 	// ─── Session ──────────────────────────────────────────────────────────
@@ -876,6 +895,10 @@ export class OpenCodeAPI {
 			const res = await this.sdk.session.status();
 			return this.unwrap(res) as Record<string, unknown>;
 		},
+		// NOTE (Audit fix #2): SDK returns Array<{ info: Message, parts: Part[] }>,
+		// NOT flat messages. This is intentional — "SDK types everywhere" means
+		// callers must access msg.info.id, msg.info.role, etc. Task 7 callers
+		// and Task 10 type migration must update all message field access.
 		messages: async (id: string) => {
 			const res = await this.sdk.session.messages({ path: { id } });
 			return this.unwrap(res);
@@ -970,10 +993,26 @@ export class OpenCodeAPI {
 
 	// ─── Provider ─────────────────────────────────────────────────────────
 
+	// NOTE (Audit fix #3): Use sdk.provider.list() (not config.providers()) because
+	// it returns { all, default, connected } matching the old ProviderListResult shape.
+	// SDK returns models as Record<string, Model> — normalize to Array<Model> here
+	// so callers don't need to change their iteration patterns.
 	readonly provider = {
 		list: async () => {
-			const res = await this.sdk.config.providers();
-			return this.unwrap(res);
+			const res = await this.sdk.provider.list();
+			const data = this.unwrap(res) as {
+				all: Array<{ id: string; name: string; models: Record<string, unknown> }>;
+				default: Record<string, string>;
+				connected: string[];
+			};
+			// Normalize models from Record<string, Model> to Array<Model>
+			const providers = (data.all ?? []).map((p) => ({
+				...p,
+				models: p.models && typeof p.models === "object" && !Array.isArray(p.models)
+					? Object.values(p.models)
+					: p.models ?? [],
+			}));
+			return { providers, defaults: data.default ?? {}, connected: data.connected ?? [] };
 		},
 	};
 
@@ -1074,6 +1113,23 @@ export class OpenCodeAPI {
 		},
 	};
 
+	// ─── Connection Info (Audit fix #5) ──────────────────────────────────
+	// PTY upstream WebSocket connections need the base URL and auth headers.
+	// These replace OpenCodeClient.getBaseUrl() and getAuthHeaders().
+
+	private readonly baseUrl: string;
+	private readonly authHeaders: Record<string, string>;
+
+	/** Expose the base URL for PTY upstream WebSocket connections. */
+	getBaseUrl(): string {
+		return this.baseUrl;
+	}
+
+	/** Expose auth headers for PTY upstream and other raw connections. */
+	getAuthHeaders(): Record<string, string> {
+		return { ...this.authHeaders };
+	}
+
 	// ─── Utility ──────────────────────────────────────────────────────────
 
 	/** Extract data from SDK response. SDK wraps responses as { data: T }. */
@@ -1138,6 +1194,8 @@ git commit -m "wip: wire OpenCodeAPI into relay-stack (callers not yet updated)"
 ---
 
 ### Task 7: Migrate all caller files to OpenCodeAPI namespaced methods
+
+> **Audit fix #2 note:** `session.messages()` now returns SDK shape `Array<{ info: Message, parts: Part[] }>`, NOT flat messages. When migrating callers that access message fields (session-manager.ts, message-poller.ts, client-init.ts), update field access from `msg.id` to `msg.info.id`, `msg.role` to `msg.info.role`, etc. Full type alignment happens in Task 10, but method call sites must handle the new shape here.
 
 **Files to modify** (one at a time, with type check between each):
 - `src/lib/handlers/agent.ts` — `client.listAgents()` → `client.app.agents()`
@@ -1381,17 +1439,40 @@ git commit -m "refactor: replace Message and Part types with SDK discriminated u
 
 The SDK provides `Event` as a discriminated union of 20+ typed event variants (e.g. `EventMessagePartUpdated`, `EventSessionStatus`). This replaces the generic `{ type: string; properties: Record<string, unknown> }` pattern.
 
-**Step 1: Update sse-wiring.ts event handler**
+> **Audit fix #4 — SSE event type gap:** The SDK `Event` union does NOT cover all event types the SSE stream delivers. Three critical types are missing:
+>
+> | SSE event type | SDK equivalent | Status |
+> |---|---|---|
+> | `message.part.delta` | *(none)* | **Not in SDK** — used for real-time text streaming |
+> | `permission.asked` | `permission.updated` | **Different name** — SDK uses `permission.updated` |
+> | `question.asked` | *(none)* | **Not in SDK** — used for ask-user flow |
+>
+> **Strategy:** Create a superset type in `opencode-events.ts`:
+> ```typescript
+> // Events delivered by SSE but not in SDK Event union
+> export interface PartDeltaEvent { type: "message.part.delta"; properties: { ... } }
+> export interface PermissionAskedEvent { type: "permission.asked"; properties: { ... } }
+> export interface QuestionAskedEvent { type: "question.asked"; properties: { ... } }
+>
+> export type SSEEvent = Event | PartDeltaEvent | PermissionAskedEvent | QuestionAskedEvent;
+> ```
+> Use `SSEEvent` (not `Event`) in sse-wiring.ts and event-translator.ts. Keep the existing type guards for the 3 unmapped types. Delete only the type guards whose events ARE in the SDK union.
 
-Change `handleSSEEvent(event: OpenCodeEvent)` to `handleSSEEvent(event: Event)` (from SDK). Replace `event.properties.foo` with type-narrowed access: `if (event.type === "message.part.updated") { event.properties.part... }`.
+**Step 1: Create SSEEvent superset type**
 
-**Step 2: Update event-translator.ts**
+In `opencode-events.ts`, define the 3 missing event types and the `SSEEvent` union. Keep existing type guards for `message.part.delta`, `permission.asked`, and `question.asked`. Delete type guards for events now covered by SDK Event (e.g., `isPartUpdatedEvent`, `isSessionStatusEvent`, etc.).
 
-Replace `OpenCodeEvent` parameter types. The translator already switches on `event.type` — but currently uses `event.properties` as `Record<string, unknown>`. With SDK types, it gets full type narrowing.
+**Step 2: Update sse-wiring.ts event handler**
 
-**Step 3: Update opencode-events.ts**
+Change `handleSSEEvent(event: OpenCodeEvent)` to `handleSSEEvent(event: SSEEvent)`. For events in the SDK union, use type narrowing: `if (event.type === "message.part.updated") { event.properties.part... }`. For the 3 gap events, use the existing type guards.
 
-The typed event interfaces and type guards can be simplified or deleted — the SDK types provide the same discrimination. Keep any type guards that add value beyond what the SDK provides.
+**Step 3: Update event-translator.ts**
+
+Replace `OpenCodeEvent` parameter types with `SSEEvent`. The translator already switches on `event.type` — for SDK-covered types it gets full type narrowing. For `message.part.delta`, `permission.asked`, `question.asked`, keep the existing `properties: Record<string, unknown>` access pattern.
+
+**Step 4: Clean up opencode-events.ts**
+
+Delete type guards and interfaces for events now fully covered by SDK Event. Keep only the 3 gap event types + `SSEEvent` union + their type guards.
 
 **Step 4: Update types.ts**
 
