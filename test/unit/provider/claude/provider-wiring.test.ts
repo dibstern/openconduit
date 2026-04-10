@@ -2,10 +2,16 @@
 import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ClaudeAdapter } from "../../../../src/lib/provider/claude/claude-adapter.js";
 import { OrchestrationEngine } from "../../../../src/lib/provider/orchestration-engine.js";
 import { ProviderRegistry } from "../../../../src/lib/provider/provider-registry.js";
+import {
+	createMockEventSink,
+	createMockQuery,
+	makeBaseSendTurnInput,
+	makeSuccessResult,
+} from "../../../helpers/mock-sdk.js";
 
 describe("Provider wiring with Claude adapter", () => {
 	let workspace: string;
@@ -136,5 +142,53 @@ describe("Provider wiring with Claude adapter", () => {
 		expect(bindings.find((b) => b.sessionId === "sess-2")?.providerId).toBe(
 			"opencode",
 		);
+	});
+
+	it("end-to-end: dispatch sendTurn through full ProviderRegistry → ClaudeAdapter → mock SDK stack", async () => {
+		const resultMsg = makeSuccessResult({ total_cost_usd: 0.03 } as Record<
+			string,
+			unknown
+		>);
+		const mockQuery = createMockQuery([resultMsg]);
+		const queryFactory = vi.fn(() => mockQuery);
+
+		// Wire up the full stack: ProviderRegistry + ClaudeAdapter + OrchestrationEngine
+		const registry = new ProviderRegistry();
+		const adapter = new ClaudeAdapter({
+			workspaceRoot: workspace,
+			queryFactory,
+		});
+		registry.registerAdapter(adapter);
+
+		const engine = new OrchestrationEngine({ registry });
+
+		const sink = createMockEventSink();
+		const result = await engine.dispatch({
+			type: "send_turn",
+			providerId: "claude",
+			input: makeBaseSendTurnInput({
+				sessionId: "e2e-session-1",
+				turnId: "e2e-turn-1",
+				prompt: "End-to-end wiring test",
+				workspaceRoot: workspace,
+				eventSink: sink,
+			}),
+		});
+
+		// Result flows back through the full stack
+		expect(result.status).toBe("completed");
+		expect(result.cost).toBe(0.03);
+		expect(result.tokens.input).toBe(100);
+		expect(result.tokens.output).toBe(50);
+		expect(result.providerStateUpdates).toBeDefined();
+
+		// queryFactory was invoked once
+		expect(queryFactory).toHaveBeenCalledTimes(1);
+
+		// Session binding was established
+		expect(engine.getProviderForSession("e2e-session-1")).toBe("claude");
+
+		// EventSink received events (at minimum session.status + turn.completed)
+		expect(sink.push).toHaveBeenCalled();
 	});
 });
