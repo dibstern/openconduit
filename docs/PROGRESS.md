@@ -1,6 +1,6 @@
 # OpenCode-Relay — Progress Tracker
 
-> Last updated: 2026-02-28
+> Last updated: 2026-04-10
 
 ## Current Status: Svelte 5 Migration — Phase S8 Complete (Cutover Done)
 
@@ -406,25 +406,25 @@
 
 | Metric | Value |
 |--------|-------|
-| Production code | ~15,600 lines across 60 server modules |
+| Production code | ~47,200 lines across 241 server modules |
 | Svelte frontend | ~12,400 lines across 102 modules (8 stores, 8 utils, 41 components, 3 pages, types, App, 41 story files, mocks) |
 | Frontend bundle | 379KB JS + 64KB CSS (Svelte 5 SPA) |
-| Test code (unit/fixture) | ~16,000 lines across 56 test files |
+| Test code (unit/fixture) | ~88,900 lines across 237 test files |
 | Test code (integration) | ~1,200 lines across 8 test files + 2 helpers |
 | Test code (contract) | ~680 lines across 7 test files |
 | Storybook stories | 41 story files, ~153 stories total |
-| Tests passing (unit/fixture) | 1481 / 1481 |
+| Tests passing (unit/fixture) | 4263 / 4263 |
 | Tests passing (integration) | 108 / 108 |
 | Tests (Playwright E2E) | 280 across 9 spec files × 5 viewports |
-| Tests total | 1869 (1481 unit + 108 integration + 280 E2E) |
-| Test duration (unit) | ~3.6s |
+| Tests total | 4651 (4263 unit + 108 integration + 280 E2E) |
+| Test duration (unit) | ~5.7s |
 | Test duration (integration) | ~91s |
 | E2E test code | ~1,950 lines across 21 files (3 helpers, 9 page objects, 9 specs) |
 | Type-check | Clean (tsc --noEmit) |
 | Docker image | Node 20 Alpine, ~60MB, healthcheck |
 | Docker Compose | Self-contained: official OpenCode image + relay, no host deps |
 | Svelte migration | ✅ Complete (S0–S8). 37 vanilla modules + 36 vanilla test files deleted. |
-| Tickets complete | 49 / 50 (6.3 remaining) + 20/20 Phase 7 + 26/26 Phase 8 |
+| Tickets complete | 49 / 50 (6.3 remaining) + 20/20 Phase 7 + 26/26 Phase 8 + orchestrator Claude sendTurn |
 
 ---
 
@@ -807,3 +807,19 @@
 - **Handler test kept**: `test/unit/handlers/get-tool-content-handler.test.ts` (7 tests) — already tests SQLite ReadAdapter path
 - **Snapshot harmless**: `test/e2e/fixtures/subagent-snapshot.json` references old filenames in historical traces — no test failures
 - **Verification**: `pnpm check` clean, `pnpm lint` clean (warnings only), 237 test files, 4304 tests passing
+
+### 2026-04-10 — Claude Adapter sendTurn: Replace SDK type stubs with real imports (Task 0)
+- **Replaced** hand-written SDK type stubs in `src/lib/provider/claude/types.ts` with real imports from `@anthropic-ai/claude-agent-sdk`
+- **Rewrote** `ClaudeEventTranslator` tests to use real SDK message types instead of hand-crafted stubs
+- **Commits**: `f050093`, `bffd6a2`
+
+### 2026-04-10 — Claude Adapter sendTurn: Implement SDK query lifecycle (Tasks 1-2)
+- **Implemented** `ClaudeAdapter.sendTurn()` — full SDK query lifecycle with `claude.query()`, AbortController integration, stream consumer that drives `ClaudeEventTranslator`, and `resolveErrorTurn()` for error mapping
+- **Extracted** `isInterruptedResult()` helper, renamed `resolveErrorTurn`, added error result test coverage
+- **Commits**: `f0a5bdc`, `c67f458`
+
+### 2026-04-10 — Claude Adapter sendTurn: Integration and E2E tests (Tasks 3-3.5)
+- **Integration tests**: 15 tests verifying sendTurn through the OrchestrationEngine — normal completion, interruption, abort, error handling, event translation
+- **E2E test**: Real-SDK test with Claude Haiku gated behind `RUN_EXPENSIVE_E2E=1` env var — verifies actual SDK round-trip including tool use
+- **Commits**: `739d968`, `2b417b2`
+- **Verification**: `pnpm check` clean, `pnpm lint` clean, 232 test files, 4263 tests passing
