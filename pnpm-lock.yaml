@@ -11,6 +11,9 @@ importers:
       '@anthropic-ai/claude-agent-sdk':
         specifier: ^0.2.97
         version: 0.2.97(zod@4.3.6)
+      '@opencode-ai/sdk':
+        specifier: ^1.4.3
+        version: 1.4.3
       dompurify:
         specifier: ^3.3.1
         version: 3.3.1
@@ -867,6 +870,9 @@ packages:
     peerDependenciesMeta:
       '@cfworker/json-schema':
         optional: true
+
+  '@opencode-ai/sdk@1.4.3':
+    resolution: {integrity: sha512-X0CAVbwoGAjTY2iecpWkx2B+GAa2jSaQKYpJ+xILopeF/OGKZUN15mjqci+L7cEuwLHV5wk3x2TStUOVCa5p0A==}
 
   '@pinojs/redact@0.4.0':
     resolution: {integrity: sha512-k2ENnmBugE/rzQfEcdWHcCY+/FM3VLzH9cYEsbdsoqrvzAKRhUZeRNhAZvB8OitQJ1TBed3yqWtdjzS6wJKBwg==}
@@ -3686,6 +3692,10 @@ snapshots:
       zod-to-json-schema: 3.25.2(zod@4.3.6)
     transitivePeerDependencies:
       - supports-color
+
+  '@opencode-ai/sdk@1.4.3':
+    dependencies:
+      cross-spawn: 7.0.6
 
   '@pinojs/redact@0.4.0': {}
 
