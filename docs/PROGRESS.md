@@ -823,3 +823,20 @@
 - **E2E test**: Real-SDK test with Claude Haiku gated behind `RUN_EXPENSIVE_E2E=1` env var — verifies actual SDK round-trip including tool use
 - **Commits**: `739d968`, `2b417b2`
 - **Verification**: `pnpm check` clean, `pnpm lint` clean, 232 test files, 4263 tests passing
+
+### 2026-04-13 — SDK Migration Task 5: OpenCodeAPI Adapter
+- **Created** `src/lib/instance/opencode-api.ts` — unified namespaced API wrapping OpencodeClient + GapEndpoints
+- **Namespaces**: session (16 methods), permission (2), question (3), config (2), provider (1), pty (4), file (3), find (3), app (7), event (1)
+- **Error strategy**: Private `sdk<T>(fn)` wrapper translates SDK error results to OpenCodeApiError/OpenCodeConnectionError
+- **Type bridge**: `SdkResult<T>` type alias + `call()` helper avoids explicit `any` casts for SDK's complex RequestResult types
+- **Tests**: 18 tests in `test/unit/instance/opencode-api.test.ts` covering delegation, error translation, gap endpoints
+- **Commit**: `f0bb0f6`
+- **Verification**: `pnpm check` clean, `pnpm lint` clean, 18 tests passing
+
+### 2026-04-13 — SDK Migration Task 10: Replace Message and Part types with SDK discriminated unions
+- **Derived** `PartType` from SDK `Part["type"]` and `ToolStatus` from SDK `ToolState["status"]` in `src/lib/instance/sdk-types.ts`
+- **Removed** hand-maintained `PartType` and `ToolStatus` string union definitions from `src/lib/shared-types.ts`
+- **Re-exported** SDK-derived types through `shared-types.ts` so all 30+ downstream consumers continue importing unchanged
+- **Retained** `HistoryMessage` and `HistoryMessagePart` as relay-specific transport types (they carry `renderedHtml`, index signatures, and optional fields not in SDK types) with updated JSDoc documenting SDK type mapping
+- **Import chain**: `sdk-types.ts` (defines) -> `shared-types.ts` (re-exports) -> `types.ts` / `frontend/types.ts` (re-exports) -> all consumers
+- **Verification**: `pnpm check` clean, `pnpm test:unit` — 236 test files, 4300 tests passing, no lint regressions
