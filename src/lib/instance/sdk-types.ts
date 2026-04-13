@@ -100,3 +100,24 @@ export type {
 	// Message types
 	UserMessage,
 } from "@opencode-ai/sdk/client";
+
+// ─── Derived type aliases (Task 10) ─────────────────────────────────────────
+// These replace the hand-maintained string unions in shared-types.ts with
+// types derived directly from the SDK's discriminated unions.
+
+import type {
+	Part as _Part,
+	ToolState as _ToolState,
+} from "@opencode-ai/sdk/client";
+
+/**
+ * Part type discriminant — derived from SDK `Part["type"]`.
+ * Replaces the hand-maintained PartType union in shared-types.ts.
+ */
+export type PartType = _Part["type"];
+
+/**
+ * Tool status discriminant — derived from SDK `ToolState["status"]`.
+ * Replaces the hand-maintained ToolStatus union in shared-types.ts.
+ */
+export type ToolStatus = _ToolState["status"];
