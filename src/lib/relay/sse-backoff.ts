@@ -3,7 +3,8 @@
 // session ID filtering, and event parsing. Deliberately IO-free.
 
 import { formatErrorDetail } from "../errors.js";
-import type { ConnectionHealth, GlobalEvent, OpenCodeEvent } from "../types.js";
+import type { ConnectionHealth, GlobalEvent } from "../types.js";
+import type { SSEEvent } from "./opencode-events.js";
 
 // ─── Exponential backoff ─────────────────────────────────────────────────────
 
@@ -125,7 +126,7 @@ export function createHealthTracker(
  * Events without a sessionID are considered "global" and always pass.
  */
 export function eventBelongsToSession(
-	event: OpenCodeEvent,
+	event: SSEEvent,
 	sessionId: string,
 ): boolean {
 	const props = event.properties as { sessionID?: string };
@@ -138,16 +139,16 @@ export function eventBelongsToSession(
  * Filter a list of events to only those belonging to a given session.
  */
 export function filterEventsBySession(
-	events: OpenCodeEvent[],
+	events: SSEEvent[],
 	sessionId: string,
-): OpenCodeEvent[] {
+): SSEEvent[] {
 	return events.filter((e) => eventBelongsToSession(e, sessionId));
 }
 
 /**
  * Get the set of session IDs present in a list of events.
  */
-export function getSessionIds(events: OpenCodeEvent[]): Set<string> {
+export function getSessionIds(events: SSEEvent[]): Set<string> {
 	const ids = new Set<string>();
 	for (const event of events) {
 		const props = event.properties as { sessionID?: string };
@@ -162,12 +163,12 @@ export function getSessionIds(events: OpenCodeEvent[]): Set<string> {
 
 export interface ParseResult {
 	ok: boolean;
-	event?: OpenCodeEvent;
+	event?: SSEEvent;
 	error?: string;
 }
 
 /**
- * Parse a raw SSE data string into an OpenCodeEvent.
+ * Parse a raw SSE data string into an SSEEvent.
  * Never throws — returns { ok: false, error } for malformed data.
  */
 export function parseSSEData(raw: string): ParseResult {
@@ -194,7 +195,7 @@ export function parseSSEData(raw: string): ParseResult {
 				event: { type: parsed.type, properties: parsed.properties ?? {} },
 			};
 		}
-		return { ok: true, event: parsed as OpenCodeEvent };
+		return { ok: true, event: parsed as SSEEvent };
 	} catch (e) {
 		return { ok: false, error: `JSON parse error: ${formatErrorDetail(e)}` };
 	}

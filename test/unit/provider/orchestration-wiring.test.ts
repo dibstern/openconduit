@@ -10,7 +10,11 @@ function makeStubClient(): OpenCodeAPI {
 	return {
 		session: { abort: vi.fn(async () => {}), prompt: vi.fn(async () => {}) },
 		permission: { reply: vi.fn(async () => {}), list: vi.fn(async () => []) },
-		question: { reply: vi.fn(async () => {}), reject: vi.fn(async () => {}), list: vi.fn(async () => []) },
+		question: {
+			reply: vi.fn(async () => {}),
+			reject: vi.fn(async () => {}),
+			list: vi.fn(async () => []),
+		},
 		provider: {
 			list: vi.fn(async () => ({
 				providers: [

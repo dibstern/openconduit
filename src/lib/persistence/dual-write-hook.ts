@@ -4,7 +4,7 @@
 // Never throws — all errors are caught, logged, and returned as results.
 
 import { formatErrorDetail } from "../errors.js";
-import type { OpenCodeEvent } from "../types.js";
+import type { SSEEvent } from "../relay/opencode-events.js";
 import { CanonicalEventTranslator } from "./canonical-event-translator.js";
 import { canonicalEvent, createEventId } from "./events.js";
 import type { PersistenceLayer } from "./persistence-layer.js";
@@ -80,10 +80,7 @@ export class DualWriteHook {
 	 *
 	 * Never throws.
 	 */
-	onSSEEvent(
-		event: OpenCodeEvent,
-		sessionId: string | undefined,
-	): DualWriteResult {
+	onSSEEvent(event: SSEEvent, sessionId: string | undefined): DualWriteResult {
 		this.stats.eventsReceived++;
 
 		if (!sessionId) {

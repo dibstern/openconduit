@@ -245,9 +245,7 @@ describe("SessionStatusPoller — reconciliation", () => {
 			// To test staleness in isolation, make REST fail so reconciliation
 			// is skipped entirely. Staleness then catches the stuck session.
 			const client = createMockClient({});
-			client.session.statuses.mockRejectedValue(
-				new Error("REST unavailable"),
-			);
+			client.session.statuses.mockRejectedValue(new Error("REST unavailable"));
 
 			const warnSpy = vi.fn();
 			const log = { ...createSilentLogger(), warn: warnSpy };
@@ -291,9 +289,7 @@ describe("SessionStatusPoller — reconciliation", () => {
 
 			// REST unavailable — isolate the staleness check
 			const client = createMockClient({});
-			client.session.statuses.mockRejectedValue(
-				new Error("REST unavailable"),
-			);
+			client.session.statuses.mockRejectedValue(new Error("REST unavailable"));
 
 			const warnSpy = vi.fn();
 			const log = { ...createSilentLogger(), warn: warnSpy };
@@ -340,9 +336,7 @@ describe("SessionStatusPoller — reconciliation", () => {
 
 			// REST unavailable — isolate the staleness check
 			const client = createMockClient({});
-			client.session.statuses.mockRejectedValue(
-				new Error("REST unavailable"),
-			);
+			client.session.statuses.mockRejectedValue(new Error("REST unavailable"));
 
 			const warnSpy = vi.fn();
 			const log = { ...createSilentLogger(), warn: warnSpy };

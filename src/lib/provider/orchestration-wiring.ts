@@ -5,7 +5,7 @@
 // provider layer alongside the existing relay pipeline.
 
 import type { OpenCodeAPI } from "../instance/opencode-api.js";
-import type { OpenCodeEvent } from "../types.js";
+import type { SSEEvent } from "../relay/opencode-events.js";
 import { OpenCodeAdapter } from "./opencode-adapter.js";
 import { OrchestrationEngine } from "./orchestration-engine.js";
 import { ProviderRegistry } from "./provider-registry.js";
@@ -27,7 +27,7 @@ export interface OrchestrationLayer {
 	 * the session transitions to idle.
 	 */
 	wireSSEToAdapter(
-		sseOn: (event: "event", handler: (e: OpenCodeEvent) => void) => void,
+		sseOn: (event: "event", handler: (e: SSEEvent) => void) => void,
 	): void;
 }
 
@@ -63,7 +63,7 @@ export function createOrchestrationLayer(
 	const engine = new OrchestrationEngine({ registry });
 
 	function wireSSEToAdapter(
-		sseOn: (event: "event", handler: (e: OpenCodeEvent) => void) => void,
+		sseOn: (event: "event", handler: (e: SSEEvent) => void) => void,
 	): void {
 		sseOn("event", (event) => {
 			if (event.type !== "session.status") return;

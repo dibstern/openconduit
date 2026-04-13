@@ -197,7 +197,9 @@ describe("MessagePoller", () => {
 			// The immediate poll should target sess_2
 			await vi.advanceTimersByTimeAsync(0);
 			const lastCall =
-				client.session.messages.mock.calls[client.session.messages.mock.calls.length - 1];
+				client.session.messages.mock.calls[
+					client.session.messages.mock.calls.length - 1
+				];
 			// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 			expect(lastCall![0]).toBe("sess_2");
 
@@ -693,7 +695,9 @@ describe("MessagePoller", () => {
 
 			// First poll after SSE silence — should reseed, no events emitted
 			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
-			expect(client.session.messages.mock.calls.length).toBeGreaterThan(callsBefore);
+			expect(client.session.messages.mock.calls.length).toBeGreaterThan(
+				callsBefore,
+			);
 			expect(events).toHaveLength(0); // Reseed poll emits nothing
 
 			// Second poll after SSE silence — normal diffing, no new content
@@ -967,7 +971,9 @@ describe("MessagePoller", () => {
 			// Restore success and verify polling continues
 			client.session.messages.mockResolvedValue([]);
 			await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS);
-			expect(client.session.messages.mock.calls.length).toBeGreaterThanOrEqual(3);
+			expect(client.session.messages.mock.calls.length).toBeGreaterThanOrEqual(
+				3,
+			);
 
 			poller.stopPolling();
 		});

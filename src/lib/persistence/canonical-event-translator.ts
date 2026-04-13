@@ -4,6 +4,7 @@
 // reasoning start → end) per session.
 
 import { mapToolName } from "../relay/event-translator.js";
+import type { SSEEvent } from "../relay/opencode-events.js";
 import {
 	isMessageCreatedEvent,
 	isMessageUpdatedEvent,
@@ -15,7 +16,6 @@ import {
 	isSessionErrorEvent,
 	isSessionStatusEvent,
 } from "../relay/opencode-events.js";
-import type { OpenCodeEvent } from "../types.js";
 import {
 	type CanonicalEvent,
 	canonicalEvent,
@@ -47,7 +47,7 @@ export class CanonicalEventTranslator {
 	 * or when sessionId is missing.
 	 */
 	translate(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string | undefined,
 	): CanonicalEvent[] | null {
 		if (!sessionId) return null;
@@ -139,7 +139,7 @@ export class CanonicalEventTranslator {
 	// ─── message.created ─────────────────────────────────────────────────────
 
 	private translateMessageCreated(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		if (!isMessageCreatedEvent(event)) return null;
@@ -164,7 +164,7 @@ export class CanonicalEventTranslator {
 	// ─── message.part.delta ──────────────────────────────────────────────────
 
 	private translatePartDelta(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		if (!isPartDeltaEvent(event)) return null;
@@ -203,7 +203,7 @@ export class CanonicalEventTranslator {
 	// ─── message.part.updated ────────────────────────────────────────────────
 
 	private translatePartUpdated(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		if (!isPartUpdatedEvent(event)) return null;
@@ -326,7 +326,7 @@ export class CanonicalEventTranslator {
 	// ─── message.updated ─────────────────────────────────────────────────────
 
 	private translateMessageUpdated(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		if (!isMessageUpdatedEvent(event)) return null;
@@ -373,7 +373,7 @@ export class CanonicalEventTranslator {
 	// ─── session.status ──────────────────────────────────────────────────────
 
 	private translateSessionStatus(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		if (!isSessionStatusEvent(event)) return null;
@@ -401,7 +401,7 @@ export class CanonicalEventTranslator {
 	// ─── session.error ───────────────────────────────────────────────────────
 
 	private translateSessionError(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		if (!isSessionErrorEvent(event)) return null;
@@ -421,7 +421,7 @@ export class CanonicalEventTranslator {
 	// ─── permission.asked ────────────────────────────────────────────────────
 
 	private translatePermissionAsked(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		if (!isPermissionAskedEvent(event)) return null;
@@ -443,7 +443,7 @@ export class CanonicalEventTranslator {
 	// ─── permission.replied ──────────────────────────────────────────────────
 
 	private translatePermissionReplied(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		if (!isPermissionRepliedEvent(event)) return null;
@@ -461,7 +461,7 @@ export class CanonicalEventTranslator {
 	// ─── question.asked ──────────────────────────────────────────────────────
 
 	private translateQuestionAsked(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		if (!isQuestionAskedEvent(event)) return null;
@@ -479,7 +479,7 @@ export class CanonicalEventTranslator {
 	// ─── session.updated ─────────────────────────────────────────────────────
 
 	private translateSessionUpdated(
-		event: OpenCodeEvent,
+		event: SSEEvent,
 		sessionId: string,
 	): CanonicalEvent[] | null {
 		// session.updated carries session info under properties.info
