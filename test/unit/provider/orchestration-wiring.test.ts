@@ -1,38 +1,41 @@
 // test/unit/provider/orchestration-wiring.test.ts
 import { describe, expect, it, vi } from "vitest";
-import type { OpenCodeClient } from "../../../src/lib/instance/opencode-client.js";
+import type { OpenCodeAPI } from "../../../src/lib/instance/opencode-api.js";
 import { OpenCodeAdapter } from "../../../src/lib/provider/opencode-adapter.js";
 import { OrchestrationEngine } from "../../../src/lib/provider/orchestration-engine.js";
 import { createOrchestrationLayer } from "../../../src/lib/provider/orchestration-wiring.js";
 import { ProviderRegistry } from "../../../src/lib/provider/provider-registry.js";
 
-function makeStubClient(): OpenCodeClient {
+function makeStubClient(): OpenCodeAPI {
 	return {
-		abortSession: vi.fn(async () => {}),
-		replyPermission: vi.fn(async () => {}),
-		replyQuestion: vi.fn(async () => {}),
-		sendMessageAsync: vi.fn(async () => {}),
-		listProviders: vi.fn(async () => ({
-			providers: [
-				{
-					id: "anthropic",
-					name: "Anthropic",
-					models: [
-						{
-							id: "claude-sonnet",
-							name: "Claude Sonnet",
-							limit: { context: 200000, output: 8192 },
-						},
-					],
-				},
-			],
-			defaults: {},
-			connected: ["anthropic"],
-		})),
-		listAgents: vi.fn(async () => []),
-		listCommands: vi.fn(async () => []),
-		listSkills: vi.fn(async () => []),
-	} as unknown as OpenCodeClient;
+		session: { abort: vi.fn(async () => {}), prompt: vi.fn(async () => {}) },
+		permission: { reply: vi.fn(async () => {}), list: vi.fn(async () => []) },
+		question: { reply: vi.fn(async () => {}), reject: vi.fn(async () => {}), list: vi.fn(async () => []) },
+		provider: {
+			list: vi.fn(async () => ({
+				providers: [
+					{
+						id: "anthropic",
+						name: "Anthropic",
+						models: [
+							{
+								id: "claude-sonnet",
+								name: "Claude Sonnet",
+								limit: { context: 200000, output: 8192 },
+							},
+						],
+					},
+				],
+				defaults: {},
+				connected: ["anthropic"],
+			})),
+		},
+		app: {
+			agents: vi.fn(async () => []),
+			commands: vi.fn(async () => []),
+			skills: vi.fn(async () => []),
+		},
+	} as unknown as OpenCodeAPI;
 }
 
 describe("Orchestration wiring", () => {

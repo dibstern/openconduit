@@ -15,7 +15,7 @@ export async function handleGetModels(
 	clientId: string,
 	_payload: PayloadMap["get_models"],
 ): Promise<void> {
-	const providerResult = await deps.client.listProviders();
+	const providerResult = await deps.client.provider.list();
 	const connectedSet = new Set(providerResult.connected);
 	const providers = providerResult.providers
 		.map((p) => ({
@@ -41,7 +41,7 @@ export async function handleGetModels(
 	const activeId = resolveSession(deps, clientId);
 	if (activeId) {
 		try {
-			const session = await deps.client.getSession(activeId);
+			const session = await deps.client.session.get(activeId);
 			if (session.modelID) {
 				deps.wsHandler.sendTo(clientId, {
 					type: "model_info",
@@ -143,7 +143,7 @@ export async function handleSwitchModel(
 		const modelKey = `${providerId}/${modelId}`;
 		let availableVariants: string[] = [];
 		try {
-			const providerResult = await deps.client.listProviders();
+			const providerResult = await deps.client.provider.list();
 			for (const p of providerResult.providers) {
 				const m = (p.models ?? []).find((mod) => mod.id === modelId);
 				if (m?.variants) {
@@ -197,7 +197,7 @@ export async function handleSetDefaultModel(
 	// Also persist to OpenCode's project config (opencode.jsonc) so the
 	// setting survives independently of the relay's own settings file.
 	try {
-		await deps.client.updateConfig({ model: modelSpec });
+		await deps.client.config.update({ model: modelSpec });
 		await fixupConfigFile(deps.config.projectDir, deps.log);
 	} catch {
 		deps.log.warn("Failed to persist default model to OpenCode config");
@@ -213,7 +213,7 @@ export async function handleSetDefaultModel(
 
 	// Send variant_info for the new default model
 	try {
-		const providerResult = await deps.client.listProviders();
+		const providerResult = await deps.client.provider.list();
 		let availableVariants: string[] = [];
 		for (const p of providerResult.providers) {
 			const m = (p.models ?? []).find((mod) => mod.id === model);
@@ -273,7 +273,7 @@ export async function handleSwitchVariant(
 	let availableVariants: string[] = [];
 	if (activeModel) {
 		try {
-			const providerResult = await deps.client.listProviders();
+			const providerResult = await deps.client.provider.list();
 			for (const p of providerResult.providers) {
 				const m = (p.models ?? []).find(
 					(mod) => mod.id === activeModel.modelID,

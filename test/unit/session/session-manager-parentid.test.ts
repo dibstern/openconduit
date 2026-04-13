@@ -1,12 +1,12 @@
 // ─── Session Manager parentID propagation (ticket 5.3) ──────────────────────
 import { describe, expect, it, vi } from "vitest";
-import type { OpenCodeClient } from "../../../src/lib/instance/opencode-client.js";
+import type { OpenCodeAPI } from "../../../src/lib/instance/opencode-api.js";
 import { SessionManager } from "../../../src/lib/session/session-manager.js";
 
 describe("toSessionInfoList parentID propagation (ticket 5.3)", () => {
 	it("includes parentID when present in SessionDetail", async () => {
 		const mockClient = {
-			listSessions: vi.fn().mockResolvedValue([
+			session: { list: vi.fn().mockResolvedValue([
 				{
 					id: "ses_child",
 					title: "Forked Session",
@@ -18,8 +18,8 @@ describe("toSessionInfoList parentID propagation (ticket 5.3)", () => {
 					title: "Original Session",
 					time: { created: 500, updated: 1500 },
 				},
-			]),
-		} as unknown as OpenCodeClient;
+			]) },
+		} as unknown as OpenCodeAPI;
 
 		const mgr = new SessionManager({ client: mockClient });
 		const sessions = await mgr.listSessions();

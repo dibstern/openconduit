@@ -209,7 +209,7 @@ describe("Regression: client-init only sends questions for the client's active s
 	it("filters out questions from other sessions on initial connect", async () => {
 		const deps = createMockClientInitDeps();
 		// Default activeId from mock is "session-1"
-		vi.mocked(deps.client.listPendingQuestions).mockResolvedValue([
+		vi.mocked(deps.client.question.list).mockResolvedValue([
 			makePendingQuestion("que_mine", "session-1"),
 			makePendingQuestion("que_other", "session-OTHER"),
 			makePendingQuestion("que_mine2", "session-1"),
@@ -232,7 +232,7 @@ describe("Regression: client-init only sends questions for the client's active s
 
 	it("sends questions with no sessionID (defensive — treats as matching)", async () => {
 		const deps = createMockClientInitDeps();
-		vi.mocked(deps.client.listPendingQuestions).mockResolvedValue([
+		vi.mocked(deps.client.question.list).mockResolvedValue([
 			{
 				id: "que_no_session",
 				questions: [

@@ -1,28 +1,44 @@
 // test/unit/provider/opencode-adapter-actions.test.ts
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { OpenCodeClient } from "../../../src/lib/instance/opencode-client.js";
+import type { OpenCodeAPI } from "../../../src/lib/instance/opencode-api.js";
 import { OpenCodeAdapter } from "../../../src/lib/provider/opencode-adapter.js";
 
-function makeStubClient(overrides?: Partial<OpenCodeClient>): OpenCodeClient {
+function makeStubClient(overrides?: Record<string, unknown>): OpenCodeAPI {
 	return {
-		abortSession: vi.fn(async () => {}),
-		replyPermission: vi.fn(async () => {}),
-		replyQuestion: vi.fn(async () => {}),
-		sendMessageAsync: vi.fn(async () => {}),
-		listProviders: vi.fn(async () => ({
-			providers: [],
-			defaults: {},
-			connected: [],
-		})),
-		listAgents: vi.fn(async () => []),
-		listCommands: vi.fn(async () => []),
-		listSkills: vi.fn(async () => []),
+		session: {
+			abort: vi.fn(async () => {}),
+			prompt: vi.fn(async () => {}),
+			...(overrides?.session as Record<string, unknown>),
+		},
+		permission: {
+			reply: vi.fn(async () => {}),
+			list: vi.fn(async () => []),
+			...(overrides?.permission as Record<string, unknown>),
+		},
+		question: {
+			reply: vi.fn(async () => {}),
+			reject: vi.fn(async () => {}),
+			list: vi.fn(async () => []),
+			...(overrides?.question as Record<string, unknown>),
+		},
+		provider: {
+			list: vi.fn(async () => ({
+				providers: [],
+				defaults: {},
+				connected: [],
+			})),
+		},
+		app: {
+			agents: vi.fn(async () => []),
+			commands: vi.fn(async () => []),
+			skills: vi.fn(async () => []),
+		},
 		...overrides,
-	} as unknown as OpenCodeClient;
+	} as unknown as OpenCodeAPI;
 }
 
 describe("OpenCodeAdapter action methods", () => {
-	let client: OpenCodeClient;
+	let client: OpenCodeAPI;
 	let adapter: OpenCodeAdapter;
 
 	beforeEach(() => {
@@ -31,17 +47,20 @@ describe("OpenCodeAdapter action methods", () => {
 	});
 
 	describe("interruptTurn", () => {
-		it("calls client.abortSession with the session ID", async () => {
+		it("calls client.session.abort with the session ID", async () => {
 			await adapter.interruptTurn("session-123");
 
-			expect(client.abortSession).toHaveBeenCalledWith("session-123");
+			expect(client.session.abort).toHaveBeenCalledWith("session-123");
 		});
 
 		it("propagates errors from client", async () => {
 			client = makeStubClient({
-				abortSession: vi.fn(async () => {
-					throw new Error("session not found");
-				}),
+				session: {
+					abort: vi.fn(async () => {
+						throw new Error("session not found");
+					}),
+					prompt: vi.fn(async () => {}),
+				},
 			});
 			adapter = new OpenCodeAdapter({ client });
 
@@ -52,38 +71,44 @@ describe("OpenCodeAdapter action methods", () => {
 	});
 
 	describe("resolvePermission", () => {
-		it("calls client.replyPermission with id and decision", async () => {
+		it("calls client.permission.reply with sessionId, id and decision", async () => {
 			await adapter.resolvePermission("s1", "perm-1", "once");
 
-			expect(client.replyPermission).toHaveBeenCalledWith({
-				id: "perm-1",
-				decision: "once",
-			});
+			expect(client.permission.reply).toHaveBeenCalledWith(
+				"s1",
+				"perm-1",
+				"once",
+			);
 		});
 
 		it("handles 'always' decision", async () => {
 			await adapter.resolvePermission("s1", "perm-2", "always");
 
-			expect(client.replyPermission).toHaveBeenCalledWith({
-				id: "perm-2",
-				decision: "always",
-			});
+			expect(client.permission.reply).toHaveBeenCalledWith(
+				"s1",
+				"perm-2",
+				"always",
+			);
 		});
 
 		it("handles 'reject' decision", async () => {
 			await adapter.resolvePermission("s1", "perm-3", "reject");
 
-			expect(client.replyPermission).toHaveBeenCalledWith({
-				id: "perm-3",
-				decision: "reject",
-			});
+			expect(client.permission.reply).toHaveBeenCalledWith(
+				"s1",
+				"perm-3",
+				"reject",
+			);
 		});
 
 		it("propagates errors from client", async () => {
 			client = makeStubClient({
-				replyPermission: vi.fn(async () => {
-					throw new Error("permission expired");
-				}),
+				permission: {
+					reply: vi.fn(async () => {
+						throw new Error("permission expired");
+					}),
+					list: vi.fn(async () => []),
+				},
 			});
 			adapter = new OpenCodeAdapter({ client });
 
@@ -94,15 +119,12 @@ describe("OpenCodeAdapter action methods", () => {
 	});
 
 	describe("resolveQuestion", () => {
-		it("calls client.replyQuestion with id and converted answers", async () => {
+		it("calls client.question.reply with id and converted answers", async () => {
 			await adapter.resolveQuestion("s1", "q1", {
 				choice: "yes",
 			});
 
-			expect(client.replyQuestion).toHaveBeenCalledWith({
-				id: "q1",
-				answers: [["yes"]],
-			});
+			expect(client.question.reply).toHaveBeenCalledWith("q1", [["yes"]]);
 		});
 
 		it("converts array answers to string arrays", async () => {
@@ -110,10 +132,9 @@ describe("OpenCodeAdapter action methods", () => {
 				multi: ["a", "b", "c"],
 			});
 
-			expect(client.replyQuestion).toHaveBeenCalledWith({
-				id: "q2",
-				answers: [["a", "b", "c"]],
-			});
+			expect(client.question.reply).toHaveBeenCalledWith("q2", [
+				["a", "b", "c"],
+			]);
 		});
 
 		it("handles multiple answer fields", async () => {
@@ -122,17 +143,21 @@ describe("OpenCodeAdapter action methods", () => {
 				field2: ["x", "y"],
 			});
 
-			expect(client.replyQuestion).toHaveBeenCalledWith({
-				id: "q3",
-				answers: [["value1"], ["x", "y"]],
-			});
+			expect(client.question.reply).toHaveBeenCalledWith("q3", [
+				["value1"],
+				["x", "y"],
+			]);
 		});
 
 		it("propagates errors from client", async () => {
 			client = makeStubClient({
-				replyQuestion: vi.fn(async () => {
-					throw new Error("question expired");
-				}),
+				question: {
+					reply: vi.fn(async () => {
+						throw new Error("question expired");
+					}),
+					reject: vi.fn(async () => {}),
+					list: vi.fn(async () => []),
+				},
 			});
 			adapter = new OpenCodeAdapter({ client });
 

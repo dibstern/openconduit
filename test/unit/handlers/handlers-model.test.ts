@@ -69,7 +69,7 @@ describe("handleSetDefaultModel", () => {
 		vi.mocked(loadRelaySettings).mockReturnValue({
 			defaultVariants: { "anthropic/claude-opus-4-6": "high" },
 		});
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [],
 			defaults: {},
 			connected: [],
@@ -97,7 +97,7 @@ describe("handleSwitchVariant", () => {
 			providerID: "anthropic",
 			modelID: "claude-opus-4-6",
 		});
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [
 				{
 					id: "anthropic",
@@ -133,7 +133,7 @@ describe("handleSwitchVariant", () => {
 			providerID: "anthropic",
 			modelID: "claude-opus-4-6",
 		});
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [],
 			defaults: {},
 			connected: [],
@@ -148,7 +148,7 @@ describe("handleSwitchVariant", () => {
 	it("sends variant_info to client when no session", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue(undefined);
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [],
 			defaults: {},
 			connected: [],
@@ -165,7 +165,7 @@ describe("handleSwitchVariant", () => {
 	it("handles empty variant (reset to default)", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("ses-1");
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [],
 			defaults: {},
 			connected: [],
@@ -181,7 +181,7 @@ describe("handleSwitchModel", () => {
 	it("restores persisted variant and sends variant_info after switching model", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("ses-1");
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [
 				{
 					id: "openai",
@@ -219,7 +219,7 @@ describe("handleSwitchModel", () => {
 	it("clears variant when new model has no variants", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("ses-1");
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [
 				{
 					id: "openai",
@@ -249,7 +249,7 @@ describe("handleSwitchModel", () => {
 	it("validates persisted variant against available list", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("ses-1");
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [
 				{
 					id: "anthropic",
@@ -281,7 +281,7 @@ describe("handleSwitchModel", () => {
 	it("still sends model_info as before", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("ses-1");
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [],
 			defaults: {},
 			connected: [],
@@ -307,7 +307,7 @@ describe("handleSwitchModel", () => {
 describe("handleSetDefaultModel — variant wiring", () => {
 	it("broadcasts variant_info after setting default model", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [
 				{
 					id: "anthropic",
@@ -342,7 +342,7 @@ describe("handleSetDefaultModel — variant wiring", () => {
 
 	it("validates persisted variant and falls back to empty", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [
 				{
 					id: "anthropic",
@@ -387,7 +387,7 @@ describe("handleGetModels — variant wiring", () => {
 			providerID: "anthropic",
 			modelID: "claude-opus-4-6",
 		});
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [
 				{
 					id: "anthropic",
@@ -404,7 +404,7 @@ describe("handleGetModels — variant wiring", () => {
 			defaults: {},
 			connected: ["anthropic"],
 		});
-		vi.mocked(deps.client.getSession).mockResolvedValue({
+		vi.mocked(deps.client.session.get).mockResolvedValue({
 			id: "ses-1",
 			modelID: "claude-opus-4-6",
 			providerID: "anthropic",

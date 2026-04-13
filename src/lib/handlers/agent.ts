@@ -55,7 +55,7 @@ export async function handleGetAgents(
 	clientId: string,
 	_payload: PayloadMap["get_agents"],
 ): Promise<void> {
-	const rawAgents = await deps.client.listAgents();
+	const rawAgents = await deps.client.app.agents();
 	const agents = filterAgents(rawAgents);
 	deps.wsHandler.sendTo(clientId, { type: "agent_list", agents });
 }

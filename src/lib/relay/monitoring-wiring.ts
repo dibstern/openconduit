@@ -4,7 +4,7 @@
 //
 // Extracted from createProjectRelay() — all closure captures are explicit params.
 
-import type { OpenCodeClient } from "../instance/opencode-client.js";
+import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type { Logger } from "../logger.js";
 import type { PushNotificationManager } from "../server/push.js";
 import type { WebSocketHandler } from "../server/ws-handler.js";
@@ -39,7 +39,7 @@ import { sendPushForEvent } from "./sse-wiring.js";
 // ─── Deps interface ──────────────────────────────────────────────────────────
 
 export interface MonitoringWiringDeps {
-	client: OpenCodeClient;
+	client: OpenCodeAPI;
 	wsHandler: WebSocketHandler;
 	sessionMgr: SessionManager;
 	overrides: SessionOverrides;
@@ -117,8 +117,8 @@ export function wireMonitoring(
 	// ── Effect executor deps (used by monitoring reducer effects) ─────────
 	const effectDeps: EffectDeps = {
 		startPoller: (sessionId) => {
-			client
-				.getMessages(sessionId)
+			client.session
+				.messages(sessionId)
 				.then((msgs) => pollerManager.startPolling(sessionId, msgs))
 				.catch((err) =>
 					statusLog.warn(

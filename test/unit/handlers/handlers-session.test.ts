@@ -59,13 +59,13 @@ describe("handleForkSession (ticket 5.3)", () => {
 		});
 	});
 
-	it("calls client.forkSession with sessionId and messageID", async () => {
+	it("calls client.session.fork with sessionId and messageID", async () => {
 		await handleForkSession(deps, "client-1", {
 			sessionId: "ses_original",
 			messageId: "msg_abc",
 		});
 
-		expect(deps.client.forkSession).toHaveBeenCalledWith("ses_original", {
+		expect(deps.client.session.fork).toHaveBeenCalledWith("ses_original", {
 			messageID: "msg_abc",
 		});
 	});
@@ -75,7 +75,7 @@ describe("handleForkSession (ticket 5.3)", () => {
 			sessionId: "ses_original",
 		});
 
-		expect(deps.client.forkSession).toHaveBeenCalledWith("ses_original", {});
+		expect(deps.client.session.fork).toHaveBeenCalledWith("ses_original", {});
 	});
 
 	it("broadcasts session_forked with parent info", async () => {
@@ -168,7 +168,7 @@ describe("handleForkSession (ticket 5.3)", () => {
 			{} as unknown as PayloadMap["fork_session"],
 		);
 
-		expect(deps.client.forkSession).toHaveBeenCalledWith("ses_client_tab", {});
+		expect(deps.client.session.fork).toHaveBeenCalledWith("ses_client_tab", {});
 	});
 
 	it("prefers payload.sessionId over getClientSession", async () => {
@@ -180,7 +180,7 @@ describe("handleForkSession (ticket 5.3)", () => {
 			sessionId: "ses_explicit",
 		});
 
-		expect(deps.client.forkSession).toHaveBeenCalledWith("ses_explicit", {});
+		expect(deps.client.session.fork).toHaveBeenCalledWith("ses_explicit", {});
 	});
 
 	it("stores forkMessageId and forkPointTimestamp from messageId payload", async () => {
@@ -391,7 +391,7 @@ describe("handleViewSession — per-tab session viewing", () => {
 		const getSessionPromise = new Promise<void>((r) => {
 			resolveGetSession = r;
 		});
-		deps.client.getSession = vi
+		deps.client.session.get = vi
 			.fn()
 			.mockReturnValue(
 				getSessionPromise.then(() => ({ modelID: "test-model" })),

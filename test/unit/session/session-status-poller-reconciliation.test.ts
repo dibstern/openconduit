@@ -15,8 +15,10 @@ import { SessionStatusSqliteReader } from "../../../src/lib/session/session-stat
 
 function createMockClient(statuses: Record<string, SessionStatus> = {}) {
 	return {
-		getSessionStatuses: vi.fn().mockResolvedValue(statuses),
-		getSession: vi.fn().mockResolvedValue({ id: "unknown" }),
+		session: {
+			statuses: vi.fn().mockResolvedValue(statuses),
+			get: vi.fn().mockResolvedValue({ id: "unknown" }),
+		},
 	};
 }
 
@@ -243,7 +245,7 @@ describe("SessionStatusPoller — reconciliation", () => {
 			// To test staleness in isolation, make REST fail so reconciliation
 			// is skipped entirely. Staleness then catches the stuck session.
 			const client = createMockClient({});
-			client.getSessionStatuses.mockRejectedValue(
+			client.session.statuses.mockRejectedValue(
 				new Error("REST unavailable"),
 			);
 
@@ -289,7 +291,7 @@ describe("SessionStatusPoller — reconciliation", () => {
 
 			// REST unavailable — isolate the staleness check
 			const client = createMockClient({});
-			client.getSessionStatuses.mockRejectedValue(
+			client.session.statuses.mockRejectedValue(
 				new Error("REST unavailable"),
 			);
 
@@ -338,7 +340,7 @@ describe("SessionStatusPoller — reconciliation", () => {
 
 			// REST unavailable — isolate the staleness check
 			const client = createMockClient({});
-			client.getSessionStatuses.mockRejectedValue(
+			client.session.statuses.mockRejectedValue(
 				new Error("REST unavailable"),
 			);
 
@@ -417,7 +419,7 @@ describe("SessionStatusPoller — reconciliation", () => {
 			await poller.reconcileNow();
 
 			// getSessionStatuses should NOT have been called (no persistence = skip)
-			expect(client.getSessionStatuses).not.toHaveBeenCalled();
+			expect(client.session.statuses).not.toHaveBeenCalled();
 
 			poller.stop();
 		});
@@ -477,7 +479,7 @@ describe("SessionStatusPoller — reconciliation", () => {
 			const client = createMockClient({ sess_1: { type: "busy" } });
 			// Make the second getSessionStatuses call (reconciliation) fail
 			let callCount = 0;
-			client.getSessionStatuses.mockImplementation(async () => {
+			client.session.statuses.mockImplementation(async () => {
 				callCount++;
 				if (callCount > 1) throw new Error("network error");
 				return { sess_1: { type: "busy" } };
@@ -535,7 +537,7 @@ describe("SessionStatusPoller — reconciliation", () => {
 			await establishBaseline();
 
 			// Transition
-			client.getSessionStatuses.mockResolvedValue({
+			client.session.statuses.mockResolvedValue({
 				sess_1: { type: "busy" },
 			});
 			await vi.advanceTimersByTimeAsync(500);

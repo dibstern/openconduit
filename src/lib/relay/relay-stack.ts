@@ -57,7 +57,7 @@ const WebSocketClass = wsLib.WebSocket as typeof import("ws").WebSocket;
 export interface ProjectRelay {
 	wsHandler: WebSocketHandler;
 	sseConsumer: SSEConsumer;
-	client: OpenCodeClient;
+	client: OpenCodeAPI;
 	sessionMgr: SessionManager;
 	translator: ReturnType<typeof createTranslator>;
 	permissionBridge: PermissionBridge;
@@ -108,7 +108,7 @@ export interface RelayStack {
 	server: RelayServer;
 	wsHandler: WebSocketHandler;
 	sseConsumer: SSEConsumer;
-	client: OpenCodeClient;
+	client: OpenCodeAPI;
 	sessionMgr: SessionManager;
 	translator: ReturnType<typeof createTranslator>;
 	permissionBridge: PermissionBridge;
@@ -152,7 +152,11 @@ export async function createProjectRelay(
 	// ── Components ──────────────────────────────────────────────────────────
 
 	// ── SDK-based client (Tasks 3–6) ─────────────────────────────────────────
-	const { client: sdkClient, fetch: sdkFetch, authHeaders } = createSdkClient({
+	const {
+		client: sdkClient,
+		fetch: sdkFetch,
+		authHeaders,
+	} = createSdkClient({
 		baseUrl: config.opencodeUrl,
 		...(config.noServer &&
 			config.projectDir != null && {
@@ -184,14 +188,14 @@ export async function createProjectRelay(
 
 	// ── Orchestration layer (Phase 5: provider adapter routing) ─────────────
 	const orchestration = createOrchestrationLayer({
-		client,
+		client: api,
 		...(config.projectDir != null && { workspaceRoot: config.projectDir }),
 	});
 
 	const translator = createTranslator();
 	const permissionBridge = new PermissionBridge();
 	const sessionMgr: SessionManager = new SessionManager({
-		client,
+		client: api,
 		log: sessionLog,
 		directory: config.projectDir,
 		// Lazy getter — statusPoller is created below but the getter is only
@@ -237,7 +241,7 @@ export async function createProjectRelay(
 	const statusPoller: SessionStatusPoller = new SessionStatusPoller(
 		serviceRegistry,
 		{
-			client,
+			client: api,
 			...(config.statusPollerInterval != null && {
 				interval: config.statusPollerInterval,
 			}),
@@ -263,7 +267,7 @@ export async function createProjectRelay(
 	// ── Message poller manager (REST fallback for CLI sessions without SSE events) ──
 	// Manages multiple pollers concurrently — one per busy session.
 	const pollerManager = new MessagePollerManager(serviceRegistry, {
-		client,
+		client: api,
 		log: pollerMgrLog,
 		hasViewers: (sid: string) => registry.hasViewers(sid),
 		...(config.messagePollerInterval != null && {
@@ -284,6 +288,7 @@ export async function createProjectRelay(
 	// ── Health check ────────────────────────────────────────────────────────
 
 	if (config.signal?.aborted) throw new Error("Relay creation aborted");
+	// Health check via legacy client (SSE consumer still needs it; replaced in Task 14)
 	await client.getHealth();
 	log.info(`✓ OpenCode is reachable at ${config.opencodeUrl}`);
 
@@ -294,7 +299,7 @@ export async function createProjectRelay(
 	if (!overrides.defaultModel) {
 		try {
 			if (config.signal?.aborted) throw new Error("Relay creation aborted");
-			const ocConfig = await client.getConfig();
+			const ocConfig = await api.config.get();
 			const configModel =
 				typeof ocConfig?.["model"] === "string" ? ocConfig["model"] : "";
 			if (configModel) {
@@ -341,7 +346,7 @@ export async function createProjectRelay(
 	const ptyDeps: PtyUpstreamDeps = {
 		ptyManager,
 		wsHandler,
-		client,
+		client: api,
 		opencodeUrl: config.opencodeUrl,
 		log: ptyLog,
 		WebSocketClass,
@@ -350,7 +355,7 @@ export async function createProjectRelay(
 	// ── Handler deps wiring (G1: client init, message queue, rate limiter) ──
 	const { rateLimiter } = wireHandlerDeps({
 		wsHandler,
-		client,
+		client: api,
 		sessionMgr,
 		permissionBridge,
 		overrides,
@@ -370,7 +375,7 @@ export async function createProjectRelay(
 
 	const sseConsumer = new SSEConsumer(serviceRegistry, {
 		baseUrl: config.opencodeUrl,
-		authHeaders: client.getAuthHeaders(),
+		authHeaders: api.getAuthHeaders(),
 		log: sseLog,
 	});
 
@@ -402,8 +407,8 @@ export async function createProjectRelay(
 			pipelineLog,
 			getSessionStatuses: () => statusPoller.getCurrentStatuses(),
 			getSessionParentMap: () => sessionMgr.getSessionParentMap(),
-			listPendingQuestions: () => client.listPendingQuestions(),
-			listPendingPermissions: () => client.listPendingPermissions(),
+			listPendingQuestions: () => api.question.list(),
+			listPendingPermissions: () => api.permission.list(),
 			statusPoller,
 			slug: config.slug,
 			onDoneProcessed: (sid) => doneDeliveredRef.fn(sid),
@@ -430,7 +435,7 @@ export async function createProjectRelay(
 		setMonitoringState,
 		recordDoneDelivered: bindDoneDelivered,
 	} = wireMonitoring({
-		client,
+		client: api,
 		wsHandler,
 		sessionMgr,
 		overrides,
@@ -457,7 +462,7 @@ export async function createProjectRelay(
 	wireSessionLifecycle({
 		sessionMgr,
 		wsHandler,
-		client,
+		client: api,
 		translator,
 		pollerManager,
 		statusPoller,
@@ -496,7 +501,7 @@ export async function createProjectRelay(
 	return {
 		wsHandler,
 		sseConsumer,
-		client,
+		client: api,
 		sessionMgr,
 		translator,
 		permissionBridge,

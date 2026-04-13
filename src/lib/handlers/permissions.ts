@@ -48,10 +48,7 @@ export async function handlePermissionResponse(
 		deps.log.info(
 			`client=${clientId} session=${sessionId} ${result.toolName}: ${result.mapped}`,
 		);
-		await deps.client.replyPermission({
-			id: requestId,
-			decision: result.mapped,
-		});
+		await deps.client.permission.reply(sessionId, requestId, result.mapped);
 		deps.wsHandler.broadcast({
 			type: "permission_resolved",
 			requestId,
@@ -77,7 +74,7 @@ async function persistPermissionRule(
 	pattern?: string,
 ): Promise<void> {
 	try {
-		const config = await deps.client.getConfig();
+		const config = await deps.client.config.get();
 		const rawPermission = config["permission"];
 
 		// Normalise: if permission is a simple string ("ask"/"allow"/"deny"),
@@ -113,7 +110,7 @@ async function persistPermissionRule(
 			return;
 		}
 
-		await deps.client.updateConfig({ permission: currentPermission });
+		await deps.client.config.update({ permission: currentPermission });
 		await fixupConfigFile(deps.config.projectDir, deps.log);
 		deps.log.info(`Persisted: ${toolName} ${scope}=${pattern ?? "*"}`);
 	} catch (err) {
@@ -156,7 +153,7 @@ export async function handleAskUserResponse(
 	);
 
 	try {
-		await deps.client.replyQuestion({ id: toolId, answers: formatted });
+		await deps.client.question.reply(toolId, formatted);
 		deps.wsHandler.broadcast({ type: "ask_user_resolved", toolId, sessionId });
 		if (sessionId) deps.sessionMgr.decrementPendingQuestionCount(sessionId);
 		restartProcessingTimeout(deps, sessionId);
@@ -168,14 +165,14 @@ export async function handleAskUserResponse(
 		// API rejected the toolId — fall back to querying pending questions
 		// and replying to the first match.
 		try {
-			const pendingQuestions = await deps.client.listPendingQuestions();
+			const pendingQuestions = await deps.client.question.list();
 			if (pendingQuestions.length > 0) {
 				// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 				const queId = pendingQuestions[0]!.id;
 				deps.log.info(
 					`client=${clientId} session=${sessionId} API fallback: ${toolId} → ${queId}`,
 				);
-				await deps.client.replyQuestion({ id: queId, answers: formatted });
+				await deps.client.question.reply(queId, formatted);
 				deps.wsHandler.broadcast({
 					type: "ask_user_resolved",
 					toolId: queId,
@@ -219,7 +216,7 @@ export async function handleQuestionReject(
 	deps.log.info(`client=${clientId} session=${sessionId} rejecting: ${toolId}`);
 
 	try {
-		await deps.client.rejectQuestion(toolId);
+		await deps.client.question.reject(toolId);
 		deps.wsHandler.broadcast({ type: "ask_user_resolved", toolId, sessionId });
 		if (sessionId) deps.sessionMgr.decrementPendingQuestionCount(sessionId);
 		restartProcessingTimeout(deps, sessionId);
@@ -230,14 +227,14 @@ export async function handleQuestionReject(
 
 		// API rejected the toolId — fall back to querying pending questions
 		try {
-			const pendingQuestions = await deps.client.listPendingQuestions();
+			const pendingQuestions = await deps.client.question.list();
 			if (pendingQuestions.length > 0) {
 				// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 				const queId = pendingQuestions[0]!.id;
 				deps.log.info(
 					`client=${clientId} session=${sessionId} reject fallback: ${toolId} → ${queId}`,
 				);
-				await deps.client.rejectQuestion(queId);
+				await deps.client.question.reject(queId);
 				deps.wsHandler.broadcast({
 					type: "ask_user_resolved",
 					toolId: queId,

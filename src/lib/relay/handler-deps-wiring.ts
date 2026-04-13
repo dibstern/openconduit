@@ -11,7 +11,7 @@ import {
 import type { PermissionBridge } from "../bridges/permission-bridge.js";
 import { formatErrorDetail, RelayError } from "../errors.js";
 import { dispatchMessage, type HandlerDeps } from "../handlers/index.js";
-import type { OpenCodeClient } from "../instance/opencode-client.js";
+import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type { Logger } from "../logger.js";
 import { type LogLevel, setLogLevel } from "../logger.js";
 import type { ReadQueryService } from "../persistence/read-query-service.js";
@@ -33,7 +33,7 @@ import { connectPtyUpstream as connectPtyUpstreamImpl } from "./pty-upstream.js"
 
 export interface HandlerDepsWiringDeps {
 	wsHandler: WebSocketHandler;
-	client: OpenCodeClient;
+	client: OpenCodeAPI;
 	sessionMgr: SessionManager;
 	permissionBridge: PermissionBridge;
 	overrides: SessionOverrides;

@@ -1,57 +1,64 @@
 // test/unit/provider/opencode-adapter-discover.test.ts
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { OpenCodeClient } from "../../../src/lib/instance/opencode-client.js";
+import type { OpenCodeAPI } from "../../../src/lib/instance/opencode-api.js";
 import { OpenCodeAdapter } from "../../../src/lib/provider/opencode-adapter.js";
 
-function makeStubClient(overrides?: Partial<OpenCodeClient>): OpenCodeClient {
+function makeStubClient(overrides?: Record<string, unknown>): OpenCodeAPI {
 	return {
-		listProviders: vi.fn(async () => ({
-			providers: [
-				{
-					id: "anthropic",
-					name: "Anthropic",
-					models: [
-						{
-							id: "claude-sonnet",
-							name: "Claude Sonnet",
-							limit: { context: 200000, output: 8192 },
-							variants: {
-								thinking: { budget_tokens: 10000 },
+		provider: {
+			list: vi.fn(async () => ({
+				providers: [
+					{
+						id: "anthropic",
+						name: "Anthropic",
+						models: [
+							{
+								id: "claude-sonnet",
+								name: "Claude Sonnet",
+								limit: { context: 200000, output: 8192 },
+								variants: {
+									thinking: { budget_tokens: 10000 },
+								},
 							},
-						},
-						{
-							id: "claude-haiku",
-							name: "Claude Haiku",
-							limit: { context: 200000, output: 4096 },
-						},
-					],
+							{
+								id: "claude-haiku",
+								name: "Claude Haiku",
+								limit: { context: 200000, output: 4096 },
+							},
+						],
+					},
+				],
+				defaults: { anthropic: "claude-sonnet" },
+				connected: ["anthropic"],
+			})),
+		},
+		app: {
+			agents: vi.fn(async () => [
+				{ id: "coder", name: "Coder", description: "Main coding agent" },
+				{
+					id: "task",
+					name: "Task",
+					description: "Sub-agent",
+					mode: "subagent",
 				},
-			],
-			defaults: { anthropic: "claude-sonnet" },
-			connected: ["anthropic"],
-		})),
-		listAgents: vi.fn(async () => [
-			{ id: "coder", name: "Coder", description: "Main coding agent" },
-			{
-				id: "task",
-				name: "Task",
-				description: "Sub-agent",
-				mode: "subagent",
-			},
-		]),
-		listCommands: vi.fn(async () => [
-			{ name: "/compact", description: "Compact context window" },
-			{ name: "/cost", description: "Show cost" },
-		]),
-		listSkills: vi.fn(async () => [
-			{ name: "debugging", description: "Debug skill" },
-		]),
+			]),
+			commands: vi.fn(async () => [
+				{ name: "/compact", description: "Compact context window" },
+				{ name: "/cost", description: "Show cost" },
+			]),
+			skills: vi.fn(async () => [
+				{ name: "debugging", description: "Debug skill" },
+			]),
+		},
+		session: { prompt: vi.fn(async () => {}), abort: vi.fn(async () => {}) },
+		permission: { reply: vi.fn(async () => {}), list: vi.fn(async () => []) },
+		question: { reply: vi.fn(async () => {}), reject: vi.fn(async () => {}), list: vi.fn(async () => []) },
 		...overrides,
-	} as unknown as OpenCodeClient;
+	} as unknown as OpenCodeAPI;
 }
 
 describe("OpenCodeAdapter.discover()", () => {
-	let client: OpenCodeClient;
+	let client: OpenCodeAPI;
 	let adapter: OpenCodeAdapter;
 
 	beforeEach(() => {
@@ -109,11 +116,11 @@ describe("OpenCodeAdapter.discover()", () => {
 
 	it("handles provider with no models", async () => {
 		client = makeStubClient({
-			listProviders: vi.fn(async () => ({
+			provider: { list: vi.fn(async () => ({
 				providers: [{ id: "empty", name: "Empty", models: [] }],
 				defaults: {},
 				connected: [],
-			})),
+			})) },
 		});
 		adapter = new OpenCodeAdapter({ client });
 
@@ -123,8 +130,11 @@ describe("OpenCodeAdapter.discover()", () => {
 
 	it("handles empty commands and skills", async () => {
 		client = makeStubClient({
-			listCommands: vi.fn(async () => []),
-			listSkills: vi.fn(async () => []),
+			app: {
+				agents: vi.fn(async () => []),
+				commands: vi.fn(async () => []),
+				skills: vi.fn(async () => []),
+			},
 		});
 		adapter = new OpenCodeAdapter({ client });
 
@@ -134,9 +144,9 @@ describe("OpenCodeAdapter.discover()", () => {
 
 	it("handles API errors gracefully", async () => {
 		client = makeStubClient({
-			listProviders: vi.fn(async () => {
+			provider: { list: vi.fn(async () => {
 				throw new Error("network error");
-			}),
+			}) },
 		});
 		adapter = new OpenCodeAdapter({ client });
 
@@ -151,8 +161,8 @@ describe("OpenCodeAdapter.discover()", () => {
 
 		await adapter.discover();
 
-		expect(client.listCommands).toHaveBeenCalledWith("/my/project");
-		expect(client.listSkills).toHaveBeenCalledWith("/my/project");
+		expect(client.app.commands).toHaveBeenCalled();
+		expect(client.app.skills).toHaveBeenCalledWith("/my/project");
 	});
 
 	it("omits directory for commands when no workspace", async () => {
@@ -160,7 +170,7 @@ describe("OpenCodeAdapter.discover()", () => {
 
 		await adapter.discover();
 
-		expect(client.listCommands).toHaveBeenCalledWith(undefined);
-		expect(client.listSkills).toHaveBeenCalledWith(undefined);
+		expect(client.app.commands).toHaveBeenCalled();
+		expect(client.app.skills).toHaveBeenCalledWith(undefined);
 	});
 });

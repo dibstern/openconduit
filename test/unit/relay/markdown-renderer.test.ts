@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import type { OpenCodeClient } from "../../../src/lib/instance/opencode-client.js";
+import type { OpenCodeAPI } from "../../../src/lib/instance/opencode-api.js";
 import {
 	preRenderHistoryMessages,
 	renderMarkdownServer,
@@ -95,7 +95,7 @@ describe("SessionManager.loadPreRenderedHistory", () => {
 		};
 
 		const mgr = new SessionManager({
-			client: mockClient as unknown as OpenCodeClient,
+			client: mockClient as unknown as OpenCodeAPI,
 		});
 
 		const result = await mgr.loadPreRenderedHistory("test-session");
@@ -136,7 +136,7 @@ describe("SessionManager.loadPreRenderedHistory", () => {
 		};
 
 		const mgr = new SessionManager({
-			client: mockClient as unknown as OpenCodeClient,
+			client: mockClient as unknown as OpenCodeAPI,
 			historyPageSize: 50,
 		});
 
