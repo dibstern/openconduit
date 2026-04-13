@@ -1,10 +1,10 @@
 // ─── Permission Bridge (Ticket 1.5) ─────────────────────────────────────────
 
+import type { SSEEvent } from "../relay/opencode-events.js";
 import type { PermissionId } from "../shared-types.js";
 import type {
 	FrontendDecision,
 	OpenCodeDecision,
-	OpenCodeEvent,
 	PendingPermission,
 } from "../types.js";
 
@@ -50,7 +50,7 @@ export class PermissionBridge {
 	}
 
 	/** Process an incoming permission.asked SSE event */
-	onPermissionRequest(event: OpenCodeEvent): PendingPermission | null {
+	onPermissionRequest(event: SSEEvent): PendingPermission | null {
 		const props = event.properties as {
 			id?: string;
 			sessionID?: string;

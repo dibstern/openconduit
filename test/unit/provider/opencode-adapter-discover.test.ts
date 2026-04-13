@@ -52,7 +52,11 @@ function makeStubClient(overrides?: Record<string, unknown>): OpenCodeAPI {
 		},
 		session: { prompt: vi.fn(async () => {}), abort: vi.fn(async () => {}) },
 		permission: { reply: vi.fn(async () => {}), list: vi.fn(async () => []) },
-		question: { reply: vi.fn(async () => {}), reject: vi.fn(async () => {}), list: vi.fn(async () => []) },
+		question: {
+			reply: vi.fn(async () => {}),
+			reject: vi.fn(async () => {}),
+			list: vi.fn(async () => []),
+		},
 		...overrides,
 	} as unknown as OpenCodeAPI;
 }
@@ -116,11 +120,13 @@ describe("OpenCodeAdapter.discover()", () => {
 
 	it("handles provider with no models", async () => {
 		client = makeStubClient({
-			provider: { list: vi.fn(async () => ({
-				providers: [{ id: "empty", name: "Empty", models: [] }],
-				defaults: {},
-				connected: [],
-			})) },
+			provider: {
+				list: vi.fn(async () => ({
+					providers: [{ id: "empty", name: "Empty", models: [] }],
+					defaults: {},
+					connected: [],
+				})),
+			},
 		});
 		adapter = new OpenCodeAdapter({ client });
 
@@ -144,9 +150,11 @@ describe("OpenCodeAdapter.discover()", () => {
 
 	it("handles API errors gracefully", async () => {
 		client = makeStubClient({
-			provider: { list: vi.fn(async () => {
-				throw new Error("network error");
-			}) },
+			provider: {
+				list: vi.fn(async () => {
+					throw new Error("network error");
+				}),
+			},
 		});
 		adapter = new OpenCodeAdapter({ client });
 

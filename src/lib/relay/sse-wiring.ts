@@ -12,10 +12,11 @@ import type { PushNotificationManager } from "../server/push.js";
 import type { SessionManager } from "../session/session-manager.js";
 import type { SessionOverrides } from "../session/session-overrides.js";
 import type { PermissionId } from "../shared-types.js";
-import type { OpenCodeEvent, RelayMessage } from "../types.js";
+import type { RelayMessage } from "../types.js";
 import { applyPipelineResult, processEvent } from "./event-pipeline.js";
 import type { Translator } from "./event-translator.js";
 import { resolveNotifications } from "./notification-policy.js";
+import type { SSEEvent } from "./opencode-events.js";
 import {
 	hasInfoWithSessionID,
 	hasPartWithSessionID,
@@ -32,7 +33,7 @@ import type { SSEConsumer } from "./sse-consumer.js";
 //   - Nested in info: message.updated → properties.info.sessionID
 // We must check all locations to correctly attribute events to sessions.
 
-export function extractSessionId(event: OpenCodeEvent): string | undefined {
+export function extractSessionId(event: SSEEvent): string | undefined {
 	const props = event.properties;
 	// 1. Top-level sessionID (most common)
 	if (hasSessionID(props)) {
@@ -159,10 +160,7 @@ export function sendPushForEvent(
 
 // ─── Handle a single SSE event ───────────────────────────────────────────────
 
-export function handleSSEEvent(
-	deps: SSEWiringDeps,
-	event: OpenCodeEvent,
-): void {
+export function handleSSEEvent(deps: SSEWiringDeps, event: SSEEvent): void {
 	const {
 		translator,
 		sessionMgr,
@@ -586,7 +584,7 @@ export function wireSSEConsumer(
 	});
 	consumer.on("error", (err) => log.warn(`Error: ${err.message}`));
 
-	consumer.on("event", (event: OpenCodeEvent) => {
+	consumer.on("event", (event: SSEEvent) => {
 		handleSSEEvent(deps, event);
 	});
 }

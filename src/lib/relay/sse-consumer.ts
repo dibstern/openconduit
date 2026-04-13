@@ -7,7 +7,8 @@ import type { ServiceRegistry } from "../daemon/service-registry.js";
 import { TrackedService } from "../daemon/tracked-service.js";
 import { SSEConnectionError } from "../errors.js";
 import { createSilentLogger, type Logger } from "../logger.js";
-import type { ConnectionHealth, OpenCodeEvent } from "../types.js";
+import type { ConnectionHealth } from "../types.js";
+import type { SSEEvent } from "./opencode-events.js";
 import {
 	type BackoffConfig,
 	calculateBackoffDelay,
@@ -27,7 +28,7 @@ export interface SSEConsumerOptions {
 }
 
 export type SSEConsumerEvents = {
-	event: [OpenCodeEvent];
+	event: [SSEEvent];
 	connected: [];
 	disconnected: [Error | undefined];
 	reconnecting: [{ attempt: number; delay: number }];
