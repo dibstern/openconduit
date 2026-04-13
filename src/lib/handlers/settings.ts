@@ -12,7 +12,7 @@ export async function handleGetCommands(
 	clientId: string,
 	_payload: PayloadMap["get_commands"],
 ): Promise<void> {
-	const commands = await deps.client.listCommands(deps.config.projectDir);
+	const commands = await deps.client.app.commands();
 	deps.wsHandler.sendTo(clientId, { type: "command_list", commands });
 }
 
@@ -30,7 +30,7 @@ export async function handleGetProjects(
 	if (deps.config.getProjects) {
 		projects = deps.config.getProjects();
 	} else {
-		const ocProjects = await deps.client.listProjects();
+		const ocProjects = await deps.client.app.projects();
 		projects = ocProjects.map((p) => ({
 			slug: p.id ?? "unknown",
 			title: p.name ?? p.id ?? "Unknown",

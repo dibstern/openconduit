@@ -16,6 +16,13 @@ import type {
 } from "@opencode-ai/sdk/client";
 import { OpenCodeApiError, OpenCodeConnectionError } from "../errors.js";
 import type { GapEndpoints } from "./gap-endpoints.js";
+import type {
+	Agent,
+	Message,
+	ProviderListResult,
+	SessionDetail,
+	SessionStatus,
+} from "./opencode-client.js";
 
 /**
  * Simplified result shape for the sdk() wrapper.
@@ -171,21 +178,43 @@ function call<T>(promise: Promise<unknown>): SdkResult<T> {
 class SessionNamespace {
 	constructor(private readonly api: OpenCodeAPI) {}
 
-	async list() {
+	async list(options?: {
+		roots?: boolean;
+		limit?: number;
+	}): Promise<SessionDetail[]> {
 		return this.api.sdk(
-			() => call(this.api._sdk.session.list()),
+			() =>
+				call(
+					this.api._sdk.session.list({
+						...(options != null
+							? {
+									query: {
+										...(options.roots !== undefined
+											? { roots: String(options.roots) }
+											: {}),
+										...(options.limit !== undefined
+											? { limit: String(options.limit) }
+											: {}),
+									} as Record<string, string>,
+								}
+							: {}),
+					}),
+				),
 			"session.list",
 		);
 	}
 
-	async get(id: string) {
+	async get(id: string): Promise<SessionDetail> {
 		return this.api.sdk(
 			() => call(this.api._sdk.session.get({ path: { id } })),
 			"session.get",
 		);
 	}
 
-	async create(options?: { title?: string; parentID?: string }) {
+	async create(options?: {
+		title?: string;
+		parentID?: string;
+	}): Promise<SessionDetail> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -197,14 +226,14 @@ class SessionNamespace {
 		);
 	}
 
-	async delete(id: string) {
+	async delete(id: string): Promise<void> {
 		return this.api.sdk(
 			() => call(this.api._sdk.session.delete({ path: { id } })),
 			"session.delete",
 		);
 	}
 
-	async update(id: string, options: { title?: string }) {
+	async update(id: string, options: { title?: string }): Promise<void> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -218,7 +247,7 @@ class SessionNamespace {
 	}
 
 	/** Get statuses for all sessions. Returns `Record<string, SessionStatus>`. */
-	async statuses() {
+	async statuses(): Promise<Record<string, SessionStatus>> {
 		return this.api.sdk(
 			() => call(this.api._sdk.session.status()),
 			"session.statuses",
@@ -232,7 +261,10 @@ class SessionNamespace {
 	 * This is NOT flat messages — each element contains the message info
 	 * and its associated parts.
 	 */
-	async messages(sessionId: string, options?: { limit?: number }) {
+	async messages(
+		sessionId: string,
+		options?: { limit?: number },
+	): Promise<Message[]> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -254,12 +286,14 @@ class SessionNamespace {
 	async messagesPage(
 		sessionId: string,
 		options?: { limit?: number; before?: string },
-	) {
-		return this.api._gaps.getMessagesPage(sessionId, options);
+	): Promise<Message[]> {
+		return this.api._gaps.getMessagesPage(sessionId, options) as Promise<
+			Message[]
+		>;
 	}
 
 	/** Get a single message with its parts. */
-	async message(sessionId: string, messageId: string) {
+	async message(sessionId: string, messageId: string): Promise<Message> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -282,7 +316,7 @@ class SessionNamespace {
 			model?: { providerID: string; modelID: string };
 			agent?: string;
 		},
-	) {
+	): Promise<void> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -299,7 +333,7 @@ class SessionNamespace {
 		);
 	}
 
-	async abort(sessionId: string) {
+	async abort(sessionId: string): Promise<void> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -311,7 +345,10 @@ class SessionNamespace {
 		);
 	}
 
-	async fork(sessionId: string, options?: { messageID?: string }) {
+	async fork(
+		sessionId: string,
+		options?: { messageID?: string },
+	): Promise<SessionDetail> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -327,7 +364,7 @@ class SessionNamespace {
 	async revert(
 		sessionId: string,
 		options: { messageID: string; partID?: string },
-	) {
+	): Promise<void> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -340,7 +377,7 @@ class SessionNamespace {
 		);
 	}
 
-	async unrevert(sessionId: string) {
+	async unrevert(sessionId: string): Promise<void> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -352,7 +389,7 @@ class SessionNamespace {
 		);
 	}
 
-	async share(sessionId: string) {
+	async share(sessionId: string): Promise<{ url: string }> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -367,7 +404,7 @@ class SessionNamespace {
 	async summarize(
 		sessionId: string,
 		options?: { providerID: string; modelID: string },
-	) {
+	): Promise<void> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -380,7 +417,10 @@ class SessionNamespace {
 		);
 	}
 
-	async diff(sessionId: string, options?: { messageID?: string }) {
+	async diff(
+		sessionId: string,
+		options?: { messageID?: string },
+	): Promise<{ diffs: Array<{ path: string; diff: string }> }> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -395,7 +435,7 @@ class SessionNamespace {
 		);
 	}
 
-	async children(sessionId: string) {
+	async children(sessionId: string): Promise<SessionDetail[]> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -414,8 +454,12 @@ class PermissionNamespace {
 	constructor(private readonly api: OpenCodeAPI) {}
 
 	/** List pending permissions (gap endpoint). */
-	async list() {
-		return this.api._gaps.listPendingPermissions();
+	async list(): Promise<
+		Array<{ [key: string]: unknown; id: string; permission: string }>
+	> {
+		return this.api._gaps.listPendingPermissions() as Promise<
+			Array<{ [key: string]: unknown; id: string; permission: string }>
+		>;
 	}
 
 	/**
@@ -428,7 +472,7 @@ class PermissionNamespace {
 		sessionId: string,
 		permissionId: string,
 		response: "once" | "always" | "reject",
-	) {
+	): Promise<void> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -448,8 +492,10 @@ class QuestionNamespace {
 	constructor(private readonly api: OpenCodeAPI) {}
 
 	/** List pending questions (gap endpoint). */
-	async list() {
-		return this.api._gaps.listPendingQuestions();
+	async list(): Promise<Array<{ [key: string]: unknown; id: string }>> {
+		return this.api._gaps.listPendingQuestions() as Promise<
+			Array<{ [key: string]: unknown; id: string }>
+		>;
 	}
 
 	/** Reply to a question (gap endpoint). */
@@ -468,11 +514,11 @@ class QuestionNamespace {
 class ConfigNamespace {
 	constructor(private readonly api: OpenCodeAPI) {}
 
-	async get() {
+	async get(): Promise<Record<string, unknown>> {
 		return this.api.sdk(() => call(this.api._sdk.config.get()), "config.get");
 	}
 
-	async update(body: Record<string, unknown>) {
+	async update(body: Record<string, unknown>): Promise<void> {
 		return this.api.sdk(
 			() =>
 				// biome-ignore lint/suspicious/noExplicitAny: Config body type is complex; callers pass partial config objects
@@ -497,7 +543,7 @@ class ProviderNamespace {
 	 * endpoint. Callers that need a flat array should normalize themselves, as
 	 * the config.providers() endpoint already returns a different shape.
 	 */
-	async list() {
+	async list(): Promise<ProviderListResult> {
 		return this.api.sdk(
 			() => call(this.api._sdk.provider.list()),
 			"provider.list",
@@ -510,7 +556,7 @@ class ProviderNamespace {
 class PtyNamespace {
 	constructor(private readonly api: OpenCodeAPI) {}
 
-	async list() {
+	async list(): Promise<Array<{ id: string; [key: string]: unknown }>> {
 		return this.api.sdk(() => call(this.api._sdk.pty.list()), "pty.list");
 	}
 
@@ -520,7 +566,7 @@ class PtyNamespace {
 		cwd?: string;
 		title?: string;
 		env?: Record<string, string>;
-	}) {
+	}): Promise<{ id: string; [key: string]: unknown }> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -530,7 +576,7 @@ class PtyNamespace {
 		);
 	}
 
-	async delete(id: string) {
+	async delete(id: string): Promise<void> {
 		return this.api.sdk(
 			() => call(this.api._sdk.pty.remove({ path: { id } })),
 			"pty.delete",
@@ -538,7 +584,7 @@ class PtyNamespace {
 	}
 
 	/** Resize a PTY session. Maps to sdk.pty.update() with size body. */
-	async resize(id: string, rows: number, cols: number) {
+	async resize(id: string, rows: number, cols: number): Promise<void> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -557,21 +603,23 @@ class PtyNamespace {
 class FileNamespace {
 	constructor(private readonly api: OpenCodeAPI) {}
 
-	async list(path: string) {
+	async list(
+		path: string,
+	): Promise<Array<{ name: string; type: string; size?: number }>> {
 		return this.api.sdk(
 			() => call(this.api._sdk.file.list({ query: { path } })),
 			"file.list",
 		);
 	}
 
-	async read(path: string) {
+	async read(path: string): Promise<{ content: string; binary?: boolean }> {
 		return this.api.sdk(
 			() => call(this.api._sdk.file.read({ query: { path } })),
 			"file.read",
 		);
 	}
 
-	async status() {
+	async status(): Promise<Record<string, unknown>> {
 		return this.api.sdk(() => call(this.api._sdk.file.status()), "file.status");
 	}
 }
@@ -581,14 +629,14 @@ class FileNamespace {
 class FindNamespace {
 	constructor(private readonly api: OpenCodeAPI) {}
 
-	async text(pattern: string) {
+	async text(pattern: string): Promise<unknown[]> {
 		return this.api.sdk(
 			() => call(this.api._sdk.find.text({ query: { pattern } })),
 			"find.text",
 		);
 	}
 
-	async files(query: string, options?: { dirs?: boolean }) {
+	async files(query: string, options?: { dirs?: boolean }): Promise<unknown[]> {
 		return this.api.sdk(
 			() =>
 				call(
@@ -605,7 +653,7 @@ class FindNamespace {
 		);
 	}
 
-	async symbols(query: string) {
+	async symbols(query: string): Promise<unknown[]> {
 		return this.api.sdk(
 			() => call(this.api._sdk.find.symbols({ query: { query } })),
 			"find.symbols",
@@ -618,11 +666,11 @@ class FindNamespace {
 class AppNamespace {
 	constructor(private readonly api: OpenCodeAPI) {}
 
-	async agents() {
+	async agents(): Promise<Agent[]> {
 		return this.api.sdk(() => call(this.api._sdk.app.agents()), "app.agents");
 	}
 
-	async commands() {
+	async commands(): Promise<Array<{ name: string; description?: string }>> {
 		return this.api.sdk(
 			() => call(this.api._sdk.command.list()),
 			"app.commands",
@@ -634,22 +682,28 @@ class AppNamespace {
 		return this.api._gaps.listSkills(directory);
 	}
 
-	async path() {
+	async path(): Promise<{ cwd: string }> {
 		return this.api.sdk(() => call(this.api._sdk.path.get()), "app.path");
 	}
 
-	async vcs() {
+	async vcs(): Promise<{ branch?: string; dirty?: boolean }> {
 		return this.api.sdk(() => call(this.api._sdk.vcs.get()), "app.vcs");
 	}
 
-	async projects() {
+	async projects(): Promise<
+		Array<{ id?: string; name?: string; path?: string; worktree?: string }>
+	> {
 		return this.api.sdk(
 			() => call(this.api._sdk.project.list()),
 			"app.projects",
 		);
 	}
 
-	async currentProject() {
+	async currentProject(): Promise<{
+		id?: string;
+		name?: string;
+		path?: string;
+	}> {
 		return this.api.sdk(
 			() => call(this.api._sdk.project.current()),
 			"app.currentProject",

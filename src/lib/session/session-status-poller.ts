@@ -17,10 +17,8 @@
 
 import type { ServiceRegistry } from "../daemon/service-registry.js";
 import { TrackedService } from "../daemon/tracked-service.js";
-import type {
-	OpenCodeClient,
-	SessionStatus,
-} from "../instance/opencode-client.js";
+import type { OpenCodeAPI } from "../instance/opencode-api.js";
+import type { SessionStatus } from "../instance/opencode-client.js";
 import { createSilentLogger, type Logger } from "../logger.js";
 import type { EventStore } from "../persistence/event-store.js";
 import {
@@ -75,7 +73,7 @@ export interface ReconciliationPersistence {
 }
 
 export interface SessionStatusPollerOptions {
-	client: Pick<OpenCodeClient, "getSessionStatuses" | "getSession">;
+	client: Pick<OpenCodeAPI, "session">;
 	/** Polling interval in milliseconds (default: 7000). */
 	interval?: number;
 	log?: Logger;
@@ -101,10 +99,7 @@ export type SessionStatusPollerEvents = {
 // ─── Reconciliation Loop ─────────────────────────────────────────────────────
 
 export class SessionStatusPoller extends TrackedService<SessionStatusPollerEvents> {
-	private readonly client: Pick<
-		OpenCodeClient,
-		"getSessionStatuses" | "getSession"
-	>;
+	private readonly client: Pick<OpenCodeAPI, "session">;
 	private readonly interval: number;
 	private readonly log: Logger;
 	private readonly getSessionParentMap: (() => Map<string, string>) | undefined;
@@ -255,7 +250,7 @@ export class SessionStatusPoller extends TrackedService<SessionStatusPollerEvent
 	async reconcileNow(): Promise<void> {
 		if (!this.persistence || !this.readQuery) return;
 		try {
-			const restStatuses = await this.client.getSessionStatuses();
+			const restStatuses = await this.client.session.statuses();
 			this.reconcileStatuses(restStatuses);
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
@@ -274,7 +269,7 @@ export class SessionStatusPoller extends TrackedService<SessionStatusPollerEvent
 			// SQLite is the sole read path when available.
 			const raw = this.sqliteReader
 				? this.sqliteReader.getSessionStatuses()
-				: await this.client.getSessionStatuses();
+				: await this.client.session.statuses();
 			const current = await this.augmentStatuses(raw);
 
 			if (!this.initialized) {
@@ -339,7 +334,7 @@ export class SessionStatusPoller extends TrackedService<SessionStatusPollerEvent
 
 		// REST reconciliation: compare REST vs projected statuses
 		try {
-			const restStatuses = await this.client.getSessionStatuses();
+			const restStatuses = await this.client.session.statuses();
 			this.reconcileStatuses(restStatuses);
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : String(err);
@@ -473,7 +468,7 @@ export class SessionStatusPoller extends TrackedService<SessionStatusPollerEvent
 				continue;
 			// API lookup (non-blocking — if it fails, we skip)
 			try {
-				const session = await this.client.getSession(busyId);
+				const session = await this.client.session.get(busyId);
 				const pid = session.parentID;
 				this.childToParentCache.set(busyId, pid);
 				if (pid) {

@@ -115,7 +115,7 @@ describe("handleViewSession — pending question delivery", () => {
 	it("only sends pending questions for the viewed session, not other sessions", async () => {
 		// listPendingQuestions returns questions for multiple sessions
 		// (the API returns all pending questions, not filtered by session)
-		vi.mocked(deps.client.listPendingQuestions).mockResolvedValue([
+		vi.mocked(deps.client.question.list).mockResolvedValue([
 			{
 				id: "que_this_session",
 				questions: [
@@ -149,7 +149,7 @@ describe("handleViewSession — pending question delivery", () => {
 		await handleViewSession(deps, "client-1", { sessionId: "ses_active" });
 
 		// Should call listPendingQuestions
-		expect(deps.client.listPendingQuestions).toHaveBeenCalled();
+		expect(deps.client.question.list).toHaveBeenCalled();
 
 		// Only the question for ses_active should be sent, NOT the one for ses_other
 		const askUserMsgs = sendToCalls.filter(
@@ -161,7 +161,7 @@ describe("handleViewSession — pending question delivery", () => {
 	});
 
 	it("does not send questions when there are none pending", async () => {
-		vi.mocked(deps.client.listPendingQuestions).mockResolvedValue([]);
+		vi.mocked(deps.client.question.list).mockResolvedValue([]);
 
 		await handleViewSession(deps, "client-1", { sessionId: "ses_active" });
 
@@ -275,7 +275,7 @@ describe("handleViewSession — pending permission delivery", () => {
 	});
 
 	it("only sends permissions for the viewed session, not other sessions", async () => {
-		vi.mocked(deps.client.listPendingPermissions).mockResolvedValue([
+		vi.mocked(deps.client.permission.list).mockResolvedValue([
 			{
 				id: "per_this",
 				permission: "external_directory",
@@ -312,7 +312,7 @@ describe("handleViewSession — pending permission delivery", () => {
 			},
 		]);
 		// API also returns it
-		vi.mocked(deps.client.listPendingPermissions).mockResolvedValue([
+		vi.mocked(deps.client.permission.list).mockResolvedValue([
 			{
 				id: "per_abc123",
 				permission: "external_directory",

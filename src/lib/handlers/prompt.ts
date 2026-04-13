@@ -168,7 +168,7 @@ export async function handleMessage(
 	} else {
 		// Legacy path: direct REST call (used when engine is not wired, e.g. tests)
 		try {
-			await deps.client.sendMessageAsync(activeId, prompt);
+			await deps.client.session.prompt(activeId, prompt);
 		} catch (sendErr) {
 			deps.log.warn(
 				`client=${clientId} session=${activeId} Failed to send message:`,
@@ -198,7 +198,7 @@ export async function handleCancel(
 		deps.log.info(`client=${clientId} session=${activeId} Aborting`);
 		deps.overrides.clearProcessingTimeout(activeId);
 		try {
-			await deps.client.abortSession(activeId);
+			await deps.client.session.abort(activeId);
 		} catch (abortErr) {
 			deps.log.warn(
 				`client=${clientId} session=${activeId} Abort failed:`,
@@ -217,7 +217,7 @@ export async function handleRewind(
 	const messageId = payload.messageId ?? payload.uuid ?? "";
 	const activeId = resolveSession(deps, clientId);
 	if (messageId && activeId) {
-		await deps.client.revertSession(activeId, messageId);
+		await deps.client.session.revert(activeId, { messageID: messageId });
 		// Invalidate pagination cursor — revert deletes messages, so the old
 		// cursor would point to a non-existent message ID.
 		deps.sessionMgr.clearPaginationCursor(activeId);

@@ -285,13 +285,13 @@ test.describe("Unified Rendering: Paginated History", () => {
 		// Inject pre-built paginated message responses into the mock so the
 		// relay's getMessagesPage(limit=50) gets the correct page sequence.
 		await harness.stack.sseConsumer.disconnect();
-		const sessions = await harness.stack.client.listSessions();
+		const sessions = await harness.stack.client.session.list();
 		const sessionId = sessions[0]?.id;
 		expect(sessionId).toBeDefined();
 		if (!sessionId) return; // TS narrowing (expect above catches test failures)
 
 		// Fetch messages from mock REST for pagination setup
-		const allMsgs = await harness.stack.client.getMessages(sessionId);
+		const allMsgs = await harness.stack.client.session.messages(sessionId);
 		if (allMsgs.length > 50) {
 			const page1 = allMsgs.slice(-50); // most recent 50
 			const page2 = allMsgs.slice(0, allMsgs.length - 50);

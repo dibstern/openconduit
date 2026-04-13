@@ -11,7 +11,7 @@ import { MessagePollerManager } from "../../../src/lib/relay/message-poller-mana
  */
 function makeMockClient() {
 	return {
-		getMessages: vi.fn().mockResolvedValue([]),
+		session: { messages: vi.fn().mockResolvedValue([]) },
 	};
 }
 
@@ -175,7 +175,7 @@ describe("MessagePollerManager", () => {
 	it("emits events with sessionId when poller finds content", async () => {
 		const mockClient = makeMockClient();
 		// First poll seeds from empty, then a user message appears
-		mockClient.getMessages
+		mockClient.session.messages
 			.mockResolvedValueOnce([]) // first poll: seeds with empty
 			.mockResolvedValue([
 				{

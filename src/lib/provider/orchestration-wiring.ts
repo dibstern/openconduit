@@ -4,7 +4,7 @@
 // engine) from an OpenCodeClient. Used by relay-stack.ts to instantiate the
 // provider layer alongside the existing relay pipeline.
 
-import type { OpenCodeClient } from "../instance/opencode-client.js";
+import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type { OpenCodeEvent } from "../types.js";
 import { OpenCodeAdapter } from "./opencode-adapter.js";
 import { OrchestrationEngine } from "./orchestration-engine.js";
@@ -12,7 +12,7 @@ import { ProviderRegistry } from "./provider-registry.js";
 import type { TurnResult } from "./types.js";
 
 export interface OrchestrationLayerOptions {
-	readonly client: OpenCodeClient;
+	readonly client: OpenCodeAPI;
 	readonly workspaceRoot?: string;
 }
 

@@ -3,10 +3,8 @@
 // Wraps the existing OpenCodeClient REST API behind the ProviderAdapter
 // interface. Translates OpenCode SSE events into canonical events via EventSink.
 
-import type {
-	OpenCodeClient,
-	PromptOptions,
-} from "../instance/opencode-client.js";
+import type { OpenCodeAPI } from "../instance/opencode-api.js";
+import type { PromptOptions } from "../instance/opencode-client.js";
 import { createLogger } from "../logger.js";
 import type {
 	AdapterCapabilities,
@@ -41,7 +39,7 @@ function createDeferred<T>(): Deferred<T> {
 // ─── Options ────────────────────────────────────────────────────────────────
 
 export interface OpenCodeAdapterOptions {
-	readonly client: OpenCodeClient;
+	readonly client: OpenCodeAPI;
 	readonly workspaceRoot?: string;
 }
 
@@ -50,7 +48,7 @@ export interface OpenCodeAdapterOptions {
 export class OpenCodeAdapter implements ProviderAdapter {
 	readonly providerId = "opencode";
 
-	private readonly client: OpenCodeClient;
+	private readonly client: OpenCodeAPI;
 	private readonly workspaceRoot: string | undefined;
 	private readonly pendingTurns = new Map<string, Deferred<TurnResult>>();
 
@@ -63,9 +61,9 @@ export class OpenCodeAdapter implements ProviderAdapter {
 
 	async discover(): Promise<AdapterCapabilities> {
 		const [providerResult, commandsRaw, skillsRaw] = await Promise.all([
-			this.client.listProviders(),
-			this.client.listCommands(this.workspaceRoot),
-			this.client.listSkills(this.workspaceRoot),
+			this.client.provider.list(),
+			this.client.app.commands(),
+			this.client.app.skills(this.workspaceRoot),
 		]);
 
 		// Map providers -> models
@@ -132,7 +130,7 @@ export class OpenCodeAdapter implements ProviderAdapter {
 		// Handle abort signal
 		const onAbort = () => {
 			log.info(`Turn aborted for session ${sessionId}`);
-			this.client.abortSession(sessionId).catch((err) => {
+			this.client.session.abort(sessionId).catch((err) => {
 				log.warn(`Failed to abort session ${sessionId}: ${err}`);
 			});
 		};
@@ -152,7 +150,7 @@ export class OpenCodeAdapter implements ProviderAdapter {
 
 		try {
 			// Send the message -- response comes via SSE, not this call
-			await this.client.sendMessageAsync(sessionId, promptOptions);
+			await this.client.session.prompt(sessionId, promptOptions);
 		} catch (err) {
 			// Clean up on send failure
 			this.pendingTurns.delete(sessionId);
@@ -198,7 +196,7 @@ export class OpenCodeAdapter implements ProviderAdapter {
 	// ─── interruptTurn ────────────────────────────────────────────────────
 
 	async interruptTurn(sessionId: string): Promise<void> {
-		await this.client.abortSession(sessionId);
+		await this.client.session.abort(sessionId);
 	}
 
 	// ─── resolvePermission ────────────────────────────────────────────────
@@ -208,7 +206,11 @@ export class OpenCodeAdapter implements ProviderAdapter {
 		requestId: string,
 		decision: PermissionDecision,
 	): Promise<void> {
-		await this.client.replyPermission({ id: requestId, decision });
+		await this.client.permission.reply(
+			_sessionId,
+			requestId,
+			decision as "once" | "always" | "reject",
+		);
 	}
 
 	// ─── resolveQuestion ──────────────────────────────────────────────────
@@ -222,10 +224,7 @@ export class OpenCodeAdapter implements ProviderAdapter {
 		const answerArrays = Object.values(answers).map((v) =>
 			Array.isArray(v) ? v.map(String) : [String(v)],
 		);
-		await this.client.replyQuestion({
-			id: requestId,
-			answers: answerArrays,
-		});
+		await this.client.question.reply(requestId, answerArrays);
 	}
 
 	// ─── shutdown ────────────────────────────────────────────────────────

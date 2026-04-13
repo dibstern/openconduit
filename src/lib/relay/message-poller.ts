@@ -9,7 +9,8 @@
 
 import type { ServiceRegistry } from "../daemon/service-registry.js";
 import { TrackedService } from "../daemon/tracked-service.js";
-import type { Message, OpenCodeClient } from "../instance/opencode-client.js";
+import type { OpenCodeAPI } from "../instance/opencode-api.js";
+import type { Message } from "../instance/opencode-client.js";
 import { createSilentLogger, type Logger } from "../logger.js";
 import type { RelayMessage } from "../types.js";
 import { mapToolName } from "./event-translator.js";
@@ -438,7 +439,7 @@ export function buildSeedSnapshot(
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface MessagePollerOptions {
-	client: Pick<OpenCodeClient, "getMessages">;
+	client: Pick<OpenCodeAPI, "session">;
 	/** Polling interval in milliseconds (default: 750) */
 	interval?: number;
 	log?: Logger;
@@ -459,7 +460,7 @@ export type MessagePollerEvents = {
 // ─── Poller ──────────────────────────────────────────────────────────────────
 
 export class MessagePoller extends TrackedService<MessagePollerEvents> {
-	private readonly client: Pick<OpenCodeClient, "getMessages">;
+	private readonly client: Pick<OpenCodeAPI, "session">;
 	private readonly interval: number;
 	private readonly log: Logger;
 	private readonly hasViewers: (() => boolean) | undefined;
@@ -636,7 +637,7 @@ export class MessagePoller extends TrackedService<MessagePollerEvents> {
 		const sessionId = this.activeSessionId;
 
 		try {
-			const messages = await this.client.getMessages(sessionId);
+			const messages = await this.client.session.messages(sessionId);
 
 			// ── Seed on first poll (no seed provided at startPolling) ──
 			// Build a baseline snapshot from REST instead of synthesizing

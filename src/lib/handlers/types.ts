@@ -95,7 +95,7 @@ export interface HandlerDeps {
 	/**
 	 * Phase 5: OrchestrationEngine for routing prompts through provider adapters.
 	 * When set, handleMessage() dispatches through the engine instead of calling
-	 * client.sendMessageAsync() directly. Optional — tests may omit it; production
+	 * client.session.prompt() directly. Optional — tests may omit it; production
 	 * always provides it via relay-stack.ts.
 	 */
 	orchestrationEngine?: OrchestrationEngine;

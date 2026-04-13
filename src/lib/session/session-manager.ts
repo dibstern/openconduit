@@ -10,8 +10,8 @@ import {
 	saveForkMetadata,
 } from "../daemon/fork-metadata.js";
 import { OpenCodeApiError } from "../errors.js";
+import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type {
-	OpenCodeClient,
 	SessionDetail,
 	SessionStatus,
 } from "../instance/opencode-client.js";
@@ -24,7 +24,7 @@ import type { RelayMessage, SessionInfo } from "../types.js";
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 export interface SessionManagerOptions {
-	client: OpenCodeClient;
+	client: OpenCodeAPI;
 	/** Number of messages to load per page (default 50) */
 	historyPageSize?: number;
 	/** Logger for diagnostics */
@@ -61,7 +61,7 @@ export interface HistoryPage {
 // ─── Session Manager ─────────────────────────────────────────────────────────
 
 export class SessionManager extends EventEmitter<SessionManagerEvents> {
-	private readonly client: OpenCodeClient;
+	private readonly client: OpenCodeAPI;
 	private readonly historyPageSize: number;
 	private readonly log: Logger;
 	private readonly directory: string | undefined;
@@ -184,7 +184,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 
 		const clientOpts =
 			options?.roots !== undefined ? { roots: options.roots } : undefined;
-		const sessions = await this.client.listSessions(clientOpts);
+		const sessions = await this.client.session.list(clientOpts);
 
 		// Track total session count from unfiltered fetches
 		if (!options?.roots) {
@@ -269,9 +269,9 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 			return { messages: [], hasMore: false };
 		}
 
-		let page: Awaited<ReturnType<typeof this.client.getMessagesPage>>;
+		let page: Awaited<ReturnType<typeof this.client.session.messagesPage>>;
 		try {
-			page = await this.client.getMessagesPage(sessionId, {
+			page = await this.client.session.messagesPage(sessionId, {
 				limit: this.historyPageSize,
 				...(before ? { before } : {}),
 			});
@@ -298,7 +298,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 
 				// For initial loads (offset = 0), retry without cursor to get
 				// the latest page (e.g. after rewind/fork).
-				page = await this.client.getMessagesPage(sessionId, {
+				page = await this.client.session.messagesPage(sessionId, {
 					limit: this.historyPageSize,
 				});
 			} else {
@@ -333,7 +333,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 		cursorId: string,
 	): Promise<HistoryPage> {
 		// Fetch all messages (API returns chronological order, oldest first).
-		const all = await this.client.getMessagesPage(sessionId, {
+		const all = await this.client.session.messagesPage(sessionId, {
 			limit: 10_000,
 		});
 
@@ -380,7 +380,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 		title?: string,
 		opts?: { silent?: boolean },
 	): Promise<SessionDetail> {
-		const session = await this.client.createSession(title ? { title } : {});
+		const session = await this.client.session.create(title ? { title } : {});
 
 		this.emit("session_lifecycle", { type: "created", sessionId: session.id });
 
@@ -396,7 +396,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 		sessionId: string,
 		opts?: { silent?: boolean },
 	): Promise<void> {
-		await this.client.deleteSession(sessionId);
+		await this.client.session.delete(sessionId);
 
 		this.emit("session_lifecycle", { type: "deleted", sessionId });
 
@@ -407,7 +407,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 
 	/** Rename a session */
 	async renameSession(sessionId: string, title: string): Promise<void> {
-		await this.client.updateSession(sessionId, { title });
+		await this.client.session.update(sessionId, { title });
 		await this.broadcastSessionList();
 	}
 
@@ -416,7 +416,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 		query: string,
 		options?: { roots?: boolean },
 	): Promise<SessionInfo[]> {
-		const sessions = await this.client.listSessions(
+		const sessions = await this.client.session.list(
 			options?.roots !== undefined ? { roots: options.roots } : undefined,
 		);
 		// Client-side filter since OpenCode's list endpoint may not support search directly
@@ -442,7 +442,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 	 */
 	async initialize(title?: string): Promise<string> {
 		// Fetch all sessions (not just the default 100) for accurate counting
-		const existing = await this.client.listSessions({ limit: 10000 });
+		const existing = await this.client.session.list({ limit: 10000 });
 		this._lastKnownSessionCount = existing.length;
 		if (existing.length > 0) {
 			// Seed lastMessageAt from session metadata timestamps.
@@ -462,7 +462,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 			// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 			return sorted[0]!.id;
 		}
-		const session = await this.client.createSession(title ? { title } : {});
+		const session = await this.client.session.create(title ? { title } : {});
 		return session.id;
 	}
 
@@ -479,7 +479,7 @@ export class SessionManager extends EventEmitter<SessionManagerEvents> {
 			// biome-ignore lint/style/noNonNullAssertion: safe — guarded by length check
 			return (topLevel ?? sessions[0]!).id;
 		}
-		const created = await this.client.createSession(title ? { title } : {});
+		const created = await this.client.session.create(title ? { title } : {});
 		this.emit("session_lifecycle", { type: "created", sessionId: created.id });
 		return created.id;
 	}

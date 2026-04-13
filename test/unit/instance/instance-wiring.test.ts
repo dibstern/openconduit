@@ -504,12 +504,12 @@ describe("instance_list resilience", () => {
 		});
 
 		// Make earlier init steps fail
-		vi.mocked(deps.client.getSession).mockRejectedValue(new Error("fail"));
+		vi.mocked(deps.client.session.get).mockRejectedValue(new Error("fail"));
 		vi.mocked(deps.sessionMgr.listSessions).mockRejectedValue(
 			new Error("fail"),
 		);
-		vi.mocked(deps.client.listAgents).mockRejectedValue(new Error("fail"));
-		vi.mocked(deps.client.listProviders).mockRejectedValue(new Error("fail"));
+		vi.mocked(deps.client.app.agents).mockRejectedValue(new Error("fail"));
+		vi.mocked(deps.client.provider.list).mockRejectedValue(new Error("fail"));
 
 		// Should not throw
 		await handleClientConnected(deps, "client-1");

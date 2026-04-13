@@ -1,6 +1,6 @@
 // test/unit/provider/opencode-adapter-send-turn.test.ts
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { OpenCodeClient } from "../../../src/lib/instance/opencode-client.js";
+import type { OpenCodeAPI } from "../../../src/lib/instance/opencode-api.js";
 import type { CanonicalEvent } from "../../../src/lib/persistence/events.js";
 import { OpenCodeAdapter } from "../../../src/lib/provider/opencode-adapter.js";
 import type {
@@ -10,22 +10,29 @@ import type {
 
 // ─── Mocks ──────────────────────────────────────────────────────────────────
 
-function makeStubClient(overrides?: Partial<OpenCodeClient>): OpenCodeClient {
+function makeStubClient(overrides?: Record<string, unknown>): OpenCodeAPI {
 	return {
-		sendMessageAsync: vi.fn(async () => {}),
-		abortSession: vi.fn(async () => {}),
-		replyPermission: vi.fn(async () => {}),
-		replyQuestion: vi.fn(async () => {}),
-		listProviders: vi.fn(async () => ({
-			providers: [],
-			defaults: {},
-			connected: [],
-		})),
-		listAgents: vi.fn(async () => []),
-		listCommands: vi.fn(async () => []),
-		listSkills: vi.fn(async () => []),
+		session: {
+			prompt: vi.fn(async () => {}),
+			abort: vi.fn(async () => {}),
+			...(overrides?.session as Record<string, unknown>),
+		},
+		permission: { reply: vi.fn(async () => {}), list: vi.fn(async () => []) },
+		question: { reply: vi.fn(async () => {}), reject: vi.fn(async () => {}), list: vi.fn(async () => []) },
+		provider: {
+			list: vi.fn(async () => ({
+				providers: [],
+				defaults: {},
+				connected: [],
+			})),
+		},
+		app: {
+			agents: vi.fn(async () => []),
+			commands: vi.fn(async () => []),
+			skills: vi.fn(async () => []),
+		},
 		...overrides,
-	} as unknown as OpenCodeClient;
+	} as unknown as OpenCodeAPI;
 }
 
 function makeStubEventSink(): EventSink & {
@@ -60,7 +67,7 @@ function makeSendTurnInput(overrides?: Partial<SendTurnInput>): SendTurnInput {
 }
 
 describe("OpenCodeAdapter.sendTurn()", () => {
-	let client: OpenCodeClient;
+	let client: OpenCodeAPI;
 	let adapter: OpenCodeAdapter;
 
 	beforeEach(() => {
@@ -82,7 +89,7 @@ describe("OpenCodeAdapter.sendTurn()", () => {
 		});
 
 		const result = await resultPromise;
-		expect(client.sendMessageAsync).toHaveBeenCalledWith("s1", {
+		expect(client.session.prompt).toHaveBeenCalledWith("s1", {
 			text: "Write hello world",
 			model: { providerID: "anthropic", modelID: "claude-sonnet" },
 		});
@@ -106,7 +113,7 @@ describe("OpenCodeAdapter.sendTurn()", () => {
 
 		await resultPromise;
 
-		expect(client.sendMessageAsync).toHaveBeenCalledWith("s1", {
+		expect(client.session.prompt).toHaveBeenCalledWith("s1", {
 			text: "Write hello world",
 			model: { providerID: "anthropic", modelID: "claude-sonnet" },
 			images: ["data:image/png;base64,abc"],
@@ -128,7 +135,7 @@ describe("OpenCodeAdapter.sendTurn()", () => {
 
 		await resultPromise;
 
-		expect(client.sendMessageAsync).toHaveBeenCalledWith(
+		expect(client.session.prompt).toHaveBeenCalledWith(
 			"s1",
 			expect.objectContaining({
 				variant: "thinking",
@@ -136,11 +143,14 @@ describe("OpenCodeAdapter.sendTurn()", () => {
 		);
 	});
 
-	it("returns error status when sendMessageAsync fails", async () => {
+	it("returns error status when session.prompt fails", async () => {
 		client = makeStubClient({
-			sendMessageAsync: vi.fn(async () => {
-				throw new Error("HTTP 500");
-			}),
+			session: {
+				prompt: vi.fn(async () => {
+					throw new Error("HTTP 500");
+				}),
+				abort: vi.fn(async () => {}),
+			},
 		});
 		adapter = new OpenCodeAdapter({ client });
 
