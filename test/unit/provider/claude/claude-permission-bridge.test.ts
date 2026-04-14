@@ -196,7 +196,7 @@ describe("ClaudePermissionBridge", () => {
 		expect(pending).toBeDefined();
 
 		// Resolve via the bridge's resolvePermission (which resolves the deferred)
-		await bridge.resolvePermission(ctx, pending!.requestId, "once");
+		await bridge.resolvePermission(ctx, pending?.requestId, "once");
 		// Also resolve the sink promise so the bridge can complete
 		resolveSink({ decision: "once" });
 
@@ -207,5 +207,109 @@ describe("ClaudePermissionBridge", () => {
 	it("resolvePermission is a no-op for unknown requestId", async () => {
 		// Should not throw
 		await bridge.resolvePermission(ctx, "unknown-id", "once");
+	});
+
+	it("concurrent canUseTool calls for different tools resolve independently", async () => {
+		let resolveSinkA: (v: unknown) => void = () => {};
+		let resolveSinkB: (v: unknown) => void = () => {};
+		let callCount = 0;
+		(sink.requestPermission as ReturnType<typeof vi.fn>) = vi.fn(() => {
+			callCount++;
+			if (callCount === 1) {
+				return new Promise((r) => {
+					resolveSinkA = r;
+				});
+			}
+			return new Promise((r) => {
+				resolveSinkB = r;
+			});
+		});
+
+		const acA = new AbortController();
+		const acB = new AbortController();
+
+		const promiseA = bridge.canUseTool(
+			ctx,
+			"Bash",
+			{ command: "ls" },
+			{
+				signal: acA.signal,
+				toolUseID: "tool-a",
+			},
+		);
+		const promiseB = bridge.canUseTool(
+			ctx,
+			"Read",
+			{ file_path: "/tmp" },
+			{
+				signal: acB.signal,
+				toolUseID: "tool-b",
+			},
+		);
+
+		// Let microtasks settle — both pending approvals should exist
+		await new Promise((r) => setTimeout(r, 0));
+		expect(ctx.pendingApprovals.size).toBe(2);
+
+		// Resolve only the first call
+		resolveSinkA({ decision: "once" });
+		const resultA = await promiseA;
+		expect(resultA.behavior).toBe("allow");
+
+		// Second is still pending
+		let bSettled = false;
+		void promiseB.then(() => {
+			bSettled = true;
+		});
+		await new Promise((r) => setTimeout(r, 0));
+		expect(bSettled).toBe(false);
+
+		// Now resolve the second call
+		resolveSinkB({ decision: "reject" });
+		const resultB = await promiseB;
+		expect(resultB.behavior).toBe("deny");
+
+		// All approvals cleaned up
+		expect(ctx.pendingApprovals.size).toBe(0);
+	});
+
+	it("unexpected response shape from EventSink defaults to reject", async () => {
+		// Return a weird shape from requestPermission
+		(sink.requestPermission as ReturnType<typeof vi.fn>) = vi.fn(async () => ({
+			decision: "invalid_value",
+		}));
+
+		const ac = new AbortController();
+		const result = await bridge.canUseTool(
+			ctx,
+			"Bash",
+			{ command: "rm -rf /" },
+			{ signal: ac.signal, toolUseID: "tool-weird" },
+		);
+		expect(result.behavior).toBe("deny");
+
+		// Also test with empty object
+		(sink.requestPermission as ReturnType<typeof vi.fn>) = vi.fn(
+			async () => ({}),
+		);
+		const result2 = await bridge.canUseTool(
+			ctx,
+			"Bash",
+			{ command: "echo hi" },
+			{ signal: ac.signal, toolUseID: "tool-empty" },
+		);
+		expect(result2.behavior).toBe("deny");
+
+		// Also test with undefined
+		(sink.requestPermission as ReturnType<typeof vi.fn>) = vi.fn(
+			async () => undefined,
+		);
+		const result3 = await bridge.canUseTool(
+			ctx,
+			"Bash",
+			{ command: "echo bye" },
+			{ signal: ac.signal, toolUseID: "tool-undef" },
+		);
+		expect(result3.behavior).toBe("deny");
 	});
 });

@@ -242,6 +242,37 @@ describe("ClaudeAdapter lifecycle", () => {
 			expect(ctx.inFlightTools.size).toBe(0);
 		});
 
+		it("cleanupSession with no eventSink skips tool.completed emission", async () => {
+			const adapter = new ClaudeAdapter({ workspaceRoot: workspace });
+			const ctx = makeFakeSessionContext("sess-1", {
+				eventSink: undefined,
+			});
+			ctx.inFlightTools.set(0, {
+				itemId: "tool-1",
+				toolName: "Bash",
+				title: "Command run",
+				input: {},
+				partialInputJson: "",
+			});
+			ctx.inFlightTools.set(1, {
+				itemId: "tool-2",
+				toolName: "Read",
+				title: "File read",
+				input: {},
+				partialInputJson: "",
+			});
+			(
+				adapter as unknown as { sessions: Map<string, ClaudeSessionContext> }
+			).sessions.set("sess-1", ctx);
+
+			// Should not throw even though eventSink is undefined
+			await adapter.interruptTurn("sess-1");
+
+			// In-flight tools should still be cleared
+			expect(ctx.inFlightTools.size).toBe(0);
+			expect(ctx.stopped).toBe(true);
+		});
+
 		it("emits tool.completed events via EventSink for in-flight tools on interrupt", async () => {
 			const adapter = new ClaudeAdapter({ workspaceRoot: workspace });
 			const sink = createMockEventSink();
@@ -274,11 +305,11 @@ describe("ClaudeAdapter lifecycle", () => {
 				(call) => call[0].type === "tool.completed",
 			);
 			expect(completedEvents).toHaveLength(2);
-			expect(completedEvents[0]![0].data).toMatchObject({
+			expect(completedEvents[0]?.[0].data).toMatchObject({
 				partId: "tool-1",
 				result: null,
 			});
-			expect(completedEvents[1]![0].data).toMatchObject({
+			expect(completedEvents[1]?.[0].data).toMatchObject({
 				partId: "tool-2",
 				result: null,
 			});

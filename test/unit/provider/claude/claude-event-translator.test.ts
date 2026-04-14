@@ -871,6 +871,136 @@ describe("ClaudeEventTranslator", () => {
 		expect(data["toolName"]).toBe("mcp_database_query");
 	});
 
+	// ─── Gap tests: edge cases ──────────────────────────────────────────
+
+	it("text.delta with empty string is skipped", async () => {
+		// Seed a text block so the translator has an in-flight tool
+		await translator.translate(
+			ctx,
+			makeStreamEvent({
+				type: "content_block_start",
+				index: 0,
+				content_block: { type: "text", text: "" },
+			}),
+		);
+
+		const countBefore = sink.events.length;
+
+		// Send an empty text_delta
+		await translator.translate(
+			ctx,
+			makeStreamEvent({
+				type: "content_block_delta",
+				index: 0,
+				delta: { type: "text_delta", text: "" },
+			}),
+		);
+
+		// No new events should have been pushed (empty deltas are skipped)
+		const deltaEvents = sink.events
+			.slice(countBefore)
+			.filter((e) => e.type === "text.delta");
+		expect(deltaEvents).toHaveLength(0);
+	});
+
+	it("input_json_delta with duplicate fingerprint is deduplicated", async () => {
+		// Seed a tool_use block
+		await translator.translate(
+			ctx,
+			makeStreamEvent({
+				type: "content_block_start",
+				index: 0,
+				content_block: {
+					type: "tool_use",
+					id: "tool-dedup",
+					name: "Bash",
+					input: {},
+				},
+			}),
+		);
+
+		// Send the first JSON delta that parses to {"command":"ls"}
+		await translator.translate(
+			ctx,
+			makeStreamEvent({
+				type: "content_block_delta",
+				index: 0,
+				delta: {
+					type: "input_json_delta",
+					partial_json: '{"command":"ls"}',
+				},
+			}),
+		);
+
+		const runningAfterFirst = sink.events.filter(
+			(e) => e.type === "tool.running",
+		);
+		expect(runningAfterFirst).toHaveLength(1);
+
+		// Send a second delta that extends the string but parses to the same JSON
+		// Because partialInputJson accumulates, we need a second delta that, when
+		// appended, still parses to the same object. The tool's partialInputJson
+		// is now '{"command":"ls"}'. Sending '' will keep it the same, but that
+		// won't trigger a parse. Instead, reset the tool's partial state to force
+		// a duplicate parse:
+		const tool = ctx.inFlightTools.get(0);
+		expect(tool).toBeDefined();
+		// Reset partial input so a fresh identical JSON chunk triggers re-parse
+		if (tool) tool.partialInputJson = "";
+
+		await translator.translate(
+			ctx,
+			makeStreamEvent({
+				type: "content_block_delta",
+				index: 0,
+				delta: {
+					type: "input_json_delta",
+					partial_json: '{"command":"ls"}',
+				},
+			}),
+		);
+
+		// Should still be 1 because the fingerprint is the same
+		const runningAfterSecond = sink.events.filter(
+			(e) => e.type === "tool.running",
+		);
+		expect(runningAfterSecond).toHaveLength(1);
+	});
+
+	it("result with cache_creation_input_tokens includes cacheWrite", async () => {
+		ctx.lastAssistantUuid = "assist-uuid-cache";
+
+		await translator.translate(ctx, {
+			type: "result",
+			subtype: "success",
+			duration_ms: 800,
+			duration_api_ms: 600,
+			is_error: false,
+			num_turns: 1,
+			result: "done",
+			stop_reason: "end_turn",
+			total_cost_usd: 0.05,
+			usage: {
+				input_tokens: 200,
+				output_tokens: 100,
+				cache_read_input_tokens: 0,
+				cache_creation_input_tokens: 500,
+			},
+			modelUsage: {},
+			permission_denials: [],
+			uuid: "00000000-0000-0000-0000-000000000040",
+			session_id: "sdk-sess",
+		} as unknown as SDKMessage);
+
+		const turnCompleted = sink.events.find((e) => e.type === "turn.completed");
+		expect(turnCompleted).toBeDefined();
+		const data = dataOf(turnCompleted);
+		const tokens = data["tokens"] as Record<string, unknown>;
+		expect(tokens["input"]).toBe(200);
+		expect(tokens["output"]).toBe(100);
+		expect(tokens["cacheWrite"]).toBe(500);
+	});
+
 	it("all emitted events have provider set to 'claude'", async () => {
 		// Trigger several event types
 		await translator.translate(ctx, {

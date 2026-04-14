@@ -3,6 +3,56 @@ import { mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// Mock the logger module so we can spy on log.error calls
+const { mockLogError } = vi.hoisted(() => ({
+	mockLogError: vi.fn(),
+}));
+vi.mock("../../../src/lib/logger.js", () => ({
+	createLogger: () => ({
+		debug: vi.fn(),
+		verbose: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: mockLogError,
+		child: () => ({
+			debug: vi.fn(),
+			verbose: vi.fn(),
+			info: vi.fn(),
+			warn: vi.fn(),
+			error: mockLogError,
+		}),
+	}),
+	createSilentLogger: () => ({
+		debug: vi.fn(),
+		verbose: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+		child: () => ({
+			debug: vi.fn(),
+			verbose: vi.fn(),
+			info: vi.fn(),
+			warn: vi.fn(),
+			error: vi.fn(),
+		}),
+	}),
+	createTestLogger: () => ({
+		debug: vi.fn(),
+		verbose: vi.fn(),
+		info: vi.fn(),
+		warn: vi.fn(),
+		error: vi.fn(),
+		child: () => ({
+			debug: vi.fn(),
+			verbose: vi.fn(),
+			info: vi.fn(),
+			warn: vi.fn(),
+			error: vi.fn(),
+		}),
+	}),
+}));
+
 import { ClaudeAdapter } from "../../../src/lib/provider/claude/claude-adapter.js";
 import {
 	OrchestrationEngine,
@@ -611,6 +661,90 @@ describe("OrchestrationEngine", () => {
 			expect(claudeEngine.getProviderForSession("int-session-erred")).toBe(
 				"claude",
 			);
+		});
+	});
+
+	describe("dispatch error context logging", () => {
+		beforeEach(() => {
+			mockLogError.mockClear();
+		});
+
+		it("dispatch logs error context before re-throwing for interruptTurn", async () => {
+			const failing = makeStubAdapter("opencode");
+			failing.interruptTurn.mockRejectedValue(
+				new Error("Adapter interrupt failed"),
+			);
+
+			const reg = new ProviderRegistry();
+			reg.registerAdapter(failing);
+			const eng = new OrchestrationEngine({ registry: reg });
+			eng.bindSession("s-err", "opencode");
+
+			await expect(
+				eng.dispatch({
+					type: "interrupt_turn",
+					sessionId: "s-err",
+				}),
+			).rejects.toThrow("Adapter interrupt failed");
+
+			expect(mockLogError).toHaveBeenCalledTimes(1);
+			const call0 = mockLogError.mock.calls[0];
+			expect(call0).toBeDefined();
+			const logMsg = call0![0] as string;
+			expect(logMsg).toContain("s-err");
+			expect(logMsg).toContain("opencode");
+		});
+
+		it("dispatch logs error context before re-throwing for resolvePermission", async () => {
+			const failing = makeStubAdapter("opencode");
+			failing.resolvePermission.mockRejectedValue(
+				new Error("Adapter permission failed"),
+			);
+
+			const reg = new ProviderRegistry();
+			reg.registerAdapter(failing);
+			const eng = new OrchestrationEngine({ registry: reg });
+			eng.bindSession("s-perm", "opencode");
+
+			await expect(
+				eng.dispatch({
+					type: "resolve_permission",
+					sessionId: "s-perm",
+					requestId: "req-1",
+					decision: "always",
+				}),
+			).rejects.toThrow("Adapter permission failed");
+
+			expect(mockLogError).toHaveBeenCalledTimes(1);
+			const call1 = mockLogError.mock.calls[0];
+			expect(call1).toBeDefined();
+			const logMsg = call1![0] as string;
+			expect(logMsg).toContain("s-perm");
+			expect(logMsg).toContain("opencode");
+		});
+
+		it("dispatch logs error context before re-throwing for discover", async () => {
+			const failing = makeStubAdapter("opencode");
+			failing.discover.mockRejectedValue(
+				new Error("Adapter discover failed"),
+			);
+
+			const reg = new ProviderRegistry();
+			reg.registerAdapter(failing);
+			const eng = new OrchestrationEngine({ registry: reg });
+
+			await expect(
+				eng.dispatch({
+					type: "discover",
+					providerId: "opencode",
+				}),
+			).rejects.toThrow("Adapter discover failed");
+
+			expect(mockLogError).toHaveBeenCalledTimes(1);
+			const call2 = mockLogError.mock.calls[0];
+			expect(call2).toBeDefined();
+			const logMsg = call2![0] as string;
+			expect(logMsg).toContain("opencode");
 		});
 	});
 });
