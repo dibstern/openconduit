@@ -293,7 +293,7 @@ describe("OpenCodeAPI", () => {
 		expect(result).toEqual({ id: "s2", title: "new" });
 	});
 
-	it("session.messages() returns SDK shape (info + parts)", async () => {
+	it("session.messages() flattens SDK shape and delegates to sdk.session.messages()", async () => {
 		const sdk = makeStubSdk();
 		const gaps = makeStubGaps();
 		const api = new OpenCodeAPI({
@@ -387,7 +387,8 @@ describe("OpenCodeAPI", () => {
 		});
 		const result = await api.provider.list();
 		expect(sdk.provider.list).toHaveBeenCalled();
-		expect(result).toEqual({ all: [], default: {}, connected: [] });
+		// SDK returns { all, default, connected }; adapter normalizes to { providers, defaults, connected }
+		expect(result).toEqual({ providers: [], defaults: {}, connected: [] });
 	});
 
 	it("pty.resize() delegates to sdk.pty.update() with size", async () => {
