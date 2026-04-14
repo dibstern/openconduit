@@ -7,8 +7,8 @@
 // result.error and translates to OpenCodeApiError (with response.status)
 // or OpenCodeConnectionError (for network failures).
 //
-// Message shape (Audit v1 fix #2): session.messages() returns SDK shape
-// `Array<{ info: Message, parts: Part[] }>`, NOT flat messages.
+// Message shape: session.messages() normalizes SDK's nested `{ info, parts }`
+// shape into flat `{ ...info, parts }` messages for relay callers.
 
 import type {
 	Event as OpenCodeEvent,
@@ -173,6 +173,32 @@ function call<T>(promise: Promise<unknown>): SdkResult<T> {
 	return promise as SdkResult<T>;
 }
 
+// ─── Message Flattening Helpers ──────────────────────────────────────────────
+// The SDK returns messages as `{ info: Message, parts: Part[] }`.
+// Callers expect flat messages with `.id`, `.role`, `.parts` at the top level.
+// These helpers handle both nested and already-flat shapes gracefully.
+
+/**
+ * Flatten a single message from SDK shape `{ info, parts }` to flat `{ ...info, parts }`.
+ * If the message is already flat (has `id` at top level), returns it as-is.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: runtime shape detection for SDK compat
+function flattenMessage(m: any): Message {
+	if (m.info && typeof m.info === "object") {
+		return { ...m.info, parts: m.parts ?? [] };
+	}
+	return m as Message;
+}
+
+/**
+ * Flatten an array of messages from SDK shape to flat messages.
+ */
+// biome-ignore lint/suspicious/noExplicitAny: runtime shape detection for SDK compat
+function flattenMessages(data: any): Message[] {
+	const arr = Array.isArray(data) ? data : [];
+	return arr.map(flattenMessage);
+}
+
 // ─── Session Namespace ───────────────────────────────────────────────────────
 
 class SessionNamespace {
@@ -257,15 +283,15 @@ class SessionNamespace {
 	/**
 	 * List messages for a session.
 	 *
-	 * Returns SDK shape: `Array<{ info: Message, parts: Part[] }>`.
-	 * This is NOT flat messages — each element contains the message info
-	 * and its associated parts.
+	 * The SDK returns `Array<{ info: Message, parts: Part[] }>`.
+	 * This method flattens to `Array<{ ...info, parts }>` so callers
+	 * get flat messages with `.id`, `.role`, `.parts` at the top level.
 	 */
 	async messages(
 		sessionId: string,
 		options?: { limit?: number },
 	): Promise<Message[]> {
-		return this.api.sdk(
+		const data = await this.api.sdk(
 			() =>
 				call(
 					this.api._sdk.session.messages({
@@ -277,24 +303,35 @@ class SessionNamespace {
 				),
 			"session.messages",
 		);
+		return flattenMessages(data);
 	}
 
 	/**
 	 * Paginated message retrieval (gap endpoint).
 	 * Returns messages before the given cursor.
+	 *
+	 * The gap endpoint returns the same nested `{ info, parts }` shape.
+	 * This method flattens to flat messages.
 	 */
 	async messagesPage(
 		sessionId: string,
 		options?: { limit?: number; before?: string },
 	): Promise<Message[]> {
-		return this.api._gaps.getMessagesPage(sessionId, options) as Promise<
-			Message[]
-		>;
+		const data = (await this.api._gaps.getMessagesPage(
+			sessionId,
+			options,
+		)) as unknown[];
+		return flattenMessages(data);
 	}
 
-	/** Get a single message with its parts. */
+	/**
+	 * Get a single message with its parts.
+	 *
+	 * The SDK returns `{ info: Message, parts: Part[] }`.
+	 * This method flattens to `{ ...info, parts }`.
+	 */
 	async message(sessionId: string, messageId: string): Promise<Message> {
-		return this.api.sdk(
+		const data = await this.api.sdk(
 			() =>
 				call(
 					this.api._sdk.session.message({
@@ -303,6 +340,7 @@ class SessionNamespace {
 				),
 			"session.message",
 		);
+		return flattenMessage(data);
 	}
 
 	/**
@@ -536,18 +574,35 @@ class ProviderNamespace {
 	/**
 	 * List all providers with models.
 	 *
-	 * Returns SDK shape from `provider.list()`:
-	 * `{ all: Array<{id, name, models: Record<string, Model>, ...}>, default: Record, connected: string[] }`
-	 *
-	 * Note: Models within each provider are a Record<string, Model> from the raw
-	 * endpoint. Callers that need a flat array should normalize themselves, as
-	 * the config.providers() endpoint already returns a different shape.
+	 * The SDK returns `{ all, default, connected }` with models as Record<string, Model>.
+	 * This method normalizes to `ProviderListResult`:
+	 * - `all` → `providers` (rename)
+	 * - `default` → `defaults` (rename)
+	 * - `models: Record<string, Model>` → `models: Array<Model>` (convert)
 	 */
 	async list(): Promise<ProviderListResult> {
-		return this.api.sdk(
+		const data = await this.api.sdk(
 			() => call(this.api._sdk.provider.list()),
 			"provider.list",
 		);
+		// Normalize SDK shape → ProviderListResult
+		// biome-ignore lint/suspicious/noExplicitAny: SDK shape differs from relay types — runtime normalization required
+		const raw = data as any;
+		const all = raw.all ?? raw.providers ?? [];
+		const providers = all.map((p: Record<string, unknown>) => ({
+			...p,
+			models:
+				p["models"] &&
+				typeof p["models"] === "object" &&
+				!Array.isArray(p["models"])
+					? Object.values(p["models"] as Record<string, unknown>)
+					: (p["models"] ?? []),
+		}));
+		return {
+			providers,
+			defaults: raw.default ?? raw.defaults ?? {},
+			connected: raw.connected ?? [],
+		};
 	}
 }
 
