@@ -7,15 +7,16 @@ import type { PermissionBridge } from "../bridges/permission-bridge.js";
 import { mapQuestionFields } from "../bridges/question-bridge.js";
 import type { Logger } from "../logger.js";
 import { notificationContent } from "../notification-content.js";
+import type { DualWriteHook } from "../persistence/dual-write-hook.js";
 import type { PushNotificationManager } from "../server/push.js";
 import type { SessionManager } from "../session/session-manager.js";
 import type { SessionOverrides } from "../session/session-overrides.js";
 import type { PermissionId } from "../shared-types.js";
-import type { OpenCodeEvent, RelayMessage } from "../types.js";
+import type { RelayMessage } from "../types.js";
 import { applyPipelineResult, processEvent } from "./event-pipeline.js";
 import type { Translator } from "./event-translator.js";
-import type { MessageCache } from "./message-cache.js";
 import { resolveNotifications } from "./notification-policy.js";
+import type { SSEEvent } from "./opencode-events.js";
 import {
 	hasInfoWithSessionID,
 	hasPartWithSessionID,
@@ -23,9 +24,7 @@ import {
 	isPermissionRepliedEvent,
 	isSessionErrorEvent,
 } from "./opencode-events.js";
-import type { PendingUserMessages } from "./pending-user-messages.js";
-import type { SSEConsumer } from "./sse-consumer.js";
-import type { ToolContentStore } from "./tool-content-store.js";
+import type { SSEStream } from "./sse-stream.js";
 
 // ─── Session ID extraction ────────────────────────────────────────────────────
 // OpenCode SSE events store sessionID in different locations by event type:
@@ -34,7 +33,7 @@ import type { ToolContentStore } from "./tool-content-store.js";
 //   - Nested in info: message.updated → properties.info.sessionID
 // We must check all locations to correctly attribute events to sessions.
 
-export function extractSessionId(event: OpenCodeEvent): string | undefined {
+export function extractSessionId(event: SSEEvent): string | undefined {
 	const props = event.properties;
 	// 1. Top-level sessionID (most common)
 	if (hasSessionID(props)) {
@@ -56,11 +55,8 @@ export function extractSessionId(event: OpenCodeEvent): string | undefined {
 export interface SSEWiringDeps {
 	translator: Translator;
 	sessionMgr: SessionManager;
-	messageCache: MessageCache;
-	pendingUserMessages: PendingUserMessages;
 	permissionBridge: PermissionBridge;
 	overrides: SessionOverrides;
-	toolContentStore: ToolContentStore;
 	wsHandler: {
 		broadcast: (msg: RelayMessage) => void;
 		sendToSession: (sessionId: string, msg: RelayMessage) => void;
@@ -72,7 +68,7 @@ export interface SSEWiringDeps {
 	/** Optional: current session statuses for processing flags */
 	getSessionStatuses?: () => Record<
 		string,
-		import("../instance/opencode-client.js").SessionStatus
+		import("../instance/sdk-types.js").SessionStatus
 	>;
 	/** Optional: REST client for rehydrating pending questions on reconnect */
 	listPendingQuestions?: () => Promise<
@@ -83,13 +79,19 @@ export interface SSEWiringDeps {
 		Array<{ id: string; permission: string; [key: string]: unknown }>
 	>;
 	/** Optional: notify status poller of SSE idle events for fast transition detection */
-	statusPoller?: { notifySSEIdle(sessionId: string): void };
+	statusPoller?: {
+		notifySSEIdle(sessionId: string): void;
+		/** One-shot reconciliation on SSE reconnect — corrects stuck statuses. */
+		reconcileNow?(): Promise<void>;
+	};
 	/** Optional: session parent map for subagent detection in notification routing */
 	getSessionParentMap?: () => Map<string, string>;
 	/** Project slug for push notification routing */
 	slug?: string;
 	/** Optional: record that a "done" was delivered via SSE (for dedup with status-poller) */
 	onDoneProcessed?: (sessionId: string) => void;
+	/** Optional: dual-write hook for SQLite event store persistence */
+	dualWriteHook?: DualWriteHook;
 }
 
 // ─── Push notification helper ────────────────────────────────────────────────
@@ -158,17 +160,12 @@ export function sendPushForEvent(
 
 // ─── Handle a single SSE event ───────────────────────────────────────────────
 
-export function handleSSEEvent(
-	deps: SSEWiringDeps,
-	event: OpenCodeEvent,
-): void {
+export function handleSSEEvent(deps: SSEWiringDeps, event: SSEEvent): void {
 	const {
 		translator,
 		sessionMgr,
-		messageCache,
 		permissionBridge,
 		overrides,
-		toolContentStore,
 		wsHandler,
 		pushManager,
 		pipelineLog,
@@ -178,17 +175,16 @@ export function handleSSEEvent(
 	const eventSessionId = extractSessionId(event);
 	log.verbose(`event=${event.type} session=${eventSessionId ?? "?"}`);
 
+	// ── Write to SQLite event store ─────────────────────────────────────
+	if (deps.dualWriteHook) {
+		deps.dualWriteHook.onSSEEvent(event, eventSessionId);
+	}
+
 	// ── Track message activity for session ordering ──────────────────────
 	// Record the timestamp of any message-related event so sessions are
 	// ordered by actual conversation activity, not metadata updates.
 	if (eventSessionId && event.type.startsWith("message.")) {
-		const now = Date.now();
-		sessionMgr.recordMessageActivity(eventSessionId, now);
-		// Keep openCodeUpdatedAt in sync with lastMessageAt. Both use
-		// Date.now() during live operation. On next restart, the stored
-		// openCodeUpdatedAt is compared against the fresh session.time.updated
-		// from OpenCode — if they differ, the cache is stale.
-		messageCache.setOpenCodeUpdatedAt(eventSessionId, now);
+		sessionMgr.recordMessageActivity(eventSessionId, Date.now());
 	}
 	// ── Permission / question bridge routing ──────────────────────────────
 
@@ -329,21 +325,6 @@ export function handleSSEEvent(
 
 	const toSend = translateResult.messages;
 	for (let msg of toSend) {
-		// ── Suppress relay-originated user messages ──────────────────────
-		// When we send a message via the relay, the frontend already adds it
-		// locally. OpenCode fires a `message.created` SSE event for the same
-		// message, which the translator converts to `user_message`. Without
-		// this check the message appears twice (once from local add, once
-		// from SSE echo). The pending tracker was populated by prompt.ts.
-		if (
-			msg.type === "user_message" &&
-			targetSessionId &&
-			deps.pendingUserMessages.consume(targetSessionId, msg.text)
-		) {
-			log.debug(`Suppressed user_message echo: session=${targetSessionId}`);
-			continue;
-		}
-
 		// Permission events: broadcast to all clients (not session-scoped)
 		if (
 			msg.type === "permission_request" ||
@@ -385,9 +366,7 @@ export function handleSSEEvent(
 		msg = pipeResult.msg;
 
 		applyPipelineResult(pipeResult, targetSessionId, {
-			toolContentStore,
 			overrides,
-			messageCache,
 			wsHandler,
 			log: pipelineLog,
 		});
@@ -430,7 +409,7 @@ export function handleSSEEvent(
 
 export function wireSSEConsumer(
 	deps: SSEWiringDeps,
-	consumer: SSEConsumer,
+	consumer: SSEStream,
 ): void {
 	const { log } = deps;
 
@@ -443,10 +422,28 @@ export function wireSSEConsumer(
 	consumer.on("connected", () => {
 		const gen = ++rehydrationGen;
 		log.info("Connected to OpenCode event stream");
+
+		// Reset dual-write translator state on reconnect so part tracking
+		// starts fresh (avoids stale first-seen flags from the previous
+		// connection producing incorrect event sequences).
+		deps.dualWriteHook?.onReconnect();
+
 		deps.wsHandler.broadcast({
 			type: "connection_status",
 			status: "connected",
 		});
+
+		// SSE reconnect reconciliation: immediately compare REST vs projected
+		// statuses and inject corrective events for any mismatches. This catches
+		// the most common case: SSE dropped during a turn, reconnected after
+		// completion — the "idle" event was never received.
+		if (deps.statusPoller?.reconcileNow) {
+			deps.statusPoller
+				.reconcileNow()
+				.catch((err: unknown) =>
+					log.warn(`SSE reconnect reconciliation failed: ${err}`),
+				);
+		}
 
 		// Rehydrate pending permissions from OpenCode API on (re)connect.
 		// Broadcast each recovered permission to all connected clients.
@@ -587,7 +584,7 @@ export function wireSSEConsumer(
 	});
 	consumer.on("error", (err) => log.warn(`Error: ${err.message}`));
 
-	consumer.on("event", (event: OpenCodeEvent) => {
-		handleSSEEvent(deps, event);
+	consumer.on("event", (event: unknown) => {
+		handleSSEEvent(deps, event as SSEEvent);
 	});
 }

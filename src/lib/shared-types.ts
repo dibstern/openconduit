@@ -2,6 +2,11 @@
 // Types shared between server and frontend.
 // Imported by src/lib/types.ts (server) and frontend code.
 
+// SDK-derived type aliases (Task 10) — single source of truth for Part/Tool enums.
+// Imported for local use; re-exported below for downstream consumers.
+import type { PartType, ToolStatus } from "./instance/sdk-types.js";
+export type { PartType, ToolStatus };
+
 /**
  * Branded type for request/response correlation IDs.
  * Prevents accidentally passing a session ID where a correlation ID is expected.
@@ -58,25 +63,7 @@ export interface TodoItem {
 	status: TodoStatus;
 }
 
-// ─── Tool Status ────────────────────────────────────────────────────────────
-
-/** Status of a tool call — shared between server relay and frontend. */
-export type ToolStatus = "pending" | "running" | "completed" | "error";
-
-/** Part type in an assistant message — covers text, reasoning, tool calls, and structural parts. */
-export type PartType =
-	| "text"
-	| "reasoning"
-	| "tool"
-	| "file"
-	| "snapshot"
-	| "patch"
-	| "agent"
-	| "compaction"
-	| "subtask"
-	| "retry"
-	| "step-start"
-	| "step-finish";
+// ─── Tool Names ──────────────────────────────────────────────────────────────
 
 /** Canonical PascalCase tool names used by the frontend after mapping from OpenCode's lowercase names. */
 export type ToolName =
@@ -187,8 +174,22 @@ export interface PtyInfo {
 }
 
 // ─── History Types ──────────────────────────────────────────────────────────
+// These are relay-specific transport types for the session_switched / history_page
+// WebSocket messages. They represent a loose superset of the SDK's Part and Message
+// types with relay-specific extensions (renderedHtml, index signatures).
+//
+// SDK type mapping (Task 10):
+//   PartType   ← SDK Part["type"]    (derived in sdk-types.ts)
+//   ToolStatus ← SDK ToolState["status"] (derived in sdk-types.ts)
+//   HistoryMessagePart ≈ SDK Part (loose — all fields optional, index sig)
+//   HistoryMessage     ≈ SDK Message (loose — all fields optional, index sig)
 
-/** Shape of HistoryMessage parts (tool calls, text, reasoning, etc.) */
+/**
+ * Shape of HistoryMessage parts (tool calls, text, reasoning, etc.).
+ *
+ * Loosely mirrors SDK `Part` with relay-specific extensions.
+ * The `type` field uses SDK-derived `PartType` for discriminated narrowing.
+ */
 export interface HistoryMessagePart {
 	id: string;
 	type: PartType;
@@ -196,7 +197,10 @@ export interface HistoryMessagePart {
 	text?: string;
 	/** Server-pre-rendered HTML for assistant text parts (C3 optimization). */
 	renderedHtml?: string;
-	/** Tool state — present on tool-type parts, contains status/input/output. */
+	/**
+	 * Tool state — present on tool-type parts, contains status/input/output.
+	 * Loosely mirrors SDK `ToolState` but with optional fields for transport compat.
+	 */
 	state?: {
 		status?: ToolStatus;
 		input?: unknown;
@@ -210,7 +214,12 @@ export interface HistoryMessagePart {
 	[key: string]: unknown;
 }
 
-/** A single message from the OpenCode REST history API */
+/**
+ * A single message from the OpenCode REST history API.
+ *
+ * Loosely mirrors SDK `Message` (UserMessage | AssistantMessage) but with
+ * optional fields for transport compatibility and relay-specific extensions.
+ */
 export interface HistoryMessage {
 	id: string;
 	role: "user" | "assistant";

@@ -275,7 +275,7 @@ describe("handleCancel", () => {
 		expect(deps.overrides.clearProcessingTimeout).toHaveBeenCalledWith(
 			"session-1",
 		);
-		expect(deps.client.abortSession).toHaveBeenCalledWith("session-1");
+		expect(deps.client.session.abort).toHaveBeenCalledWith("session-1");
 		expect(deps.wsHandler.sendToSession).toHaveBeenCalledWith("session-1", {
 			type: "done",
 			code: 1,
@@ -286,14 +286,14 @@ describe("handleCancel", () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue(undefined);
 		await handleCancel(deps, "client-1", {});
-		expect(deps.client.abortSession).not.toHaveBeenCalled();
+		expect(deps.client.session.abort).not.toHaveBeenCalled();
 		expect(deps.wsHandler.sendToSession).not.toHaveBeenCalled();
 	});
 
 	it("still sends done to session if abort throws", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
-		vi.mocked(deps.client.abortSession).mockRejectedValue(
+		vi.mocked(deps.client.session.abort).mockRejectedValue(
 			new Error("abort fail"),
 		);
 		await handleCancel(deps, "client-1", {});
@@ -338,14 +338,10 @@ describe("handleNewSession", () => {
 // ─── handleMessage ───────────────────────────────────────────────────────────
 
 describe("handleMessage", () => {
-	it("sends message to active session and records user_message", async () => {
+	it("sends message to active session and routes to session", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
 		await handleMessage(deps, "client-1", { text: "Hello" });
-		expect(deps.messageCache.recordEvent).toHaveBeenCalledWith("session-1", {
-			type: "user_message",
-			text: "Hello",
-		});
 		expect(deps.wsHandler.sendToSession).toHaveBeenCalledWith("session-1", {
 			type: "status",
 			status: "processing",
@@ -354,7 +350,7 @@ describe("handleMessage", () => {
 			"session-1",
 			expect.any(Function),
 		);
-		expect(deps.client.sendMessageAsync).toHaveBeenCalledWith("session-1", {
+		expect(deps.client.session.prompt).toHaveBeenCalledWith("session-1", {
 			text: "Hello",
 		});
 	});
@@ -362,7 +358,7 @@ describe("handleMessage", () => {
 	it("returns early when text is empty", async () => {
 		const deps = createMockHandlerDeps();
 		await handleMessage(deps, "client-1", { text: "" });
-		expect(deps.client.sendMessageAsync).not.toHaveBeenCalled();
+		expect(deps.client.session.prompt).not.toHaveBeenCalled();
 	});
 
 	it("sends error when no active session", async () => {
@@ -386,20 +382,11 @@ describe("handleMessage", () => {
 		});
 		vi.mocked(deps.overrides.isModelUserSelected).mockReturnValue(true);
 		await handleMessage(deps, "client-1", { text: "Hello" });
-		expect(deps.client.sendMessageAsync).toHaveBeenCalledWith("session-1", {
+		expect(deps.client.session.prompt).toHaveBeenCalledWith("session-1", {
 			text: "Hello",
 			agent: "coder",
 			model: { providerID: "openai", modelID: "gpt-4" },
 		});
-	});
-
-	it("records pending user message so SSE echo is suppressed", async () => {
-		const deps = createMockHandlerDeps();
-		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
-		await handleMessage(deps, "client-1", { text: "Hello" });
-		// pendingUserMessages.record() should have been called so that
-		// sse-wiring can later consume() the echo and suppress it.
-		expect(deps.pendingUserMessages.consume("session-1", "Hello")).toBe(true);
 	});
 
 	it("sends user_message to other clients viewing the same session", async () => {
@@ -431,7 +418,7 @@ describe("handleMessage", () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
 		const sendErr = new Error("send failed");
-		vi.mocked(deps.client.sendMessageAsync).mockRejectedValue(sendErr);
+		vi.mocked(deps.client.session.prompt).mockRejectedValue(sendErr);
 		await handleMessage(deps, "client-1", { text: "Hello" });
 		expect(deps.overrides.clearProcessingTimeout).toHaveBeenCalledWith(
 			"session-1",
@@ -476,10 +463,11 @@ describe("handlePermissionResponse", () => {
 			requestId: pid("perm-1"),
 			decision: "allow",
 		});
-		expect(deps.client.replyPermission).toHaveBeenCalledWith({
-			id: "perm-1",
-			decision: "once",
-		});
+		expect(deps.client.permission.reply).toHaveBeenCalledWith(
+			"?",
+			"perm-1",
+			"once",
+		);
 		expect(deps.wsHandler.broadcast).toHaveBeenCalledWith({
 			type: "permission_resolved",
 			requestId: pid("perm-1"),
@@ -494,7 +482,7 @@ describe("handlePermissionResponse", () => {
 			requestId: pid("perm-1"),
 			decision: "allow",
 		});
-		expect(deps.client.replyPermission).not.toHaveBeenCalled();
+		expect(deps.client.permission.reply).not.toHaveBeenCalled();
 	});
 
 	it("uses client session in log (not global active)", async () => {
@@ -525,10 +513,10 @@ describe("handlePermissionResponse", () => {
 			mapped: "always",
 			toolName: "read",
 		});
-		deps.client.getConfig = vi.fn().mockResolvedValue({
+		deps.client.config.get = vi.fn().mockResolvedValue({
 			permission: { bash: "ask" },
 		});
-		deps.client.updateConfig = vi.fn().mockResolvedValue({});
+		deps.client.config.update = vi.fn().mockResolvedValue({});
 
 		await handlePermissionResponse(deps, "client-1", {
 			requestId: pid("r1"),
@@ -536,12 +524,13 @@ describe("handlePermissionResponse", () => {
 			persistScope: "tool",
 		});
 
-		expect(deps.client.replyPermission).toHaveBeenCalledWith({
-			id: "r1",
-			decision: "always",
-		});
-		expect(deps.client.getConfig).toHaveBeenCalled();
-		expect(deps.client.updateConfig).toHaveBeenCalledWith({
+		expect(deps.client.permission.reply).toHaveBeenCalledWith(
+			"?",
+			"r1",
+			"always",
+		);
+		expect(deps.client.config.get).toHaveBeenCalled();
+		expect(deps.client.config.update).toHaveBeenCalledWith({
 			permission: { bash: "ask", read: "allow" },
 		});
 	});
@@ -552,10 +541,10 @@ describe("handlePermissionResponse", () => {
 			mapped: "always",
 			toolName: "bash",
 		});
-		deps.client.getConfig = vi.fn().mockResolvedValue({
+		deps.client.config.get = vi.fn().mockResolvedValue({
 			permission: { bash: { "*": "ask" } },
 		});
-		deps.client.updateConfig = vi.fn().mockResolvedValue({});
+		deps.client.config.update = vi.fn().mockResolvedValue({});
 
 		await handlePermissionResponse(deps, "client-1", {
 			requestId: pid("r1"),
@@ -564,7 +553,7 @@ describe("handlePermissionResponse", () => {
 			persistPattern: "git *",
 		});
 
-		expect(deps.client.updateConfig).toHaveBeenCalledWith({
+		expect(deps.client.config.update).toHaveBeenCalledWith({
 			permission: { bash: { "*": "ask", "git *": "allow" } },
 		});
 	});
@@ -581,8 +570,8 @@ describe("handlePermissionResponse", () => {
 			decision: "allow_always",
 		});
 
-		expect(deps.client.replyPermission).toHaveBeenCalled();
-		expect(deps.client.updateConfig).not.toHaveBeenCalled();
+		expect(deps.client.permission.reply).toHaveBeenCalled();
+		expect(deps.client.config.update).not.toHaveBeenCalled();
 	});
 
 	it("handles config persistence failure gracefully (non-fatal)", async () => {
@@ -591,7 +580,7 @@ describe("handlePermissionResponse", () => {
 			mapped: "always",
 			toolName: "read",
 		});
-		deps.client.getConfig = vi
+		deps.client.config.get = vi
 			.fn()
 			.mockRejectedValue(new Error("network error"));
 
@@ -602,10 +591,11 @@ describe("handlePermissionResponse", () => {
 		});
 
 		// Reply still sent despite config failure
-		expect(deps.client.replyPermission).toHaveBeenCalledWith({
-			id: "r1",
-			decision: "always",
-		});
+		expect(deps.client.permission.reply).toHaveBeenCalledWith(
+			"?",
+			"r1",
+			"always",
+		);
 	});
 
 	it("handles string permission config (simple form) when persisting tool-level", async () => {
@@ -614,10 +604,10 @@ describe("handlePermissionResponse", () => {
 			mapped: "always",
 			toolName: "read",
 		});
-		deps.client.getConfig = vi.fn().mockResolvedValue({
+		deps.client.config.get = vi.fn().mockResolvedValue({
 			permission: "ask",
 		});
-		deps.client.updateConfig = vi.fn().mockResolvedValue({});
+		deps.client.config.update = vi.fn().mockResolvedValue({});
 
 		await handlePermissionResponse(deps, "client-1", {
 			requestId: pid("r1"),
@@ -626,7 +616,7 @@ describe("handlePermissionResponse", () => {
 		});
 
 		// When config is a simple string, expand to object form
-		expect(deps.client.updateConfig).toHaveBeenCalledWith({
+		expect(deps.client.config.update).toHaveBeenCalledWith({
 			permission: { "*": "ask", read: "allow" },
 		});
 	});
@@ -641,10 +631,9 @@ describe("handleAskUserResponse", () => {
 			toolId: "q-1",
 			answers: { "0": "Option A" },
 		});
-		expect(deps.client.replyQuestion).toHaveBeenCalledWith({
-			id: "q-1",
-			answers: [["Option A"]],
-		});
+		expect(deps.client.question.reply).toHaveBeenCalledWith("q-1", [
+			["Option A"],
+		]);
 		expect(deps.wsHandler.broadcast).toHaveBeenCalledWith({
 			type: "ask_user_resolved",
 			toolId: "q-1",
@@ -667,10 +656,10 @@ describe("handleAskUserResponse", () => {
 
 	it("falls back to listPendingQuestions when replyQuestion fails", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.replyQuestion)
+		vi.mocked(deps.client.question.reply)
 			.mockRejectedValueOnce(new Error("not found"))
 			.mockResolvedValueOnce(undefined);
-		vi.mocked(deps.client.listPendingQuestions).mockResolvedValue([
+		vi.mocked(deps.client.question.list).mockResolvedValue([
 			{ id: "que_fallback" },
 		]);
 
@@ -679,11 +668,10 @@ describe("handleAskUserResponse", () => {
 			answers: { "0": "yes" },
 		});
 
-		expect(deps.client.listPendingQuestions).toHaveBeenCalled();
-		expect(deps.client.replyQuestion).toHaveBeenCalledWith({
-			id: "que_fallback",
-			answers: [["yes"]],
-		});
+		expect(deps.client.question.list).toHaveBeenCalled();
+		expect(deps.client.question.reply).toHaveBeenCalledWith("que_fallback", [
+			["yes"],
+		]);
 		expect(deps.wsHandler.broadcast).toHaveBeenCalledWith({
 			type: "ask_user_resolved",
 			toolId: "que_fallback",
@@ -696,17 +684,17 @@ describe("handleAskUserResponse", () => {
 		const deps = createMockHandlerDeps({
 			log: { ...createSilentLogger(), warn: warnSpy },
 		});
-		vi.mocked(deps.client.replyQuestion).mockRejectedValue(
+		vi.mocked(deps.client.question.reply).mockRejectedValue(
 			new Error("not found"),
 		);
-		vi.mocked(deps.client.listPendingQuestions).mockResolvedValue([]);
+		vi.mocked(deps.client.question.list).mockResolvedValue([]);
 
 		await handleAskUserResponse(deps, "client-1", {
 			toolId: "toolu_123",
 			answers: { "0": "yes" },
 		});
 
-		expect(deps.client.listPendingQuestions).toHaveBeenCalled();
+		expect(deps.client.question.list).toHaveBeenCalled();
 		// broadcast should NOT have been called since both paths failed
 		expect(deps.wsHandler.broadcast).not.toHaveBeenCalled();
 		// Should log a "DROPPED" message via warn
@@ -726,7 +714,7 @@ describe("handleQuestionReject", () => {
 	it("rejects question and broadcasts resolved", async () => {
 		const deps = createMockHandlerDeps();
 		await handleQuestionReject(deps, "client-1", { toolId: "q-1" });
-		expect(deps.client.rejectQuestion).toHaveBeenCalledWith("q-1");
+		expect(deps.client.question.reject).toHaveBeenCalledWith("q-1");
 		expect(deps.wsHandler.broadcast).toHaveBeenCalledWith({
 			type: "ask_user_resolved",
 			toolId: "q-1",
@@ -746,17 +734,17 @@ describe("handleQuestionReject", () => {
 
 	it("falls back to listPendingQuestions when rejectQuestion fails", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.rejectQuestion)
+		vi.mocked(deps.client.question.reject)
 			.mockRejectedValueOnce(new Error("not found"))
 			.mockResolvedValueOnce(undefined);
-		vi.mocked(deps.client.listPendingQuestions).mockResolvedValue([
+		vi.mocked(deps.client.question.list).mockResolvedValue([
 			{ id: "que_from_api" },
 		]);
 
 		await handleQuestionReject(deps, "client-1", { toolId: "toolu_123" });
 
-		expect(deps.client.listPendingQuestions).toHaveBeenCalled();
-		expect(deps.client.rejectQuestion).toHaveBeenCalledWith("que_from_api");
+		expect(deps.client.question.list).toHaveBeenCalled();
+		expect(deps.client.question.reject).toHaveBeenCalledWith("que_from_api");
 		expect(deps.wsHandler.broadcast).toHaveBeenCalledWith({
 			type: "ask_user_resolved",
 			toolId: "que_from_api",
@@ -767,7 +755,7 @@ describe("handleQuestionReject", () => {
 	it("does nothing when toolId is empty", async () => {
 		const deps = createMockHandlerDeps();
 		await handleQuestionReject(deps, "client-1", { toolId: "" });
-		expect(deps.client.rejectQuestion).not.toHaveBeenCalled();
+		expect(deps.client.question.reject).not.toHaveBeenCalled();
 	});
 
 	it("uses client session in log (not global active)", async () => {
@@ -804,25 +792,8 @@ describe("handleSwitchSession", () => {
 		expect(deps.wsHandler.setClientSession).not.toHaveBeenCalled();
 	});
 
-	it("uses cached events when available with chat content", async () => {
+	it("serves REST history on session switch", async () => {
 		const deps = createMockHandlerDeps();
-		const cachedEvents: RelayMessage[] = [
-			{ type: "user_message", text: "hi" },
-			{ type: "delta", text: "hello" },
-		];
-		vi.mocked(deps.messageCache.getEvents).mockResolvedValue(cachedEvents);
-		await handleSwitchSession(deps, "client-1", { sessionId: "s2" });
-		expect(deps.wsHandler.sendTo).toHaveBeenCalledWith("client-1", {
-			type: "session_switched",
-			id: "s2",
-			// Session is idle and cache has no done — synthetic done is appended
-			events: [...cachedEvents, { type: "done", code: 0 }],
-		});
-	});
-
-	it("falls back to REST history when cache is empty", async () => {
-		const deps = createMockHandlerDeps();
-		vi.mocked(deps.messageCache.getEvents).mockResolvedValue(null);
 		vi.mocked(deps.sessionMgr.loadPreRenderedHistory).mockResolvedValue({
 			messages: [{ role: "user", content: "hi" }] as unknown[],
 			hasMore: false,
@@ -843,10 +814,9 @@ describe("handleSwitchSession", () => {
 // ─── handleDeleteSession ─────────────────────────────────────────────────────
 
 describe("handleDeleteSession", () => {
-	it("removes cache and deletes session with silent mode", async () => {
+	it("deletes session with silent mode", async () => {
 		const deps = createMockHandlerDeps();
 		await handleDeleteSession(deps, "client-1", { sessionId: "s2" });
-		expect(deps.messageCache.remove).toHaveBeenCalledWith("s2");
 		expect(deps.sessionMgr.deleteSession).toHaveBeenCalledWith("s2", {
 			silent: true,
 		});
@@ -982,7 +952,7 @@ describe("handleLoadMoreHistory", () => {
 describe("handleGetAgents", () => {
 	it("fetches and filters agents, sends to client", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listAgents).mockResolvedValue([
+		vi.mocked(deps.client.app.agents).mockResolvedValue([
 			{ id: "1", name: "coder" },
 			{ id: "2", name: "title" },
 		]);
@@ -999,7 +969,7 @@ describe("handleGetAgents", () => {
 describe("handleGetModels", () => {
 	it("fetches providers and sends model_list", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listProviders).mockResolvedValue({
+		vi.mocked(deps.client.provider.list).mockResolvedValue({
 			providers: [
 				{
 					id: "openai",
@@ -1023,7 +993,7 @@ describe("handleGetModels", () => {
 describe("handleGetCommands", () => {
 	it("fetches and sends command list", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listCommands).mockResolvedValue([
+		vi.mocked(deps.client.app.commands).mockResolvedValue([
 			{ name: "/help", description: "Get help" },
 		]);
 		await handleGetCommands(deps, "client-1", {});
@@ -1033,13 +1003,11 @@ describe("handleGetCommands", () => {
 		});
 	});
 
-	it("passes projectDir to listCommands for per-project skill scoping", async () => {
+	it("calls app.commands for command listing", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listCommands).mockResolvedValue([]);
+		vi.mocked(deps.client.app.commands).mockResolvedValue([]);
 		await handleGetCommands(deps, "client-1", {});
-		expect(deps.client.listCommands).toHaveBeenCalledWith(
-			deps.config.projectDir,
-		);
+		expect(deps.client.app.commands).toHaveBeenCalled();
 	});
 });
 
@@ -1067,9 +1035,9 @@ describe("handleGetProjects", () => {
 
 	it("falls back to OpenCode API when getProjects not set", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listProjects).mockResolvedValue([
+		vi.mocked(deps.client.app.projects).mockResolvedValue([
 			{ id: "p1", name: "Project 1", path: "/p1" },
-		] as Awaited<ReturnType<typeof deps.client.listProjects>>);
+		] as Awaited<ReturnType<typeof deps.client.app.projects>>);
 		await handleGetProjects(deps, "client-1", {});
 		expect(deps.wsHandler.sendTo).toHaveBeenCalledWith(
 			"client-1",
@@ -1171,11 +1139,11 @@ describe("handleAddProject", () => {
 describe("handleGetFileList", () => {
 	it("lists directory and sends file_list", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listDirectory).mockResolvedValue([
+		vi.mocked(deps.client.file.list).mockResolvedValue([
 			{ name: "foo.ts", type: "file" },
-		] as Awaited<ReturnType<typeof deps.client.listDirectory>>);
+		] as Awaited<ReturnType<typeof deps.client.file.list>>);
 		await handleGetFileList(deps, "client-1", { path: "src" });
-		expect(deps.client.listDirectory).toHaveBeenCalledWith("src");
+		expect(deps.client.file.list).toHaveBeenCalledWith("src");
 		expect(deps.wsHandler.sendTo).toHaveBeenCalledWith(
 			"client-1",
 			expect.objectContaining({ type: "file_list", path: "src" }),
@@ -1189,7 +1157,7 @@ describe("handleGetFileContent", () => {
 	it("fetches file content and sends to client", async () => {
 		const deps = createMockHandlerDeps();
 		await handleGetFileContent(deps, "client-1", { path: "src/index.ts" });
-		expect(deps.client.getFileContent).toHaveBeenCalledWith("src/index.ts");
+		expect(deps.client.file.read).toHaveBeenCalledWith("src/index.ts");
 		expect(deps.wsHandler.sendTo).toHaveBeenCalledWith(
 			"client-1",
 			expect.objectContaining({
@@ -1202,39 +1170,36 @@ describe("handleGetFileContent", () => {
 	it("does nothing when path is empty", async () => {
 		const deps = createMockHandlerDeps();
 		await handleGetFileContent(deps, "client-1", { path: "" });
-		expect(deps.client.getFileContent).not.toHaveBeenCalled();
+		expect(deps.client.file.read).not.toHaveBeenCalled();
 	});
 });
 
 // ─── handleRewind ────────────────────────────────────────────────────────────
 
 describe("handleRewind", () => {
-	it("reverts session and invalidates cache", async () => {
+	it("reverts session and clears pagination cursor", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
 		await handleRewind(deps, "client-1", { messageId: "msg-1" });
-		expect(deps.client.revertSession).toHaveBeenCalledWith(
-			"session-1",
-			"msg-1",
-		);
-		expect(deps.messageCache.remove).toHaveBeenCalledWith("session-1");
+		expect(deps.client.session.revert).toHaveBeenCalledWith("session-1", {
+			messageID: "msg-1",
+		});
 	});
 
 	it("also supports uuid field (legacy)", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
 		await handleRewind(deps, "client-1", { uuid: "msg-2" });
-		expect(deps.client.revertSession).toHaveBeenCalledWith(
-			"session-1",
-			"msg-2",
-		);
+		expect(deps.client.session.revert).toHaveBeenCalledWith("session-1", {
+			messageID: "msg-2",
+		});
 	});
 
 	it("does nothing when no messageId and no active session", async () => {
 		const deps = createMockHandlerDeps();
 		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue(undefined);
 		await handleRewind(deps, "client-1", { messageId: "msg-1" });
-		expect(deps.client.revertSession).not.toHaveBeenCalled();
+		expect(deps.client.session.revert).not.toHaveBeenCalled();
 	});
 });
 
@@ -1257,7 +1222,7 @@ describe("handlePtyCreate", () => {
 	it("creates PTY and connects upstream", async () => {
 		const deps = createMockHandlerDeps();
 		await handlePtyCreate(deps, "client-1", {});
-		expect(deps.client.createPty).toHaveBeenCalled();
+		expect(deps.client.pty.create).toHaveBeenCalled();
 		expect(deps.wsHandler.broadcast).toHaveBeenCalledWith(
 			expect.objectContaining({ type: "pty_created" }),
 		);
@@ -1266,7 +1231,7 @@ describe("handlePtyCreate", () => {
 
 	it("sends error when createPty fails", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.createPty).mockRejectedValue(
+		vi.mocked(deps.client.pty.create).mockRejectedValue(
 			new Error("create fail"),
 		);
 		await handlePtyCreate(deps, "client-1", {});
@@ -1294,7 +1259,7 @@ describe("handlePtyCreate", () => {
 
 	it("handles createPty returning no id", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.createPty).mockResolvedValue({} as { id: string });
+		vi.mocked(deps.client.pty.create).mockResolvedValue({} as { id: string });
 		await handlePtyCreate(deps, "client-1", {});
 		expect(deps.wsHandler.sendTo).toHaveBeenCalledWith("client-1", {
 			type: "error",
@@ -1359,7 +1324,7 @@ describe("handlePtyResize", () => {
 			cols: 120,
 			rows: 40,
 		});
-		expect(deps.client.resizePty).toHaveBeenCalledWith("pty-1", 120, 40);
+		expect(deps.client.pty.resize).toHaveBeenCalledWith("pty-1", 40, 120);
 	});
 
 	it("logs but does not error when resize fails", async () => {
@@ -1367,7 +1332,7 @@ describe("handlePtyResize", () => {
 		const deps = createMockHandlerDeps({
 			log: { ...createSilentLogger(), warn: warnSpy },
 		});
-		vi.mocked(deps.client.resizePty).mockRejectedValue(
+		vi.mocked(deps.client.pty.resize).mockRejectedValue(
 			new Error("resize fail"),
 		);
 		await handlePtyResize(deps, "client-1", {
@@ -1385,7 +1350,7 @@ describe("handlePtyClose", () => {
 		const deps = createMockHandlerDeps();
 		await handlePtyClose(deps, "client-1", { ptyId: "pty-1" });
 		expect(deps.ptyManager.closeSession).toHaveBeenCalledWith("pty-1");
-		expect(deps.client.deletePty).toHaveBeenCalledWith("pty-1");
+		expect(deps.client.pty.delete).toHaveBeenCalledWith("pty-1");
 		expect(deps.wsHandler.broadcast).toHaveBeenCalledWith({
 			type: "pty_deleted",
 			ptyId: "pty-1",
@@ -1405,7 +1370,7 @@ describe("handleTerminalCommand", () => {
 	it("delegates create action to createAndConnectPty", async () => {
 		const deps = createMockHandlerDeps();
 		await handleTerminalCommand(deps, "client-1", { action: "create" });
-		expect(deps.client.createPty).toHaveBeenCalled();
+		expect(deps.client.pty.create).toHaveBeenCalled();
 		expect(deps.connectPtyUpstream).toHaveBeenCalled();
 	});
 
@@ -1416,12 +1381,12 @@ describe("handleTerminalCommand", () => {
 			ptyId: "pty-1",
 		});
 		expect(deps.ptyManager.closeSession).toHaveBeenCalledWith("pty-1");
-		expect(deps.client.deletePty).toHaveBeenCalledWith("pty-1");
+		expect(deps.client.pty.delete).toHaveBeenCalledWith("pty-1");
 	});
 
 	it("handles list action and reconnects running PTYs", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listPtys).mockResolvedValue([
+		vi.mocked(deps.client.pty.list).mockResolvedValue([
 			{ id: "pty-1", status: "running" },
 		]);
 		await handleTerminalCommand(deps, "client-1", { action: "list" });
@@ -1435,7 +1400,7 @@ describe("handleTerminalCommand", () => {
 
 	it("list action skips reconnect for already-tracked PTYs", async () => {
 		const deps = createMockHandlerDeps();
-		vi.mocked(deps.client.listPtys).mockResolvedValue([
+		vi.mocked(deps.client.pty.list).mockResolvedValue([
 			{ id: "pty-1", status: "running" },
 		]);
 		vi.mocked(deps.ptyManager.hasSession).mockReturnValue(true);

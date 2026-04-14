@@ -9,9 +9,8 @@
 import { mapQuestionFields } from "../bridges/question-bridge.js";
 import { formatErrorDetail, RelayError } from "../errors.js";
 import { filterAgents, getSessionInputDraft } from "../handlers/index.js";
-import type { OpenCodeClient } from "../instance/opencode-client.js";
+import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type { Logger } from "../logger.js";
-import type { MessageCache } from "../relay/message-cache.js";
 import type { PtyManager } from "../relay/pty-manager.js";
 import type { SessionManager } from "../session/session-manager.js";
 import type { SessionOverrides } from "../session/session-overrides.js";
@@ -32,9 +31,8 @@ export interface ClientInitDeps {
 		sendTo: (clientId: string, msg: RelayMessage) => void;
 		setClientSession: (clientId: string, sessionId: string) => void;
 	};
-	client: OpenCodeClient;
+	client: OpenCodeAPI;
 	sessionMgr: SessionManager;
-	messageCache: MessageCache;
 	overrides: SessionOverrides;
 	ptyManager: PtyManager;
 	permissionBridge: Pick<PermissionBridge, "getPending" | "recoverPending">;
@@ -76,7 +74,6 @@ export async function handleClientConnected(
 		wsHandler,
 		client,
 		sessionMgr,
-		messageCache,
 		overrides,
 		ptyManager,
 		permissionBridge,
@@ -102,15 +99,11 @@ export async function handleClientConnected(
 		// adds new required fields that this object doesn't provide.
 		await switchClientToSession(
 			{
-				messageCache,
 				sessionMgr,
 				wsHandler,
 				...(deps.statusPoller != null && { statusPoller: deps.statusPoller }),
 				log: deps.log,
 				getInputDraft: getSessionInputDraft,
-				forkMeta: {
-					getForkEntry: (sid: string) => sessionMgr.getForkEntry(sid),
-				},
 			} satisfies SessionSwitchDeps,
 			clientId,
 			activeId,
@@ -119,7 +112,7 @@ export async function handleClientConnected(
 
 		// Send model/agent info from the active session
 		try {
-			const session = await client.getSession(activeId);
+			const session = await client.session.get(activeId);
 			if (session.modelID) {
 				wsHandler.sendTo(clientId, {
 					type: "model_info",
@@ -178,7 +171,7 @@ export async function handleClientConnected(
 	// Then fetch from the API to recover any permissions the bridge missed
 	// (e.g. relay restart, SSE event lost). Dedup against already-sent IDs.
 	try {
-		const apiPermissions = await client.listPendingPermissions();
+		const apiPermissions = await client.permission.list();
 		const newPerms = apiPermissions.filter((p) => !sentPermissionIds.has(p.id));
 		if (newPerms.length > 0) {
 			const recovered = permissionBridge.recoverPending(
@@ -218,7 +211,7 @@ export async function handleClientConnected(
 	}
 	// Replay pending questions for the client's active session only
 	try {
-		const pendingQuestions = await client.listPendingQuestions();
+		const pendingQuestions = await client.question.list();
 		deps.log.debug(
 			`client=${clientId} listPendingQuestions returned ${pendingQuestions.length} question(s)${pendingQuestions.length > 0 ? `: ${JSON.stringify(pendingQuestions.map((q) => ({ id: q.id, hasQuestions: !!q["questions"], hasTool: !!q["tool"] })))}` : ""}`,
 		);
@@ -263,7 +256,7 @@ export async function handleClientConnected(
 
 	// ── Agent list (filter out internal agents) ──────────────────────────
 	try {
-		const rawAgents = await client.listAgents();
+		const rawAgents = await client.app.agents();
 		const agents = filterAgents(rawAgents);
 		wsHandler.sendTo(clientId, { type: "agent_list", agents });
 	} catch (err) {
@@ -272,7 +265,7 @@ export async function handleClientConnected(
 
 	// ── Provider/model list + auto-select default ────────────────────────
 	try {
-		const providerResult = await client.listProviders();
+		const providerResult = await client.provider.list();
 		const connectedSet = new Set(providerResult.connected);
 		const providers = providerResult.providers
 			.map((p) => ({
