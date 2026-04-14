@@ -202,22 +202,17 @@ describe("Integration: ClaudeAdapter full lifecycle", () => {
 		expect(textPayloads).toContain("help you.");
 
 		// Must contain tool.started for the text block and the tool_use block
-		const toolStarted = pushCalls.filter(
-			(c) => c[0].type === "tool.started",
-		);
+		const toolStarted = pushCalls.filter((c) => c[0].type === "tool.started");
 		expect(toolStarted.length).toBeGreaterThanOrEqual(2); // text block + tool_use block
 
 		// Verify the tool_use started event has the correct tool name
 		const readToolStarted = toolStarted.find(
-			(c) =>
-				(c[0].data as { toolName: string }).toolName === "Read",
+			(c) => (c[0].data as { toolName: string }).toolName === "Read",
 		);
 		expect(readToolStarted).toBeDefined();
 
 		// Must contain tool.running from input_json_delta
-		const toolRunning = pushCalls.filter(
-			(c) => c[0].type === "tool.running",
-		);
+		const toolRunning = pushCalls.filter((c) => c[0].type === "tool.running");
 		expect(toolRunning.length).toBeGreaterThanOrEqual(1);
 
 		// Must contain tool.completed for the tool_result
@@ -227,8 +222,7 @@ describe("Integration: ClaudeAdapter full lifecycle", () => {
 		expect(toolCompleted.length).toBeGreaterThanOrEqual(1);
 		// One of the tool.completed events should have the tool result content
 		const toolResultEvent = toolCompleted.find(
-			(c) =>
-				(c[0].data as { result: unknown }).result === "file contents here",
+			(c) => (c[0].data as { result: unknown }).result === "file contents here",
 		);
 		expect(toolResultEvent).toBeDefined();
 
@@ -244,7 +238,7 @@ describe("Integration: ClaudeAdapter full lifecycle", () => {
 		const firstToolStartIdx = eventTypes.findIndex(
 			(t, i) =>
 				t === "tool.started" &&
-				(pushCalls[i]![0].data as { toolName: string }).toolName === "Read",
+				(pushCalls[i]?.[0].data as { toolName: string }).toolName === "Read",
 		);
 		const turnCompletedIdx = eventTypes.lastIndexOf("turn.completed");
 
@@ -274,7 +268,11 @@ describe("Integration: ClaudeAdapter full lifecycle", () => {
 					toolName: string,
 					input: Record<string, unknown>,
 					opts: { signal: AbortSignal; toolUseID: string },
-			  ) => Promise<{ behavior: string; updatedInput?: Record<string, unknown>; message?: string }>)
+			  ) => Promise<{
+					behavior: string;
+					updatedInput?: Record<string, unknown>;
+					message?: string;
+			  }>)
 			| undefined;
 
 		let resolvePermissionPhase: (() => void) | undefined;
@@ -339,7 +337,7 @@ describe("Integration: ClaudeAdapter full lifecycle", () => {
 			} as unknown as SDKMessage;
 
 			// Signal that the permission phase is ready for canUseTool invocation
-			resolvePermissionPhase!();
+			resolvePermissionPhase?.();
 
 			// Wait for permission to be resolved before continuing
 			await postPermissionReady;
@@ -400,7 +398,9 @@ describe("Integration: ClaudeAdapter full lifecycle", () => {
 				prompt: AsyncIterable<unknown>;
 				options?: Record<string, unknown>;
 			}) => {
-				capturedCanUseTool = params.options?.["canUseTool"] as typeof capturedCanUseTool;
+				capturedCanUseTool = params.options?.[
+					"canUseTool"
+				] as typeof capturedCanUseTool;
 				return mockQuery;
 			},
 		);
@@ -441,7 +441,7 @@ describe("Integration: ClaudeAdapter full lifecycle", () => {
 		expect(capturedCanUseTool).toBeDefined();
 
 		const abortController = new AbortController();
-		const permissionResult = capturedCanUseTool!(
+		const permissionResult = capturedCanUseTool?.(
 			"Bash",
 			{ command: "rm -rf /" },
 			{ signal: abortController.signal, toolUseID: toolUseId },
@@ -451,10 +451,11 @@ describe("Integration: ClaudeAdapter full lifecycle", () => {
 		// mocked to return { decision: "once" }. So permissionResult should
 		// resolve with { behavior: "allow" }.
 		const permResult = await permissionResult;
-		expect(permResult.behavior).toBe("allow");
+		expect(permResult).toBeDefined();
+		expect(permResult?.behavior).toBe("allow");
 
 		// Now unblock the post-permission messages
-		resolvePostPermission!();
+		resolvePostPermission?.();
 
 		// Wait for the turn to complete
 		const result = await turnPromise;
@@ -464,8 +465,8 @@ describe("Integration: ClaudeAdapter full lifecycle", () => {
 
 		// ── Verify requestPermission was called ────────────────────────
 		expect(sink.requestPermission).toHaveBeenCalledTimes(1);
-		const permCall = (sink.requestPermission as ReturnType<typeof vi.fn>)
-			.mock.calls[0]![0] as Record<string, unknown>;
+		const permCall = (sink.requestPermission as ReturnType<typeof vi.fn>).mock
+			.calls[0]?.[0] as Record<string, unknown>;
 		expect(permCall["toolName"]).toBe("Bash");
 		expect(permCall["sessionId"]).toBe("session-integ-perm");
 

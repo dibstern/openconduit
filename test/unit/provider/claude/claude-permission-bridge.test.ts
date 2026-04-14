@@ -196,7 +196,7 @@ describe("ClaudePermissionBridge", () => {
 		expect(pending).toBeDefined();
 
 		// Resolve via the bridge's resolvePermission (which resolves the deferred)
-		await bridge.resolvePermission(ctx, pending?.requestId, "once");
+		await bridge.resolvePermission(ctx, pending?.requestId ?? "", "once");
 		// Also resolve the sink promise so the bridge can complete
 		resolveSink({ decision: "once" });
 

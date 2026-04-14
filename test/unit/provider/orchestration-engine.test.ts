@@ -690,7 +690,7 @@ describe("OrchestrationEngine", () => {
 			expect(mockLogError).toHaveBeenCalledTimes(1);
 			const call0 = mockLogError.mock.calls[0];
 			expect(call0).toBeDefined();
-			const logMsg = call0![0] as string;
+			const logMsg = call0?.[0] as string;
 			expect(logMsg).toContain("s-err");
 			expect(logMsg).toContain("opencode");
 		});
@@ -718,16 +718,14 @@ describe("OrchestrationEngine", () => {
 			expect(mockLogError).toHaveBeenCalledTimes(1);
 			const call1 = mockLogError.mock.calls[0];
 			expect(call1).toBeDefined();
-			const logMsg = call1![0] as string;
+			const logMsg = call1?.[0] as string;
 			expect(logMsg).toContain("s-perm");
 			expect(logMsg).toContain("opencode");
 		});
 
 		it("dispatch logs error context before re-throwing for discover", async () => {
 			const failing = makeStubAdapter("opencode");
-			failing.discover.mockRejectedValue(
-				new Error("Adapter discover failed"),
-			);
+			failing.discover.mockRejectedValue(new Error("Adapter discover failed"));
 
 			const reg = new ProviderRegistry();
 			reg.registerAdapter(failing);
@@ -743,7 +741,7 @@ describe("OrchestrationEngine", () => {
 			expect(mockLogError).toHaveBeenCalledTimes(1);
 			const call2 = mockLogError.mock.calls[0];
 			expect(call2).toBeDefined();
-			const logMsg = call2![0] as string;
+			const logMsg = call2?.[0] as string;
 			expect(logMsg).toContain("opencode");
 		});
 	});
