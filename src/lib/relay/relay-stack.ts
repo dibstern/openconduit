@@ -18,6 +18,7 @@ import { OpenCodeAPI } from "../instance/opencode-api.js";
 import { createSdkClient } from "../instance/sdk-factory.js";
 import { createLogger, type Logger } from "../logger.js";
 import { DualWriteHook } from "../persistence/dual-write-hook.js";
+import { SessionSeeder } from "../persistence/session-seeder.js";
 import type { PersistenceLayer } from "../persistence/persistence-layer.js";
 import { ReadQueryService } from "../persistence/read-query-service.js";
 import {
@@ -343,6 +344,18 @@ export async function createProjectRelay(
 		WebSocketClass,
 	};
 
+	// ── Claude event persistence (reuses existing persistence layer) ──────
+	const claudeEventPersist = config.persistence
+		? (() => {
+				const seeder = new SessionSeeder(config.persistence.db);
+				return {
+					eventStore: config.persistence.eventStore,
+					projectionRunner: config.persistence.projectionRunner,
+					ensureSession: (sid: string) => seeder.ensureSession(sid, "claude"),
+				};
+			})()
+		: undefined;
+
 	// ── Handler deps wiring (G1: client init, message queue, rate limiter) ──
 	const { rateLimiter } = wireHandlerDeps({
 		wsHandler,
@@ -360,6 +373,7 @@ export async function createProjectRelay(
 		ptyDeps,
 		...(readQuery != null && { readQuery }),
 		orchestrationLayer: orchestration,
+		...(claudeEventPersist != null && { claudeEventPersist }),
 	});
 
 	// ── SSE stream (SDK-backed, replaces legacy SSEConsumer) ────────────────
@@ -368,6 +382,14 @@ export async function createProjectRelay(
 		api,
 		log: sseLog,
 	});
+
+	// ── Run projector recovery (required before projectEvent works) ──────
+	// ProjectionRunner guards projectEvent() behind a recovery check.
+	// Without this call, all projections silently fail (caught by try/catch
+	// in DualWriteHook and RelayEventSink) and the messages table stays empty.
+	if (config.persistence) {
+		config.persistence.projectionRunner.recover();
+	}
 
 	// ── Dual-write hook (SSE → SQLite event store) ──────────────────────
 	let dualWriteHook: DualWriteHook | undefined;
