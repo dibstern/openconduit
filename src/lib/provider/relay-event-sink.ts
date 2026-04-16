@@ -6,7 +6,7 @@
 // familiar RelayMessage shapes.
 
 import { createLogger } from "../logger.js";
-import type { CanonicalEvent } from "../persistence/events.js";
+import type { CanonicalEvent, StoredEvent } from "../persistence/events.js";
 import type { PermissionId } from "../shared-types.js";
 import type { RelayMessage } from "../types.js";
 import { createDeferred, type Deferred } from "./deferred.js";
@@ -21,6 +21,12 @@ const log = createLogger("relay-event-sink");
 
 // ─── Deps ───────────────────────────────────────────────────────────────────
 
+export interface RelayEventSinkPersist {
+	readonly eventStore: { append(event: CanonicalEvent): StoredEvent };
+	readonly projectionRunner: { projectEvent(event: StoredEvent): void };
+	readonly ensureSession: (sessionId: string) => void;
+}
+
 export interface RelayEventSinkDeps {
 	readonly sessionId: string;
 	readonly send: (msg: RelayMessage) => void;
@@ -28,6 +34,8 @@ export interface RelayEventSinkDeps {
 	readonly clearTimeout?: () => void;
 	/** Optional: reset processing timeout on any activity. */
 	readonly resetTimeout?: () => void;
+	/** Optional: persist events to SQLite for session history survival. */
+	readonly persist?: RelayEventSinkPersist;
 }
 
 export interface RelayEventSink extends EventSink {
@@ -40,7 +48,7 @@ export interface RelayEventSink extends EventSink {
 // ─── Factory ────────────────────────────────────────────────────────────────
 
 export function createRelayEventSink(deps: RelayEventSinkDeps): RelayEventSink {
-	const { sessionId, send, clearTimeout, resetTimeout } = deps;
+	const { sessionId, send, clearTimeout, resetTimeout, persist } = deps;
 
 	const pendingPermissions = new Map<string, Deferred<PermissionResponse>>();
 	const pendingQuestions = new Map<string, Deferred<Record<string, unknown>>>();
@@ -56,6 +64,17 @@ export function createRelayEventSink(deps: RelayEventSinkDeps): RelayEventSink {
 	return {
 		async push(event: CanonicalEvent): Promise<void> {
 			reset();
+			// Persist to SQLite when available (before WS send for durability)
+			if (persist) {
+				try {
+					persist.ensureSession(sessionId);
+					const stored = persist.eventStore.append(event);
+					persist.projectionRunner.projectEvent(stored);
+				} catch {
+					// Non-fatal — same pattern as dual-write-hook.ts:149.
+					// Covers: disk full, DB locked, projection recovery guard, etc.
+				}
+			}
 			const msg = translateCanonicalEvent(event);
 			if (msg) {
 				for (const m of msg) {

@@ -197,6 +197,141 @@ describe("createRelayEventSink — translation", () => {
 	});
 });
 
+describe("createRelayEventSink — persistence", () => {
+	it("persists events to eventStore and projects them when persist deps provided", async () => {
+		const send = vi.fn();
+		const appendResult = {
+			eventId: "evt_1",
+			sessionId: "ses-1",
+			type: "text.delta" as const,
+			data: { messageId: "msg_1", partId: "part_1", text: "Hello" },
+			metadata: {},
+			provider: "claude",
+			createdAt: Date.now(),
+			sequence: 1,
+			streamVersion: 1,
+		};
+		const eventStore = { append: vi.fn(() => appendResult) };
+		const projectionRunner = { projectEvent: vi.fn() };
+		const ensureSession = vi.fn();
+
+		const sink = createRelayEventSink({
+			sessionId: "ses-1",
+			send,
+			persist: { eventStore, projectionRunner, ensureSession },
+		});
+
+		const event = makeEvent("text.delta", {
+			messageId: "msg_1",
+			partId: "part_1",
+			text: "Hello",
+		});
+		await sink.push(event);
+
+		expect(ensureSession).toHaveBeenCalledWith("ses-1");
+		expect(eventStore.append).toHaveBeenCalledWith(event);
+		expect(projectionRunner.projectEvent).toHaveBeenCalledWith(appendResult);
+		expect(send).toHaveBeenCalledWith({
+			type: "delta",
+			text: "Hello",
+			messageId: "msg_1",
+		});
+	});
+
+	it("still sends to WebSocket when persist is not provided", async () => {
+		const send = vi.fn();
+		const sink = createRelayEventSink({ sessionId: "ses-1", send });
+
+		await sink.push(
+			makeEvent("text.delta", {
+				messageId: "msg_1",
+				partId: "part_1",
+				text: "Hello",
+			}),
+		);
+
+		expect(send).toHaveBeenCalledWith({
+			type: "delta",
+			text: "Hello",
+			messageId: "msg_1",
+		});
+	});
+
+	it("continues sending to WebSocket even if projection throws", async () => {
+		const send = vi.fn();
+		const appendResult = {
+			eventId: "evt_1",
+			sessionId: "ses-1",
+			type: "text.delta" as const,
+			data: { messageId: "msg_1", partId: "part_1", text: "Hello" },
+			metadata: {},
+			provider: "claude",
+			createdAt: Date.now(),
+			sequence: 1,
+			streamVersion: 1,
+		};
+		const eventStore = { append: vi.fn(() => appendResult) };
+		const projectionRunner = {
+			projectEvent: vi.fn(() => {
+				throw new Error("projection boom");
+			}),
+		};
+		const ensureSession = vi.fn();
+
+		const sink = createRelayEventSink({
+			sessionId: "ses-1",
+			send,
+			persist: { eventStore, projectionRunner, ensureSession },
+		});
+
+		await sink.push(
+			makeEvent("text.delta", {
+				messageId: "msg_1",
+				partId: "part_1",
+				text: "Hello",
+			}),
+		);
+
+		expect(send).toHaveBeenCalledWith({
+			type: "delta",
+			text: "Hello",
+			messageId: "msg_1",
+		});
+	});
+
+	it("continues sending to WebSocket even if eventStore.append throws", async () => {
+		const send = vi.fn();
+		const eventStore = {
+			append: vi.fn(() => {
+				throw new Error("disk full");
+			}),
+		};
+		const projectionRunner = { projectEvent: vi.fn() };
+		const ensureSession = vi.fn();
+
+		const sink = createRelayEventSink({
+			sessionId: "ses-1",
+			send,
+			persist: { eventStore, projectionRunner, ensureSession },
+		});
+
+		await sink.push(
+			makeEvent("text.delta", {
+				messageId: "msg_1",
+				partId: "part_1",
+				text: "Hello",
+			}),
+		);
+
+		expect(send).toHaveBeenCalledWith({
+			type: "delta",
+			text: "Hello",
+			messageId: "msg_1",
+		});
+		expect(projectionRunner.projectEvent).not.toHaveBeenCalled();
+	});
+});
+
 describe("createRelayEventSink — permission/question", () => {
 	it("emits permission_request and resolves when resolvePermission is called", async () => {
 		const send = vi.fn();
