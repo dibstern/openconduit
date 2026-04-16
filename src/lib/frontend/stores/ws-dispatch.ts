@@ -636,6 +636,12 @@ export function handleMessage(msg: RelayMessage): void {
 			handleTodoState(msg);
 			break;
 
+		// ─── Provider session reload ─────────────────────────────────────
+		case "provider_session_reloaded":
+			log.debug("Provider session reloaded:", msg.sessionId);
+			showToast("Skills reloaded");
+			break;
+
 		// ─── Part / Message removal ──────────────────────────────────────
 		case "part_removed":
 			handlePartRemoved(msg);

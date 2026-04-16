@@ -52,12 +52,21 @@ export interface DiscoverCommand {
 	readonly providerId: string;
 }
 
+export interface EndSessionCommand {
+	readonly type: "end_session";
+	readonly commandId?: string;
+	readonly sessionId: string;
+	/** Default false -- keep binding. Set true to also unbind. */
+	readonly unbind?: boolean;
+}
+
 export type OrchestrationCommand =
 	| SendTurnCommand
 	| InterruptTurnCommand
 	| ResolvePermissionCommand
 	| ResolveQuestionCommand
-	| DiscoverCommand;
+	| DiscoverCommand
+	| EndSessionCommand;
 
 // biome-ignore lint/suspicious/noConfusingVoidType: void is needed for Promise<void> overloads
 export type OrchestrationResult = TurnResult | AdapterCapabilities | void;
@@ -95,6 +104,7 @@ export class OrchestrationEngine {
 	async dispatch(command: InterruptTurnCommand): Promise<void>;
 	async dispatch(command: ResolvePermissionCommand): Promise<void>;
 	async dispatch(command: ResolveQuestionCommand): Promise<void>;
+	async dispatch(command: EndSessionCommand): Promise<void>;
 	async dispatch(command: OrchestrationCommand): Promise<OrchestrationResult> {
 		// Idempotency check
 		if (command.commandId) {
@@ -120,6 +130,9 @@ export class OrchestrationEngine {
 				break;
 			case "discover":
 				result = await this.handleDiscover(command);
+				break;
+			case "end_session":
+				result = await this.handleEndSession(command);
 				break;
 			default: {
 				const _exhaustive: never = command;
@@ -225,6 +238,29 @@ export class OrchestrationEngine {
 			);
 			throw err;
 		}
+	}
+
+	private async handleEndSession(command: EndSessionCommand): Promise<void> {
+		const providerId = this.sessionBindings.get(command.sessionId);
+		if (!providerId) {
+			log.debug(
+				`endSession: no provider bound for session=${command.sessionId}`,
+			);
+			return;
+		}
+		const adapter = this.registry.getAdapterOrThrow(providerId);
+		log.info(
+			`Dispatching endSession: session=${command.sessionId} provider=${providerId}`,
+		);
+		try {
+			await adapter.endSession(command.sessionId);
+		} catch (err) {
+			log.error(
+				`endSession failed: session=${command.sessionId} provider=${providerId}: ${err instanceof Error ? err.message : err}`,
+			);
+			throw err;
+		}
+		if (command.unbind) this.sessionBindings.delete(command.sessionId);
 	}
 
 	// ─── Session Binding Management ───────────────────────────────────────

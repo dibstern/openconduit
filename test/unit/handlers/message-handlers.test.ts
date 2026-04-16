@@ -1481,6 +1481,7 @@ describe("dispatchMessage", () => {
 			"set_project_instance",
 			"proxy_detect",
 			"scan_now",
+			"reload_provider_session",
 		];
 		const table = MESSAGE_HANDLERS as Record<string, unknown>;
 		for (const name of expectedHandlers) {

@@ -444,6 +444,8 @@ export type RelayMessage =
 			env?: Record<string, string>;
 			port?: number;
 	  }
+	// ── Provider session reload ─────────────────────────────────────────
+	| { type: "provider_session_reloaded"; sessionId: string }
 	// ── Variant / thinking level ────────────────────────────────────────
 	| { type: "variant_info"; variant?: string; variants?: string[] }
 	| { type: "proxy_detected"; found: boolean; port: number }

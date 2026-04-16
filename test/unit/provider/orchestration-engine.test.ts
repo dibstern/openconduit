@@ -76,6 +76,7 @@ function makeStubAdapter(providerId: string): ProviderAdapter & {
 	resolveQuestion: ReturnType<typeof vi.fn>;
 	discover: ReturnType<typeof vi.fn>;
 	shutdown: ReturnType<typeof vi.fn>;
+	endSession: ReturnType<typeof vi.fn>;
 } {
 	return {
 		providerId,
@@ -101,6 +102,7 @@ function makeStubAdapter(providerId: string): ProviderAdapter & {
 		resolvePermission: vi.fn(async () => {}),
 		resolveQuestion: vi.fn(async () => {}),
 		shutdown: vi.fn(async () => {}),
+		endSession: vi.fn(async () => {}),
 	};
 }
 
@@ -256,6 +258,66 @@ describe("OrchestrationEngine", () => {
 
 			expect(opencode.discover).toHaveBeenCalledTimes(1);
 			expect(result).toMatchObject({ models: [] });
+		});
+	});
+
+	describe("dispatch: end_session", () => {
+		it("routes endSession to the bound provider", async () => {
+			engine.bindSession("s-end-1", "opencode");
+
+			await engine.dispatch({
+				type: "end_session",
+				sessionId: "s-end-1",
+			});
+
+			expect(opencode.endSession).toHaveBeenCalledWith("s-end-1");
+		});
+
+		it("is a no-op when session has no binding", async () => {
+			await engine.dispatch({
+				type: "end_session",
+				sessionId: "unbound",
+			});
+
+			expect(opencode.endSession).not.toHaveBeenCalled();
+		});
+
+		it("preserves the binding when unbind is omitted", async () => {
+			engine.bindSession("s-keep", "opencode");
+
+			await engine.dispatch({
+				type: "end_session",
+				sessionId: "s-keep",
+			});
+
+			expect(engine.getProviderForSession("s-keep")).toBe("opencode");
+		});
+
+		it("removes the binding when unbind: true is set", async () => {
+			engine.bindSession("s-drop", "opencode");
+
+			await engine.dispatch({
+				type: "end_session",
+				sessionId: "s-drop",
+				unbind: true,
+			});
+
+			expect(engine.getProviderForSession("s-drop")).toBeUndefined();
+		});
+
+		it("propagates adapter errors and preserves binding", async () => {
+			opencode.endSession.mockRejectedValueOnce(new Error("adapter boom"));
+			engine.bindSession("s-err", "opencode");
+
+			await expect(
+				engine.dispatch({
+					type: "end_session",
+					sessionId: "s-err",
+				}),
+			).rejects.toThrow("adapter boom");
+
+			// Binding should be preserved when endSession throws
+			expect(engine.getProviderForSession("s-err")).toBe("opencode");
 		});
 	});
 
