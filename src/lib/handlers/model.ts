@@ -36,6 +36,9 @@ export async function handleGetModels(
 		.filter((p) => p.configured);
 
 	// Merge Claude in-process models when the orchestration engine is available.
+	// Both sets are shown so users can choose which backend handles the request:
+	//   "Anthropic - opencode" → routes via OpenCode REST API
+	//   "Anthropic - claude"  → routes via in-process Claude Agent SDK
 	if (deps.orchestrationEngine) {
 		try {
 			const claudeCaps = await deps.orchestrationEngine.dispatch({
@@ -43,9 +46,16 @@ export async function handleGetModels(
 				providerId: "claude",
 			});
 			if (claudeCaps.models.length > 0) {
+				// Rename "anthropic" provider to distinguish from SDK models
+				for (const p of providers) {
+					if (p.id === "anthropic") {
+						p.name = "Anthropic - opencode";
+					}
+				}
+
 				providers.push({
 					id: "claude",
-					name: "Claude (In-Process)",
+					name: "Anthropic - claude",
 					configured: true,
 					models: claudeCaps.models.map((m) => ({
 						id: m.id,
@@ -129,7 +139,6 @@ export async function handleGetModels(
 	});
 }
 
-/** Check if a provider ID corresponds to the Claude/Anthropic in-process adapter. */
 /**
  * Determines if a provider ID refers to the in-process Claude SDK adapter
  * (not OpenCode's "anthropic" provider which proxies to Anthropic via
@@ -137,7 +146,7 @@ export async function handleGetModels(
  * routes through the ClaudeAdapter — all other providers (including
  * "anthropic") route through OpenCodeAdapter.
  */
-function isClaudeProvider(providerId: string): boolean {
+export function isClaudeProvider(providerId: string): boolean {
 	return providerId === "claude";
 }
 

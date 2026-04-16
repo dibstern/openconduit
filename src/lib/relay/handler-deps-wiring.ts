@@ -97,6 +97,9 @@ export function wireHandlerDeps(
 		...(config.getCachedUpdate != null && {
 			getCachedUpdate: config.getCachedUpdate,
 		}),
+		...(orchestrationLayer != null && {
+			orchestrationEngine: orchestrationLayer.engine,
+		}),
 		log: wsLog,
 	};
 

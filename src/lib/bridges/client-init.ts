@@ -11,6 +11,7 @@ import { formatErrorDetail, RelayError } from "../errors.js";
 import { filterAgents, getSessionInputDraft } from "../handlers/index.js";
 import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type { Logger } from "../logger.js";
+import type { OrchestrationEngine } from "../provider/orchestration-engine.js";
 import type { PtyManager } from "../relay/pty-manager.js";
 import type { SessionManager } from "../session/session-manager.js";
 import type { SessionOverrides } from "../session/session-overrides.js";
@@ -45,6 +46,8 @@ export interface ClientInitDeps {
 	getInstances?: () => ReadonlyArray<Readonly<OpenCodeInstance>>;
 	/** Optional supplier of cached update version (for replaying to new clients) */
 	getCachedUpdate?: () => string | null;
+	/** Optional orchestration engine for Claude SDK model discovery */
+	orchestrationEngine?: OrchestrationEngine;
 	log: Logger;
 }
 
@@ -284,6 +287,41 @@ export async function handleClientConnected(
 				})),
 			}))
 			.filter((p) => p.configured);
+
+		// Merge Claude in-process models when the orchestration engine is available.
+		// Mirrors handleGetModels so the initial client_connected payload doesn't
+		// overwrite the merged list the client later receives from get_models.
+		//   "Anthropic - opencode" → routes via OpenCode REST API
+		//   "Anthropic - claude"  → routes via in-process Claude Agent SDK
+		if (deps.orchestrationEngine) {
+			try {
+				const claudeCaps = await deps.orchestrationEngine.dispatch({
+					type: "discover",
+					providerId: "claude",
+				});
+				if (claudeCaps.models.length > 0) {
+					for (const p of providers) {
+						if (p.id === "anthropic") {
+							p.name = "Anthropic - opencode";
+						}
+					}
+					providers.push({
+						id: "claude",
+						name: "Anthropic - claude",
+						configured: true,
+						models: claudeCaps.models.map((m) => ({
+							id: m.id,
+							name: m.name,
+							provider: "claude",
+							...(m.limit ? { limit: m.limit } : {}),
+						})),
+					});
+				}
+			} catch {
+				// Claude adapter may not be available — skip silently
+			}
+		}
+
 		wsHandler.sendTo(clientId, { type: "model_list", providers });
 
 		// Send variant info — current thinking level and available variants
