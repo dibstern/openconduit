@@ -61,28 +61,44 @@ const BUILTIN_COMMANDS: ReadonlyArray<{ name: string; description: string }> = [
 
 // ─── Model catalog ─────────────────────────────────────────────────────────
 
+// Model IDs must match Claude Code backend-recognized identifiers. Outdated
+// IDs (e.g. claude-haiku-3-5, claude-opus-4, claude-sonnet-4) return a 502
+// "unknown provider for model" error from the backend. Short aliases
+// (opus/sonnet/haiku) always resolve to the current generation.
 const CLAUDE_MODELS: ReadonlyArray<ModelInfo> = [
 	{
-		id: "claude-opus-4",
-		name: "Claude Opus 4",
+		id: "claude-opus-4-6",
+		name: "Claude Opus 4.6",
 		providerId: "claude",
 		limit: { context: 200_000, output: 32_000 },
 	},
 	{
-		id: "claude-sonnet-4-5",
-		name: "Claude Sonnet 4.5",
+		id: "claude-sonnet-4-6",
+		name: "Claude Sonnet 4.6",
 		providerId: "claude",
 		limit: { context: 200_000, output: 64_000 },
 	},
 	{
-		id: "claude-sonnet-4",
-		name: "Claude Sonnet 4",
+		id: "claude-haiku-4-5",
+		name: "Claude Haiku 4.5",
+		providerId: "claude",
+		limit: { context: 200_000, output: 8_192 },
+	},
+	{
+		id: "opus",
+		name: "Claude Opus (latest)",
 		providerId: "claude",
 		limit: { context: 200_000, output: 32_000 },
 	},
 	{
-		id: "claude-haiku-3-5",
-		name: "Claude Haiku 3.5",
+		id: "sonnet",
+		name: "Claude Sonnet (latest)",
+		providerId: "claude",
+		limit: { context: 200_000, output: 64_000 },
+	},
+	{
+		id: "haiku",
+		name: "Claude Haiku (latest)",
 		providerId: "claude",
 		limit: { context: 200_000, output: 8_192 },
 	},
@@ -259,7 +275,13 @@ export class ClaudeAdapter implements ProviderAdapter {
 		}
 
 		const existingCtx = this.sessions.get(sessionId);
-		if (existingCtx) {
+		if (existingCtx?.stopped) {
+			// Safety net: any path that stopped this context (interruptTurn,
+			// endSession, shutdown) leaves it in sessions with a closed prompt
+			// queue; enqueueing would throw. Evict silently and create fresh.
+			log.info(`Evicting stopped session on sendTurn: ${sessionId}`);
+			this.sessions.delete(sessionId);
+		} else if (existingCtx) {
 			return this.enqueueTurn(existingCtx, input);
 		}
 
@@ -486,8 +508,24 @@ export class ClaudeAdapter implements ProviderAdapter {
 		ctx: ClaudeSessionContext,
 		result: SDKResultMessage,
 	): TurnResult {
-		const isSuccess = result.subtype === "success";
+		// is_error=true can appear on success-subtype results when the SDK
+		// wraps an upstream API error (e.g. "unknown provider for model X",
+		// 502s after all retries) as a synthetic successful completion.
+		// Treat those as errors so the caller sees failure, not success.
+		const isErrorFlag = (result as { is_error?: boolean }).is_error === true;
+		const isSuccess = result.subtype === "success" && !isErrorFlag;
 		const isInterrupted = !isSuccess && isInterruptedResult(result);
+		// Error text source depends on result shape:
+		//  - error_during_execution (and other non-success subtypes): `errors` array
+		//  - success + is_error=true: `result` field contains the provider error text
+		const errorsField = (result as unknown as { errors?: string[] }).errors;
+		const resultField = (result as unknown as { result?: string }).result;
+		const errorMessage =
+			Array.isArray(errorsField) && errorsField.length > 0
+				? errorsField.join("; ")
+				: typeof resultField === "string" && resultField.length > 0
+					? resultField
+					: "Unknown error";
 		return {
 			status: isSuccess ? "completed" : isInterrupted ? "interrupted" : "error",
 			cost: result.total_cost_usd ?? 0,
@@ -499,16 +537,11 @@ export class ClaudeAdapter implements ProviderAdapter {
 					: {}),
 			},
 			durationMs: result.duration_ms ?? 0,
-			...(!isSuccess && !isInterrupted && "errors" in result
+			...(!isSuccess && !isInterrupted
 				? {
 						error: {
 							code: "provider_error" as const,
-							message:
-								(
-									result as unknown as {
-										errors?: string[];
-									}
-								).errors?.join("; ") ?? "Unknown error",
+							message: errorMessage,
 						},
 					}
 				: {}),
@@ -692,23 +725,58 @@ export class ClaudeAdapter implements ProviderAdapter {
 		}
 	}
 
-	// ─── shutdown ────────────────────────────────────────────────────────
+	// ─── disposeSession / endSession / shutdown ──────────────────────────
+
+	/**
+	 * Terminal disposal of a single session: cleanup + reject pending turn
+	 * deferreds + close the SDK query + remove from the session map. Shared
+	 * by endSession() and shutdown(); interruptTurn() still uses cleanupSession
+	 * alone because interrupt is resumable.
+	 */
+	private async disposeSession(
+		ctx: ClaudeSessionContext,
+		reason: string,
+	): Promise<void> {
+		await this.cleanupSession(ctx, reason);
+
+		// Reject any pending turn deferreds. cleanupSession only rejects one
+		// via the stream consumer's finally; additional queued-up deferreds
+		// would orphan otherwise.
+		const queue = this.turnDeferredQueues.get(ctx.sessionId);
+		if (queue) {
+			for (const d of queue) {
+				try {
+					d.reject(new Error(reason));
+				} catch {
+					// Already settled
+				}
+			}
+			this.turnDeferredQueues.delete(ctx.sessionId);
+		}
+
+		// Terminal close of the SDK query (vs interrupt(), which is resumable).
+		try {
+			ctx.query.close();
+		} catch {
+			// Already closed
+		}
+
+		this.sessions.delete(ctx.sessionId);
+	}
+
+	async endSession(sessionId: string): Promise<void> {
+		const ctx = this.sessions.get(sessionId);
+		if (!ctx) return; // idempotent
+		log.info(`Ending Claude session: ${sessionId}`);
+		await this.disposeSession(ctx, "Session ended (reload)");
+	}
 
 	async shutdown(): Promise<void> {
 		log.info("ClaudeAdapter shutting down");
-
-		const sessionsToStop = [...this.sessions.values()];
-		for (const ctx of sessionsToStop) {
-			await this.cleanupSession(ctx, "Adapter shutting down");
-			// Additionally close the query (shutdown is terminal; interrupt alone
-			// lets the query be resumed).
-			try {
-				ctx.query.close();
-			} catch {
-				// Ignore
-			}
+		for (const ctx of [...this.sessions.values()]) {
+			await this.disposeSession(ctx, "Adapter shutting down");
 		}
-		this.sessions.clear();
+		this.sessions.clear(); // safety net
 	}
 
 	// ─── Internal: permission bridge access ──────────────────────────────

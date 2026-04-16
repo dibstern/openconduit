@@ -210,6 +210,21 @@ export class OpenCodeAdapter implements ProviderAdapter {
 		await this.client.question.reply(requestId, answerArrays);
 	}
 
+	// ─── endSession ──────────────────────────────────────────────────────
+
+	async endSession(sessionId: string): Promise<void> {
+		// OpenCode owns session state server-side. The adapter's only
+		// per-session state is the pending turn deferred; reject it so the
+		// caller unblocks. We do NOT call client.session.abort -- reload is
+		// an adapter-state reset, not a turn cancellation (that's what
+		// interruptTurn / "cancel" is for).
+		const deferred = this.pendingTurns.get(sessionId);
+		if (deferred) {
+			this.pendingTurns.delete(sessionId);
+			deferred.reject(new Error("Session ended (reload)"));
+		}
+	}
+
 	// ─── shutdown ────────────────────────────────────────────────────────
 
 	async shutdown(): Promise<void> {

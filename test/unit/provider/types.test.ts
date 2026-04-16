@@ -12,7 +12,7 @@ import type {
 } from "../../../src/lib/provider/types.js";
 
 describe("ProviderAdapter types", () => {
-	it("ProviderAdapter has exactly the 7-method interface", () => {
+	it("ProviderAdapter has exactly the 8-method interface", () => {
 		// Compile-time check: if the interface changes shape, this won't compile.
 		const adapter: ProviderAdapter = {
 			providerId: "test",
@@ -46,6 +46,7 @@ describe("ProviderAdapter types", () => {
 				_answers: Record<string, unknown>,
 			) => {},
 			shutdown: async () => {},
+			endSession: async (_sessionId: string) => {},
 		};
 
 		expect(adapter.providerId).toBe("test");
@@ -55,6 +56,7 @@ describe("ProviderAdapter types", () => {
 		expect(typeof adapter.resolvePermission).toBe("function");
 		expect(typeof adapter.resolveQuestion).toBe("function");
 		expect(typeof adapter.shutdown).toBe("function");
+		expect(typeof adapter.endSession).toBe("function");
 	});
 
 	it("SendTurnInput includes all required fields", () => {

@@ -10,7 +10,14 @@ import type {
 	PendingApproval,
 	PendingQuestion,
 } from "../../../../src/lib/provider/claude/types.js";
-import { createMockEventSink } from "../../../helpers/mock-sdk.js";
+import { createDeferred } from "../../../../src/lib/provider/deferred.js";
+import type { TurnResult } from "../../../../src/lib/provider/types.js";
+import {
+	createMockEventSink,
+	createMockQuery,
+	makeBaseSendTurnInput,
+	makeSuccessResult,
+} from "../../../helpers/mock-sdk.js";
 
 function makeFakeSessionContext(
 	sessionId: string,
@@ -356,6 +363,123 @@ describe("ClaudeAdapter lifecycle", () => {
 
 			// Should not throw
 			await adapter.resolvePermission("sess-1", "nonexistent", "once");
+		});
+	});
+
+	describe("endSession()", () => {
+		it("closes query and removes session from map", async () => {
+			const adapter = new ClaudeAdapter({ workspaceRoot: workspace });
+			const ctx = makeFakeSessionContext("sess-end");
+			(
+				adapter as unknown as { sessions: Map<string, ClaudeSessionContext> }
+			).sessions.set("sess-end", ctx);
+
+			await adapter.endSession("sess-end");
+
+			expect(ctx.promptQueue.close).toHaveBeenCalled();
+			expect(ctx.query.close).toHaveBeenCalled();
+			expect(ctx.stopped).toBe(true);
+			expect(
+				(adapter as unknown as { sessions: Map<string, unknown> }).sessions
+					.size,
+			).toBe(0);
+		});
+
+		it("is a no-op for unknown session", async () => {
+			const adapter = new ClaudeAdapter({ workspaceRoot: workspace });
+			// Should not throw
+			await adapter.endSession("nonexistent");
+		});
+
+		it("rejects queued turn deferreds with reload reason", async () => {
+			const adapter = new ClaudeAdapter({ workspaceRoot: workspace });
+			const ctx = makeFakeSessionContext("sess-reject");
+			(
+				adapter as unknown as { sessions: Map<string, ClaudeSessionContext> }
+			).sessions.set("sess-reject", ctx);
+
+			// Simulate two queued turn deferreds
+			const d1 = createDeferred<TurnResult>();
+			const d2 = createDeferred<TurnResult>();
+			(
+				adapter as unknown as {
+					turnDeferredQueues: Map<string, (typeof d1)[]>;
+				}
+			).turnDeferredQueues.set("sess-reject", [d1, d2]);
+
+			// Swallow rejections to avoid unhandled-promise warnings
+			const rejected: Error[] = [];
+			d1.promise.catch((e) => rejected.push(e));
+			d2.promise.catch((e) => rejected.push(e));
+
+			await adapter.endSession("sess-reject");
+
+			// Flush microtasks
+			await Promise.resolve();
+			await Promise.resolve();
+
+			expect(rejected).toHaveLength(2);
+			expect(rejected[0]?.message).toContain("reload");
+			expect(rejected[1]?.message).toContain("reload");
+			// The deferred queue should be cleared
+			expect(
+				(
+					adapter as unknown as {
+						turnDeferredQueues: Map<string, unknown>;
+					}
+				).turnDeferredQueues.has("sess-reject"),
+			).toBe(false);
+		});
+
+		it("endSession followed by sendTurn creates a fresh query", async () => {
+			const result1 = makeSuccessResult();
+			const result2 = makeSuccessResult({ total_cost_usd: 0.13 } as Record<
+				string,
+				unknown
+			>);
+
+			const queryA = createMockQuery([result1]);
+			const queryB = createMockQuery([result2]);
+
+			let calls = 0;
+			const factory = vi.fn(() => {
+				calls++;
+				return calls === 1 ? queryA : queryB;
+			});
+
+			const adapter = new ClaudeAdapter({
+				workspaceRoot: workspace,
+				queryFactory: factory,
+			});
+
+			const sink = createMockEventSink();
+			// Establish session
+			await adapter.sendTurn(
+				makeBaseSendTurnInput({
+					sessionId: "sess-reload-flow",
+					turnId: "turn-1",
+					eventSink: sink,
+				}),
+			);
+
+			// End session (user-initiated reload)
+			await adapter.endSession("sess-reload-flow");
+			expect(
+				(adapter as unknown as { sessions: Map<string, unknown> }).sessions.has(
+					"sess-reload-flow",
+				),
+			).toBe(false);
+
+			// Next sendTurn should create a brand new query
+			const r2 = await adapter.sendTurn(
+				makeBaseSendTurnInput({
+					sessionId: "sess-reload-flow",
+					turnId: "turn-2",
+					eventSink: sink,
+				}),
+			);
+			expect(r2.status).toBe("completed");
+			expect(factory).toHaveBeenCalledTimes(2);
 		});
 	});
 

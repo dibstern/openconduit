@@ -1008,6 +1008,61 @@ describe("ClaudeAdapter.sendTurn()", () => {
 		expect(eventTypes).toContain("turn.error");
 	});
 
+	it("sendTurn evicts stopped session and creates fresh query", async () => {
+		const result1 = makeSuccessResult();
+		const result2 = makeSuccessResult({ total_cost_usd: 0.09 } as Record<
+			string,
+			unknown
+		>);
+
+		const queryA = createMockQuery([result1]);
+		const queryB = createMockQuery([result2]);
+
+		let callCount = 0;
+		queryFactorySpy = vi.fn(() => {
+			callCount++;
+			return callCount === 1 ? queryA : queryB;
+		});
+
+		const adapter = new ClaudeAdapter({
+			workspaceRoot: workspace,
+			queryFactory: queryFactorySpy,
+		});
+
+		const sink = createMockEventSink();
+
+		// First turn creates session
+		const input1 = makeBaseSendTurnInput({
+			sessionId: "session-evict",
+			turnId: "turn-1",
+			prompt: "First",
+			eventSink: sink,
+		});
+		const r1 = await adapter.sendTurn(input1);
+		expect(r1.status).toBe("completed");
+
+		// Manually mark the session as stopped (simulating interruptTurn, etc.)
+		const ctx = (
+			adapter as unknown as { sessions: Map<string, { stopped: boolean }> }
+		).sessions.get("session-evict");
+		expect(ctx).toBeDefined();
+		(ctx as { stopped: boolean }).stopped = true;
+
+		// Second turn after a stop should evict + create a new query
+		const input2 = makeBaseSendTurnInput({
+			sessionId: "session-evict",
+			turnId: "turn-2",
+			prompt: "Second",
+			eventSink: sink,
+		});
+		const r2 = await adapter.sendTurn(input2);
+
+		expect(r2.status).toBe("completed");
+		expect(r2.cost).toBe(0.09);
+		// Two queries: one for the initial session, one for the re-creation
+		expect(queryFactorySpy).toHaveBeenCalledTimes(2);
+	});
+
 	it("SDK throws after first result but before second turn enqueues", async () => {
 		const result1 = makeSuccessResult();
 

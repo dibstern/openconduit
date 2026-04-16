@@ -209,4 +209,12 @@ export interface ProviderAdapter {
 
 	/** Graceful shutdown -- clean up connections, abort pending turns */
 	shutdown(): Promise<void>;
+
+	/**
+	 * Terminate the provider's session-level state (SDK query, pending turns,
+	 * approvals, queued messages). Idempotent. Does NOT unbind the session
+	 * from the provider -- that's a higher-level concern. Next sendTurn()
+	 * re-creates state from scratch.
+	 */
+	endSession(sessionId: string): Promise<void>;
 }

@@ -60,6 +60,7 @@ describe("Provider wiring with Claude adapter", () => {
 			resolvePermission: async () => {},
 			resolveQuestion: async () => {},
 			shutdown: async () => {},
+			endSession: async () => {},
 		};
 
 		registry.registerAdapter(opencode);
