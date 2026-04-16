@@ -1,7 +1,9 @@
 // ─── Prompt Handlers ─────────────────────────────────────────────────────────
 
 import { formatErrorDetail, RelayError } from "../errors.js";
+import { createRelayEventSink } from "../provider/relay-event-sink.js";
 import type { SendTurnInput } from "../provider/types.js";
+import { isClaudeProvider } from "./model.js";
 import type { PayloadMap } from "./payloads.js";
 import { resolveSession } from "./resolve-session.js";
 import type { HandlerDeps, PromptOptions } from "./types.js";
@@ -107,6 +109,23 @@ export async function handleMessage(
 	// direct REST call for legacy paths (e.g. tests that don't provide the engine).
 	if (deps.orchestrationEngine) {
 		const model = deps.overrides.getModel(activeId);
+		let providerId = deps.orchestrationEngine.getProviderForSession(activeId);
+		if (!providerId) {
+			providerId =
+				model && isClaudeProvider(model.providerID) ? "claude" : "opencode";
+		}
+		// ClaudeAdapter emits events via EventSink. Build a RelayEventSink that
+		// translates CanonicalEvents → RelayMessages → WebSocket. OpenCodeAdapter
+		// ignores eventSink (events flow via SSE), so a no-op sink is fine there.
+		const eventSink =
+			providerId === "claude"
+				? createRelayEventSink({
+						sessionId: activeId,
+						send: (msg) => deps.wsHandler.sendToSession(activeId, msg),
+						clearTimeout: () => deps.overrides.clearProcessingTimeout(activeId),
+						resetTimeout: () => deps.overrides.resetProcessingTimeout(activeId),
+					})
+				: NOOP_EVENT_SINK;
 		const sendTurnInput: SendTurnInput = {
 			sessionId: activeId,
 			turnId: crypto.randomUUID(),
@@ -123,14 +142,12 @@ export async function handleMessage(
 					}
 				: {}),
 			workspaceRoot: deps.config.projectDir ?? "",
-			eventSink: NOOP_EVENT_SINK,
+			eventSink,
 			abortSignal: new AbortController().signal,
 			...(images && images.length > 0 ? { images } : {}),
 			...(sessionAgent ? { agent: sessionAgent } : {}),
 			...(variant ? { variant } : {}),
 		};
-		const providerId =
-			deps.orchestrationEngine.getProviderForSession(activeId) ?? "opencode";
 		// Fire-and-forget: the engine manages the turn lifecycle asynchronously.
 		// Errors are surfaced via the .then() handler below.
 		void deps.orchestrationEngine

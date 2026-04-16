@@ -448,6 +448,247 @@ describe("handleMessage", () => {
 		await handleMessage(deps, "client-1", { text: "my draft" });
 		expect(getSessionInputDraft("session-1")).toBe("");
 	});
+
+	it("dispatches through 'claude' when model provider is 'claude' and no session binding", async () => {
+		const engine = {
+			dispatch: vi.fn().mockResolvedValue({
+				status: "completed",
+				cost: 0,
+				tokens: { input: 0, output: 0 },
+				durationMs: 0,
+				providerStateUpdates: [],
+			}),
+			getProviderForSession: vi.fn().mockReturnValue(undefined),
+			bindSession: vi.fn(),
+		};
+		const deps = createMockHandlerDeps({
+			orchestrationEngine: engine as unknown as NonNullable<
+				HandlerDeps["orchestrationEngine"]
+			>,
+		});
+		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
+		vi.mocked(deps.overrides.getModel).mockReturnValue({
+			providerID: "claude",
+			modelID: "claude-sonnet-4",
+		});
+		vi.mocked(deps.overrides.isModelUserSelected).mockReturnValue(true);
+
+		await handleMessage(deps, "client-1", { text: "Hello" });
+
+		// Should dispatch to "claude", not "opencode"
+		expect(engine.dispatch).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "send_turn",
+				providerId: "claude",
+			}),
+		);
+	});
+
+	it("dispatches through 'opencode' when model provider is 'anthropic' even with claude-* model ID", async () => {
+		const engine = {
+			dispatch: vi.fn().mockResolvedValue({
+				status: "completed",
+				cost: 0,
+				tokens: { input: 0, output: 0 },
+				durationMs: 0,
+				providerStateUpdates: [],
+			}),
+			getProviderForSession: vi.fn().mockReturnValue(undefined),
+			bindSession: vi.fn(),
+		};
+		const deps = createMockHandlerDeps({
+			orchestrationEngine: engine as unknown as NonNullable<
+				HandlerDeps["orchestrationEngine"]
+			>,
+		});
+		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
+		vi.mocked(deps.overrides.getModel).mockReturnValue({
+			providerID: "anthropic",
+			modelID: "claude-sonnet-4",
+		});
+		vi.mocked(deps.overrides.isModelUserSelected).mockReturnValue(true);
+
+		await handleMessage(deps, "client-1", { text: "Hello" });
+
+		// "anthropic" provider routes through OpenCode, even for claude-* models.
+		// Dedup in handleGetModels ensures users pick from "claude" provider group.
+		expect(engine.dispatch).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "send_turn",
+				providerId: "opencode",
+			}),
+		);
+	});
+
+	it("dispatches through 'opencode' when model is not Claude and no binding", async () => {
+		const engine = {
+			dispatch: vi.fn().mockResolvedValue({
+				status: "completed",
+				cost: 0,
+				tokens: { input: 0, output: 0 },
+				durationMs: 0,
+				providerStateUpdates: [],
+			}),
+			getProviderForSession: vi.fn().mockReturnValue(undefined),
+			bindSession: vi.fn(),
+		};
+		const deps = createMockHandlerDeps({
+			orchestrationEngine: engine as unknown as NonNullable<
+				HandlerDeps["orchestrationEngine"]
+			>,
+		});
+		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
+		vi.mocked(deps.overrides.getModel).mockReturnValue({
+			providerID: "openai",
+			modelID: "gpt-4o",
+		});
+		vi.mocked(deps.overrides.isModelUserSelected).mockReturnValue(true);
+
+		await handleMessage(deps, "client-1", { text: "Hello" });
+
+		expect(engine.dispatch).toHaveBeenCalledWith(
+			expect.objectContaining({
+				type: "send_turn",
+				providerId: "opencode",
+			}),
+		);
+	});
+
+	// ── Regression: Claude adapter event delivery ────────────────────────────
+	// Previously, prompt.ts wired a NOOP_EVENT_SINK to EVERY adapter — including
+	// the Claude SDK path which uses the sink to emit text/tool/result events.
+	// The result: Claude model prompts hung until PROCESSING_TIMEOUT (120s)
+	// because nothing ever reached the WebSocket. This test captures the
+	// eventSink passed to dispatch and verifies that pushing a CanonicalEvent
+	// produces a corresponding RelayMessage on the session.
+	it("Claude adapter events pushed to eventSink reach the WebSocket", async () => {
+		let capturedSink: unknown = null;
+		const engine = {
+			dispatch: vi.fn().mockImplementation((cmd) => {
+				if (cmd.type === "send_turn") {
+					capturedSink = cmd.input.eventSink;
+				}
+				return Promise.resolve({
+					status: "completed",
+					cost: 0,
+					tokens: { input: 0, output: 0 },
+					durationMs: 0,
+					providerStateUpdates: [],
+				});
+			}),
+			getProviderForSession: vi.fn().mockReturnValue(undefined),
+			bindSession: vi.fn(),
+		};
+		const deps = createMockHandlerDeps({
+			orchestrationEngine: engine as unknown as NonNullable<
+				HandlerDeps["orchestrationEngine"]
+			>,
+		});
+		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
+		vi.mocked(deps.overrides.getModel).mockReturnValue({
+			providerID: "claude",
+			modelID: "claude-haiku-3-5",
+		});
+		vi.mocked(deps.overrides.isModelUserSelected).mockReturnValue(true);
+
+		await handleMessage(deps, "client-1", { text: "/usage" });
+
+		// The sink must be the real RelayEventSink, not the no-op.
+		expect(capturedSink).not.toBeNull();
+		expect(typeof (capturedSink as { push?: unknown }).push).toBe("function");
+
+		// Simulate the adapter pushing a text delta (the SDK's first output).
+		await (
+			capturedSink as {
+				push: (e: {
+					type: string;
+					sessionId: string;
+					data: Record<string, unknown>;
+					eventId: string;
+					metadata: Record<string, unknown>;
+					provider: string;
+					createdAt: number;
+				}) => Promise<void>;
+			}
+		).push({
+			eventId: "evt_1",
+			sessionId: "session-1",
+			type: "text.delta",
+			data: { messageId: "msg_1", partId: "part_1", text: "Hello world" },
+			metadata: {},
+			provider: "claude",
+			createdAt: Date.now(),
+		});
+
+		// Assert: the delta reached the session's clients as a `delta` RelayMessage.
+		expect(deps.wsHandler.sendToSession).toHaveBeenCalledWith(
+			"session-1",
+			expect.objectContaining({
+				type: "delta",
+				text: "Hello world",
+				messageId: "msg_1",
+			}),
+		);
+	});
+
+	it("Claude adapter turn.completed triggers done + clears timeout", async () => {
+		let capturedSink: unknown = null;
+		const engine = {
+			dispatch: vi.fn().mockImplementation((cmd) => {
+				if (cmd.type === "send_turn") capturedSink = cmd.input.eventSink;
+				return Promise.resolve({
+					status: "completed",
+					cost: 0,
+					tokens: { input: 0, output: 0 },
+					durationMs: 0,
+					providerStateUpdates: [],
+				});
+			}),
+			getProviderForSession: vi.fn().mockReturnValue(undefined),
+			bindSession: vi.fn(),
+		};
+		const deps = createMockHandlerDeps({
+			orchestrationEngine: engine as unknown as NonNullable<
+				HandlerDeps["orchestrationEngine"]
+			>,
+		});
+		vi.mocked(deps.wsHandler.getClientSession).mockReturnValue("session-1");
+		vi.mocked(deps.overrides.getModel).mockReturnValue({
+			providerID: "claude",
+			modelID: "claude-haiku-3-5",
+		});
+		vi.mocked(deps.overrides.isModelUserSelected).mockReturnValue(true);
+
+		await handleMessage(deps, "client-1", { text: "Hi" });
+
+		await (
+			capturedSink as {
+				push: (e: unknown) => Promise<void>;
+			}
+		).push({
+			eventId: "evt_2",
+			sessionId: "session-1",
+			type: "turn.completed",
+			data: {
+				messageId: "msg_1",
+				tokens: { input: 10, output: 5 },
+				cost: 0.01,
+				duration: 1234,
+			},
+			metadata: {},
+			provider: "claude",
+			createdAt: Date.now(),
+		});
+
+		// Assert done was sent and processing timeout was cleared
+		expect(deps.wsHandler.sendToSession).toHaveBeenCalledWith(
+			"session-1",
+			expect.objectContaining({ type: "done", code: 0 }),
+		);
+		expect(deps.overrides.clearProcessingTimeout).toHaveBeenCalledWith(
+			"session-1",
+		);
+	});
 });
 
 // ─── handlePermissionResponse ────────────────────────────────────────────────
