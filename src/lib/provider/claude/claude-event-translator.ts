@@ -239,6 +239,45 @@ export class ClaudeEventTranslator {
 			return;
 		}
 
+		// Handle system/api_retry — SDK is retrying a failed API call. Surface
+		// it as a session.status:retry so the UI can display retry progress
+		// instead of silence. Attempt/delay/error details travel via metadata.
+		if (subtype === "api_retry") {
+			const attempt = getNumber(record, "attempt") ?? 0;
+			const maxRetries = getNumber(record, "max_retries") ?? 0;
+			const retryDelayMs = getNumber(record, "retry_delay_ms");
+			const errorStatus = getNumber(record, "error_status");
+			const errorKind = getString(record, "error") ?? "unknown";
+			const parts: string[] = [`Retrying (attempt ${attempt}/${maxRetries})`];
+			if (errorStatus !== undefined) {
+				parts.push(`HTTP ${errorStatus}`);
+			}
+			if (errorKind !== "unknown") parts.push(errorKind);
+			if (retryDelayMs !== undefined) {
+				const secs = Math.round(retryDelayMs / 100) / 10;
+				parts.push(`next in ${secs}s`);
+			}
+			const reason = parts.join(" · ");
+			await this.push(
+				canonicalEvent(
+					"session.status",
+					ctx.sessionId,
+					{
+						sessionId: ctx.sessionId,
+						status: "retry",
+					},
+					{
+						provider: PROVIDER,
+						metadata: {
+							source: "api_retry",
+							correlationId: reason,
+						},
+					},
+				),
+			);
+			return;
+		}
+
 		// Handle system/task_progress -- token usage updates
 		if (subtype === "task_progress") {
 			const usage = getRecord(record, "usage") ?? {};
@@ -547,6 +586,54 @@ export class ClaudeEventTranslator {
 				}),
 			);
 			return;
+		}
+
+		// Success subtype with is_error=true: the SDK wraps an upstream API
+		// error (e.g. "unknown provider for model X", 502s after all retries,
+		// reasoning_effort validation failures) as a synthetic successful
+		// completion whose `result` field contains the error text. Surface
+		// this as a turn.error so the UI shows the message instead of a
+		// silent empty assistant reply.
+		const resultRec = asRecord(result as unknown);
+		const isErrorFlag = resultRec["is_error"] === true;
+		if (isErrorFlag) {
+			const errorText =
+				getString(resultRec, "result") || "Provider returned an error";
+			await this.push(
+				makeCanonicalEvent("turn.error", ctx.sessionId, {
+					messageId:
+						ctx.lastAssistantUuid || this.currentAssistantMessageId || "",
+					error: errorText,
+					code: "provider_error",
+				}),
+			);
+			return;
+		}
+
+		// If the SDK bypassed streaming (short responses, slash commands handled
+		// locally, skill lookups), the full response text lives in `result.result`.
+		// Emit a synthetic text.delta so the UI renders it as an assistant bubble.
+		// Skip when any assistant message was already seen — streaming already
+		// delivered the content to avoid duplicate rendering.
+		const resultText = getString(resultRec, "result");
+		if (
+			resultText &&
+			resultText.length > 0 &&
+			!ctx.lastAssistantUuid &&
+			!this.currentAssistantMessageId
+		) {
+			const resultUuid =
+				getString(resultRec, "uuid") ??
+				`claude-result-${ctx.sessionId}-${Date.now()}`;
+			this.currentAssistantMessageId = resultUuid;
+			ctx.lastAssistantUuid = resultUuid;
+			await this.push(
+				makeCanonicalEvent("text.delta", ctx.sessionId, {
+					messageId: resultUuid,
+					partId: `${resultUuid}-0`,
+					text: resultText,
+				}),
+			);
 		}
 
 		const usage = result.usage ?? {};

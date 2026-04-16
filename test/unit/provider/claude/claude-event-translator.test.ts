@@ -167,6 +167,34 @@ describe("ClaudeEventTranslator", () => {
 		expect(tokens["cacheRead"]).toBe(50);
 	});
 
+	// ─── 3b. system (subtype api_retry) ──────────────────────────────────
+
+	it("translates system/api_retry to session.status:retry with detail metadata", async () => {
+		await translator.translate(ctx, {
+			type: "system",
+			subtype: "api_retry",
+			attempt: 3,
+			max_retries: 10,
+			retry_delay_ms: 2240,
+			error_status: 502,
+			error: "server_error",
+			session_id: "sdk-sess",
+			uuid: "00000000-0000-0000-0000-000000000099",
+		} as unknown as SDKMessage);
+
+		const statusEvent = sink.events.find(
+			(e) => e.type === "session.status" && dataOf(e)["status"] === "retry",
+		);
+		expect(statusEvent).toBeDefined();
+		// Detail (attempt, delay, error) is passed via metadata.correlationId
+		// so the relay sink can render it without parsing canonical payloads.
+		const meta = statusEvent?.metadata as Record<string, unknown>;
+		expect(typeof meta["correlationId"]).toBe("string");
+		expect(meta["correlationId"]).toMatch(/attempt 3\/10/);
+		expect(meta["correlationId"]).toMatch(/HTTP 502/);
+		expect(meta["correlationId"]).toMatch(/next in 2\.2s/);
+	});
+
 	// ─── 4. stream_event (content_block_start: text) ─────────────────────
 
 	it("translates content_block_start text to tool.started for __text", async () => {
@@ -559,6 +587,82 @@ describe("ClaudeEventTranslator", () => {
 		expect(tokens["cacheWrite"]).toBe(5);
 		expect(data["cost"]).toBeCloseTo(0.0123);
 		expect(data["duration"]).toBe(1200);
+	});
+
+	// ─── 13b. result (success, no streaming, text in result field) ──────────
+	// Regression: short responses and slash-command dispatch (e.g. "/usage")
+	// bypass the stream_event/assistant path entirely. The SDK returns a
+	// single result message with the full text in `result.result`. Before
+	// this fix, the translator ignored that field — the UI got a `done`
+	// event but no assistant bubble, appearing to "hang" with no response.
+
+	it("emits text.delta when result.result is set and no streaming occurred", async () => {
+		// No assistant uuid set — simulates the non-streaming path.
+		expect(ctx.lastAssistantUuid).toBeUndefined();
+
+		await translator.translate(ctx, {
+			type: "result",
+			subtype: "success",
+			duration_ms: 5,
+			duration_api_ms: 0,
+			is_error: false,
+			num_turns: 1,
+			result: "Unknown skill: usage",
+			stop_reason: null,
+			total_cost_usd: 0,
+			usage: {
+				input_tokens: 0,
+				output_tokens: 0,
+				cache_read_input_tokens: 0,
+				cache_creation_input_tokens: 0,
+			},
+			modelUsage: {},
+			permission_denials: [],
+			uuid: "11111111-1111-1111-1111-111111111111",
+			session_id: "sdk-sess",
+		} as unknown as SDKMessage);
+
+		const delta = sink.events.find((e) => e.type === "text.delta");
+		expect(delta).toBeDefined();
+		const data = dataOf(delta);
+		expect(data["text"]).toBe("Unknown skill: usage");
+		// MessageId reuses the result uuid so the UI groups delta + done.
+		expect(data["messageId"]).toBe("11111111-1111-1111-1111-111111111111");
+
+		// turn.completed still fires so the UI transitions out of processing.
+		const completed = sink.events.find((e) => e.type === "turn.completed");
+		expect(completed).toBeDefined();
+	});
+
+	it("does NOT emit synthetic text.delta when streaming already delivered content", async () => {
+		// Simulate a streamed response: assistant uuid is set before result.
+		ctx.lastAssistantUuid = "streamed-uuid-1";
+
+		await translator.translate(ctx, {
+			type: "result",
+			subtype: "success",
+			duration_ms: 1500,
+			duration_api_ms: 1200,
+			is_error: false,
+			num_turns: 1,
+			result: "streamed final text",
+			stop_reason: "end_turn",
+			total_cost_usd: 0.001,
+			usage: {
+				input_tokens: 10,
+				output_tokens: 5,
+				cache_read_input_tokens: 0,
+				cache_creation_input_tokens: 0,
+			},
+			modelUsage: {},
+			permission_denials: [],
+			uuid: "22222222-2222-2222-2222-222222222222",
+			session_id: "sdk-sess",
+		} as unknown as SDKMessage);
+
+		// No synthetic delta emitted — content already arrived via stream_event.
+		const textDeltas = sink.events.filter((e) => e.type === "text.delta");
+		expect(textDeltas).toHaveLength(0);
 	});
 
 	// ─── 14. result (error) ──────────────────────────────────────────────
