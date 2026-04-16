@@ -16,6 +16,7 @@ import type { Logger } from "../logger.js";
 import { type LogLevel, setLogLevel } from "../logger.js";
 import type { ReadQueryService } from "../persistence/read-query-service.js";
 import type { OrchestrationLayer } from "../provider/orchestration-wiring.js";
+import type { RelayEventSinkPersist } from "../provider/relay-event-sink.js";
 import { ClientMessageQueue } from "../server/client-message-queue.js";
 import { RateLimiter } from "../server/rate-limiter.js";
 import type { WebSocketHandler } from "../server/ws-handler.js";
@@ -49,6 +50,8 @@ export interface HandlerDepsWiringDeps {
 	readQuery?: ReadQueryService;
 	/** Phase 5: Orchestration layer for provider adapter routing (optional). */
 	orchestrationLayer?: OrchestrationLayer;
+	/** Claude event persistence deps (optional — only when persistence configured). */
+	claudeEventPersist?: RelayEventSinkPersist;
 }
 
 // ─── Return type ─────────────────────────────────────────────────────────────
@@ -80,6 +83,7 @@ export function wireHandlerDeps(
 		ptyDeps,
 		readQuery,
 		orchestrationLayer,
+		claudeEventPersist,
 	} = deps;
 
 	// Per-client sliding-window rate limiter for chat messages
@@ -170,6 +174,7 @@ export function wireHandlerDeps(
 		...(orchestrationLayer != null && {
 			orchestrationEngine: orchestrationLayer.engine,
 		}),
+		...(claudeEventPersist != null && { claudeEventPersist }),
 	};
 
 	const clientQueue = new ClientMessageQueue({

@@ -7,6 +7,7 @@ import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type { PromptOptions } from "../instance/sdk-types.js";
 import type { Logger } from "../logger.js";
 import type { ReadQueryService } from "../persistence/read-query-service.js";
+import type { RelayEventSinkPersist } from "../provider/relay-event-sink.js";
 import type { OrchestrationEngine } from "../provider/orchestration-engine.js";
 import type { MessagePollerManager } from "../relay/message-poller-manager.js";
 import type { PtyManager } from "../relay/pty-manager.js";
@@ -99,6 +100,11 @@ export interface HandlerDeps {
 	 * always provides it via relay-stack.ts.
 	 */
 	orchestrationEngine?: OrchestrationEngine;
+	/**
+	 * Claude event persistence deps (optional — only when SQLite is configured).
+	 * Passed to RelayEventSink so Claude SDK events survive session switches.
+	 */
+	claudeEventPersist?: RelayEventSinkPersist;
 }
 
 export type MessageHandler<K extends keyof PayloadMap = keyof PayloadMap> = (
