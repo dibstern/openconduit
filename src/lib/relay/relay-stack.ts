@@ -18,9 +18,9 @@ import { OpenCodeAPI } from "../instance/opencode-api.js";
 import { createSdkClient } from "../instance/sdk-factory.js";
 import { createLogger, type Logger } from "../logger.js";
 import { DualWriteHook } from "../persistence/dual-write-hook.js";
-import { SessionSeeder } from "../persistence/session-seeder.js";
 import type { PersistenceLayer } from "../persistence/persistence-layer.js";
 import { ReadQueryService } from "../persistence/read-query-service.js";
+import { SessionSeeder } from "../persistence/session-seeder.js";
 import {
 	createOrchestrationLayer,
 	type OrchestrationLayer,
