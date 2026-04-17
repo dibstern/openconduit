@@ -472,7 +472,7 @@ describe("handleGetModels — Claude provider labeling", () => {
 		const call = vi
 			.mocked(deps.wsHandler.sendTo)
 			.mock.calls.find((c) => (c[1] as { type: string }).type === "model_list");
-		const payload = call![1] as {
+		const payload = call?.[1] as {
 			type: string;
 			providers: Array<{
 				id: string;
@@ -483,7 +483,7 @@ describe("handleGetModels — Claude provider labeling", () => {
 
 		const claudeProvider = payload.providers.find((p) => p.id === "claude");
 		expect(claudeProvider).toBeDefined();
-		expect(claudeProvider!.name).toBe("Anthropic - claude");
+		expect(claudeProvider?.name).toBe("Anthropic - claude");
 	});
 
 	it("renames 'anthropic' to 'Anthropic - opencode' when SDK has models", async () => {
@@ -527,7 +527,7 @@ describe("handleGetModels — Claude provider labeling", () => {
 		const call = vi
 			.mocked(deps.wsHandler.sendTo)
 			.mock.calls.find((c) => (c[1] as { type: string }).type === "model_list");
-		const payload = call![1] as {
+		const payload = call?.[1] as {
 			type: string;
 			providers: Array<{ id: string; name: string }>;
 		};
@@ -536,7 +536,7 @@ describe("handleGetModels — Claude provider labeling", () => {
 			(p) => p.id === "anthropic",
 		);
 		expect(anthropicProvider).toBeDefined();
-		expect(anthropicProvider!.name).toBe("Anthropic - opencode");
+		expect(anthropicProvider?.name).toBe("Anthropic - opencode");
 	});
 
 	it("keeps 'Anthropic' name unchanged when SDK has no models", async () => {
@@ -574,7 +574,7 @@ describe("handleGetModels — Claude provider labeling", () => {
 		const call = vi
 			.mocked(deps.wsHandler.sendTo)
 			.mock.calls.find((c) => (c[1] as { type: string }).type === "model_list");
-		const payload = call![1] as {
+		const payload = call?.[1] as {
 			type: string;
 			providers: Array<{ id: string; name: string }>;
 		};
@@ -582,7 +582,7 @@ describe("handleGetModels — Claude provider labeling", () => {
 		const anthropicProvider = payload.providers.find(
 			(p) => p.id === "anthropic",
 		);
-		expect(anthropicProvider!.name).toBe("Anthropic");
+		expect(anthropicProvider?.name).toBe("Anthropic");
 	});
 
 	it("both provider groups retain their models (no dedup)", async () => {
@@ -630,20 +630,20 @@ describe("handleGetModels — Claude provider labeling", () => {
 		const call = vi
 			.mocked(deps.wsHandler.sendTo)
 			.mock.calls.find((c) => (c[1] as { type: string }).type === "model_list");
-		const payload = call![1] as {
+		const payload = call?.[1] as {
 			type: string;
 			providers: Array<{ id: string; models: Array<{ id: string }> }>;
 		};
 
 		// OpenCode anthropic keeps ALL its models
 		const anthropic = payload.providers.find((p) => p.id === "anthropic");
-		expect(anthropic!.models.map((m) => m.id)).toEqual(
+		expect(anthropic?.models.map((m) => m.id)).toEqual(
 			expect.arrayContaining(["claude-sonnet-4", "claude-opus-4-1"]),
 		);
 
 		// SDK claude has its own models
 		const claude = payload.providers.find((p) => p.id === "claude");
-		expect(claude!.models.map((m) => m.id)).toEqual(
+		expect(claude?.models.map((m) => m.id)).toEqual(
 			expect.arrayContaining(["claude-sonnet-4", "claude-opus-4"]),
 		);
 	});
