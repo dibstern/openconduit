@@ -2,6 +2,7 @@
 // Shared types used by all handler modules.
 
 import type { PermissionBridge } from "../bridges/permission-bridge.js";
+import type { QuestionBridge } from "../bridges/question-bridge.js";
 import type { ForkEntry } from "../daemon/fork-metadata.js";
 import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type { PromptOptions } from "../instance/sdk-types.js";
@@ -70,6 +71,7 @@ export interface HandlerDeps {
 	client: OpenCodeAPI;
 	sessionMgr: SessionManager;
 	permissionBridge: PermissionBridge;
+	questionBridge: QuestionBridge;
 	overrides: SessionOverrides;
 	ptyManager: PtyManager;
 	config: ProjectRelayConfig;

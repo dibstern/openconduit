@@ -81,12 +81,38 @@ async function sendSessionMetadata(
 			),
 		),
 
-		// Pending questions
+		// Pending questions (bridge + API)
 		(async () => {
+			const sentQuestionIds = new Set<string>();
+
+			// Check the QuestionBridge first — Claude sessions store pending
+			// questions here (OpenCode API knows nothing about them).
+			const bridgePendingQuestions = deps.questionBridge.getPending();
+			for (const pq of bridgePendingQuestions) {
+				if (pq.sessionId && pq.sessionId !== id) continue;
+				deps.wsHandler.sendTo(clientId, {
+					type: "ask_user",
+					toolId: pq.requestId,
+					questions: pq.questions.map((q) => ({
+						question: q.question,
+						header: q.header ?? "",
+						options: (q.options ?? []) as Array<{
+							label: string;
+							description?: string;
+						}>,
+						multiSelect: q.multiSelect ?? false,
+					})),
+					...(pq.toolCallId ? { toolUseId: pq.toolCallId } : {}),
+				});
+				sentQuestionIds.add(pq.requestId);
+			}
+
+			// Fall back to OpenCode API for OpenCode-native sessions.
 			const pendingQuestions = await deps.client.question.list();
 			for (const pq of pendingQuestions) {
 				const qSessionId = pq["sessionID"] as string | undefined;
 				if (qSessionId && qSessionId !== id) continue;
+				if (sentQuestionIds.has(pq.id)) continue;
 
 				const rawQuestions = pq["questions"] as
 					| Array<{

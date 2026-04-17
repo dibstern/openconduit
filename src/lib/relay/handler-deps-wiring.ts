@@ -9,6 +9,7 @@ import {
 	handleClientConnected,
 } from "../bridges/client-init.js";
 import type { PermissionBridge } from "../bridges/permission-bridge.js";
+import { QuestionBridge } from "../bridges/question-bridge.js";
 import { formatErrorDetail, RelayError } from "../errors.js";
 import { dispatchMessage, type HandlerDeps } from "../handlers/index.js";
 import type { OpenCodeAPI } from "../instance/opencode-api.js";
@@ -93,6 +94,9 @@ export function wireHandlerDeps(
 	// Per-client sliding-window rate limiter for chat messages
 	const rateLimiter = new RateLimiter();
 
+	// Question bridge for tracking pending questions (enables replay on session switch)
+	const questionBridge = new QuestionBridge();
+
 	const clientInitDeps: ClientInitDeps = {
 		wsHandler,
 		client,
@@ -135,6 +139,7 @@ export function wireHandlerDeps(
 		client,
 		sessionMgr,
 		permissionBridge,
+		questionBridge,
 		overrides,
 		ptyManager,
 		config,

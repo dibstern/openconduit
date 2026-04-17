@@ -49,6 +49,23 @@ export interface RelayEventSinkDeps {
 		/** Clean up the bridge entry when a permission is resolved. */
 		onPermissionReplied(requestId: string): boolean;
 	};
+	/** Optional: question bridge for tracking pending questions (enables replay on session switch). */
+	readonly questionBridge?: {
+		trackPending(entry: {
+			requestId: string;
+			sessionId: string;
+			questions: Array<{
+				question: string;
+				header?: string;
+				options?: unknown[];
+				multiSelect?: boolean;
+			}>;
+			toolCallId?: string;
+			timestamp: number;
+		}): void;
+		/** Clean up the bridge entry when a question is resolved. */
+		onResolved(requestId: string): boolean;
+	};
 }
 
 export interface RelayEventSink extends EventSink {
@@ -137,6 +154,21 @@ export function createRelayEventSink(deps: RelayEventSinkDeps): RelayEventSink {
 			request: QuestionRequest,
 		): Promise<Record<string, unknown>> {
 			reset();
+			// Register with the question bridge so this question can be
+			// replayed when the user switches sessions and comes back.
+			if (deps.questionBridge) {
+				deps.questionBridge.trackPending({
+					requestId: request.requestId,
+					sessionId,
+					questions: request.questions.map((q) => ({
+						question: q.question,
+						header: q.header,
+						options: q.options,
+						multiSelect: q.multiSelect ?? false,
+					})),
+					timestamp: Date.now(),
+				});
+			}
 			send({
 				type: "ask_user",
 				toolId: request.requestId,
@@ -179,6 +211,11 @@ export function createRelayEventSink(deps: RelayEventSinkDeps): RelayEventSink {
 				return;
 			}
 			pendingQuestions.delete(requestId);
+			// Clean up the bridge entry so it is no longer replayed on
+			// session switch / reconnect.
+			if (deps.questionBridge) {
+				deps.questionBridge.onResolved(requestId);
+			}
 			deferred.resolve(answers);
 		},
 	};

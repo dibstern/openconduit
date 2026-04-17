@@ -175,6 +175,7 @@ export async function handleMessage(
 							? { persist: deps.claudeEventPersist }
 							: {}),
 						permissionBridge: deps.permissionBridge,
+						questionBridge: deps.questionBridge,
 					})
 				: NOOP_EVENT_SINK;
 		const sendTurnInput: SendTurnInput = {

@@ -176,6 +176,15 @@ function createMockPermissionBridge(): HandlerDeps["permissionBridge"] {
 	} as unknown as HandlerDeps["permissionBridge"];
 }
 
+function createMockQuestionBridge(): HandlerDeps["questionBridge"] {
+	return {
+		trackPending: vi.fn(),
+		onResolved: vi.fn().mockReturnValue(false),
+		getPending: vi.fn().mockReturnValue([]),
+		size: 0,
+	} as unknown as HandlerDeps["questionBridge"];
+}
+
 function createMockOverrides(): HandlerDeps["overrides"] {
 	return {
 		agent: undefined,
@@ -244,6 +253,7 @@ export function createMockHandlerDeps(
 		client: createMockClient(),
 		sessionMgr: createMockSessionMgr(),
 		permissionBridge: createMockPermissionBridge(),
+		questionBridge: createMockQuestionBridge(),
 		overrides: createMockOverrides(),
 		ptyManager: createMockPtyManager(),
 		config: createMockConfig(),
