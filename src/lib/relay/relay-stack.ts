@@ -19,6 +19,7 @@ import { createSdkClient } from "../instance/sdk-factory.js";
 import { createLogger, type Logger } from "../logger.js";
 import { DualWriteHook } from "../persistence/dual-write-hook.js";
 import type { PersistenceLayer } from "../persistence/persistence-layer.js";
+import { ProviderStateService } from "../persistence/provider-state-service.js";
 import { ReadQueryService } from "../persistence/read-query-service.js";
 import { SessionSeeder } from "../persistence/session-seeder.js";
 import {
@@ -226,6 +227,11 @@ export async function createProjectRelay(
 		? new ReadQueryService(config.persistence.db)
 		: undefined;
 
+	// ── Provider state service (resume cursor persistence) ──
+	const providerStateService = config.persistence
+		? new ProviderStateService(config.persistence.db)
+		: undefined;
+
 	// ── Session status reconciliation loop ──────────────────────────────────
 	// Background job that detects and corrects status mismatches between
 	// the projected SQLite state and OpenCode's REST API. Default interval
@@ -374,6 +380,7 @@ export async function createProjectRelay(
 		...(readQuery != null && { readQuery }),
 		orchestrationLayer: orchestration,
 		...(claudeEventPersist != null && { claudeEventPersist }),
+		...(providerStateService != null && { providerStateService }),
 	});
 
 	// ── SSE stream (SDK-backed, replaces legacy SSEConsumer) ────────────────

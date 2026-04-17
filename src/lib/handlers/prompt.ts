@@ -182,7 +182,7 @@ export async function handleMessage(
 			turnId: crypto.randomUUID(),
 			prompt: text,
 			history: [],
-			providerState: {},
+			providerState: deps.providerStateService?.getState(activeId) ?? {},
 			// Only pass model when user has explicitly selected one
 			...(model && deps.overrides.isModelUserSelected(activeId)
 				? {
@@ -215,6 +215,20 @@ export async function handleMessage(
 						clientId,
 						new RelayError(msg, { code: "SEND_FAILED" }).toMessage(),
 					);
+				}
+				// Persist resume cursor and other provider state updates
+				if (result.status !== "error" && result.providerStateUpdates?.length) {
+					try {
+						deps.providerStateService?.saveUpdates(
+							activeId,
+							result.providerStateUpdates.map((u) => ({
+								key: u.key,
+								value: String(u.value),
+							})),
+						);
+					} catch {
+						// Non-fatal — resume is a convenience, not a requirement
+					}
 				}
 			})
 			.catch((sendErr) => {

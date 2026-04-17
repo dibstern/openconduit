@@ -6,6 +6,7 @@ import type { ForkEntry } from "../daemon/fork-metadata.js";
 import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type { PromptOptions } from "../instance/sdk-types.js";
 import type { Logger } from "../logger.js";
+import type { ProviderStateService } from "../persistence/provider-state-service.js";
 import type { ReadQueryService } from "../persistence/read-query-service.js";
 import type { OrchestrationEngine } from "../provider/orchestration-engine.js";
 import type { RelayEventSinkPersist } from "../provider/relay-event-sink.js";
@@ -105,6 +106,8 @@ export interface HandlerDeps {
 	 * Passed to RelayEventSink so Claude SDK events survive session switches.
 	 */
 	claudeEventPersist?: RelayEventSinkPersist;
+	/** Provider state service for resume cursor persistence (optional). */
+	providerStateService?: ProviderStateService;
 }
 
 export type MessageHandler<K extends keyof PayloadMap = keyof PayloadMap> = (

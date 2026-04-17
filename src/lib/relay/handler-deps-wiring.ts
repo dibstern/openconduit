@@ -14,6 +14,7 @@ import { dispatchMessage, type HandlerDeps } from "../handlers/index.js";
 import type { OpenCodeAPI } from "../instance/opencode-api.js";
 import type { Logger } from "../logger.js";
 import { type LogLevel, setLogLevel } from "../logger.js";
+import type { ProviderStateService } from "../persistence/provider-state-service.js";
 import type { ReadQueryService } from "../persistence/read-query-service.js";
 import type { OrchestrationLayer } from "../provider/orchestration-wiring.js";
 import type { RelayEventSinkPersist } from "../provider/relay-event-sink.js";
@@ -52,6 +53,8 @@ export interface HandlerDepsWiringDeps {
 	orchestrationLayer?: OrchestrationLayer;
 	/** Claude event persistence deps (optional — only when persistence configured). */
 	claudeEventPersist?: RelayEventSinkPersist;
+	/** Provider state service for resume cursor persistence (optional). */
+	providerStateService?: ProviderStateService;
 }
 
 // ─── Return type ─────────────────────────────────────────────────────────────
@@ -84,6 +87,7 @@ export function wireHandlerDeps(
 		readQuery,
 		orchestrationLayer,
 		claudeEventPersist,
+		providerStateService,
 	} = deps;
 
 	// Per-client sliding-window rate limiter for chat messages
@@ -176,6 +180,7 @@ export function wireHandlerDeps(
 			orchestrationEngine: orchestrationLayer.engine,
 		}),
 		...(claudeEventPersist != null && { claudeEventPersist }),
+		...(providerStateService != null && { providerStateService }),
 	};
 
 	const clientQueue = new ClientMessageQueue({
