@@ -98,6 +98,11 @@ export class PermissionBridge {
 		return this.pending.delete(requestId);
 	}
 
+	/** Register a pending permission directly (used by Claude SDK path). */
+	trackPending(entry: PendingPermission): void {
+		this.pending.set(entry.requestId, entry);
+	}
+
 	/** Get all pending permissions (for replay on reconnect) */
 	getPending(): PendingPermission[] {
 		return Array.from(this.pending.values());

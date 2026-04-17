@@ -1,9 +1,6 @@
 // test/unit/instance/sdk-factory.test.ts
 import { describe, expect, it, vi } from "vitest";
-import {
-	createSdkClient,
-	type SdkFactoryOptions,
-} from "../../../src/lib/instance/sdk-factory.js";
+import { createSdkClient } from "../../../src/lib/instance/sdk-factory.js";
 
 describe("createSdkClient", () => {
 	it("creates an OpencodeClient with the given baseUrl", () => {

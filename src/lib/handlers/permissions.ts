@@ -6,6 +6,7 @@
 // bridge state is needed, so questions survive relay restarts.
 
 import { RelayError } from "../errors.js";
+import type { PermissionDecision } from "../provider/types.js";
 import { fixupConfigFile } from "./fixup-config-file.js";
 import type { PayloadMap } from "./payloads.js";
 import { resolveSession, resolveSessionForLog } from "./resolve-session.js";
@@ -48,7 +49,36 @@ export async function handlePermissionResponse(
 		deps.log.info(
 			`client=${clientId} session=${sessionId} ${result.toolName}: ${result.mapped}`,
 		);
-		await deps.client.permission.reply(sessionId, requestId, result.mapped);
+
+		// Route through OrchestrationEngine for Claude sessions so the
+		// decision reaches RelayEventSink.resolvePermission() and unblocks
+		// the in-process SDK turn.
+		if (deps.orchestrationEngine) {
+			const providerId =
+				deps.orchestrationEngine.getProviderForSession(sessionId);
+			if (providerId === "claude") {
+				try {
+					await deps.orchestrationEngine.dispatch({
+						type: "resolve_permission",
+						sessionId,
+						requestId,
+						decision: result.mapped as PermissionDecision,
+					});
+				} catch (err) {
+					deps.log.warn(
+						`client=${clientId} session=${sessionId} engine resolve_permission failed: ${err}`,
+					);
+				}
+			}
+		}
+
+		// Also call the OpenCode REST API (harmless no-op for Claude sessions)
+		try {
+			await deps.client.permission.reply(sessionId, requestId, result.mapped);
+		} catch {
+			// Swallow — this will fail for Claude-only sessions with no
+			// OpenCode counterpart; the engine dispatch above is the real path.
+		}
 		deps.wsHandler.broadcast({
 			type: "permission_resolved",
 			requestId,
@@ -152,6 +182,35 @@ export async function handleAskUserResponse(
 		`client=${clientId} session=${sessionId} answering: ${toolId} payload=${JSON.stringify({ id: toolId, answers: formatted })}`,
 	);
 
+	// Route through OrchestrationEngine for Claude sessions so the answer
+	// reaches RelayEventSink.resolveQuestion() and unblocks the SDK turn.
+	if (deps.orchestrationEngine && sessionId) {
+		const providerId =
+			deps.orchestrationEngine.getProviderForSession(sessionId);
+		if (providerId === "claude") {
+			try {
+				await deps.orchestrationEngine.dispatch({
+					type: "resolve_question",
+					sessionId,
+					requestId: toolId,
+					answers: answers as Record<string, unknown>,
+				});
+				deps.wsHandler.broadcast({
+					type: "ask_user_resolved",
+					toolId,
+					sessionId,
+				});
+				if (sessionId) deps.sessionMgr.decrementPendingQuestionCount(sessionId);
+				restartProcessingTimeout(deps, sessionId);
+				return;
+			} catch (err) {
+				deps.log.warn(
+					`client=${clientId} session=${sessionId} engine resolve_question failed: ${err}`,
+				);
+			}
+		}
+	}
+
 	try {
 		await deps.client.question.reply(toolId, formatted);
 		deps.wsHandler.broadcast({ type: "ask_user_resolved", toolId, sessionId });
@@ -214,6 +273,35 @@ export async function handleQuestionReject(
 	const sessionId = resolveSession(deps, clientId) ?? "";
 
 	deps.log.info(`client=${clientId} session=${sessionId} rejecting: ${toolId}`);
+
+	// Route through OrchestrationEngine for Claude sessions — resolve with
+	// empty answers to signal rejection (the SDK interprets {} as skip).
+	if (deps.orchestrationEngine && sessionId) {
+		const providerId =
+			deps.orchestrationEngine.getProviderForSession(sessionId);
+		if (providerId === "claude") {
+			try {
+				await deps.orchestrationEngine.dispatch({
+					type: "resolve_question",
+					sessionId,
+					requestId: toolId,
+					answers: {},
+				});
+				deps.wsHandler.broadcast({
+					type: "ask_user_resolved",
+					toolId,
+					sessionId,
+				});
+				if (sessionId) deps.sessionMgr.decrementPendingQuestionCount(sessionId);
+				restartProcessingTimeout(deps, sessionId);
+				return;
+			} catch (err) {
+				deps.log.warn(
+					`client=${clientId} session=${sessionId} engine resolve_question (reject) failed: ${err}`,
+				);
+			}
+		}
+	}
 
 	try {
 		await deps.client.question.reject(toolId);

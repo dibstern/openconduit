@@ -108,6 +108,7 @@ export async function handleClientConnected(
 				sessionMgr,
 				wsHandler,
 				...(deps.statusPoller != null && { statusPoller: deps.statusPoller }),
+				overrides,
 				log: deps.log,
 				getInputDraft: getSessionInputDraft,
 				...(deps.readQuery != null && { readQuery: deps.readQuery }),

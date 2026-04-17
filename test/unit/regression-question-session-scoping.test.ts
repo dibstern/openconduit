@@ -89,7 +89,10 @@ describe("Regression: handleViewSession only sends questions for viewed session"
 					total: 0,
 				}),
 			} as unknown as HandlerDeps["sessionMgr"],
-			overrides: { clear: vi.fn() } as unknown as HandlerDeps["overrides"],
+			overrides: {
+				clear: vi.fn(),
+				hasActiveProcessingTimeout: vi.fn().mockReturnValue(false),
+			} as unknown as HandlerDeps["overrides"],
 			statusPoller: { isProcessing: vi.fn().mockReturnValue(false) },
 			log: createSilentLogger(),
 		});

@@ -325,6 +325,32 @@ export class ClaudeEventTranslator {
 		const eventType = getString(event, "type");
 		if (!eventType) return;
 
+		// Capture the assistant message ID at the START of streaming so all
+		// content blocks (text, tool_use, thinking) share a single messageId.
+		// Without this, currentAssistantMessageId is empty during streaming
+		// (only set later in translateAssistantSnapshot) and every block falls
+		// back to its own per-block UUID — creating dozens of separate messages
+		// in the persistence layer instead of one cohesive assistant message.
+		if (eventType === "message_start") {
+			const msgRecord = getRecord(event, "message");
+			if (msgRecord) {
+				const msgId = getString(msgRecord, "id");
+				if (msgId && !this.currentAssistantMessageId) {
+					this.currentAssistantMessageId = msgId;
+					// Emit message.created so MessageProjector creates the row
+					// and TurnProjector can link the turn to its assistant message.
+					await this.push(
+						makeCanonicalEvent("message.created", ctx.sessionId, {
+							messageId: msgId,
+							role: "assistant",
+							sessionId: ctx.sessionId,
+						}),
+					);
+				}
+			}
+			return;
+		}
+
 		if (eventType === "content_block_start") {
 			return this.handleBlockStart(ctx, event);
 		}
@@ -375,20 +401,21 @@ export class ClaudeEventTranslator {
 			const tool: ToolInFlight = {
 				itemId,
 				toolName,
-				title: "Assistant message",
+				title: blockType === "text" ? "Assistant message" : "Thinking",
 				input: {},
 				partialInputJson: "",
 			};
 			ctx.inFlightTools.set(index, tool);
-			await this.push(
-				makeCanonicalEvent("tool.started", ctx.sessionId, {
-					messageId: this.currentAssistantMessageId,
-					partId: tool.itemId,
-					toolName,
-					callId: tool.itemId,
-					input: {},
-				}),
-			);
+			if (blockType === "thinking") {
+				// Emit thinking.start so the UI creates a ThinkingMessage with verbs.
+				// text blocks don't need an event — content streams via text.delta → delta.
+				await this.push(
+					makeCanonicalEvent("thinking.start", ctx.sessionId, {
+						messageId: this.currentAssistantMessageId,
+						partId: tool.itemId,
+					}),
+				);
+			}
 			return;
 		}
 

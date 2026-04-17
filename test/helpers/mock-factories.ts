@@ -198,6 +198,7 @@ function createMockOverrides(): HandlerDeps["overrides"] {
 		startProcessingTimeout: vi.fn(),
 		clearProcessingTimeout: vi.fn(),
 		resetProcessingTimeout: vi.fn(),
+		hasActiveProcessingTimeout: vi.fn().mockReturnValue(false),
 		dispose: vi.fn(),
 	} as unknown as HandlerDeps["overrides"];
 }

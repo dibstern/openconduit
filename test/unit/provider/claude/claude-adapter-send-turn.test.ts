@@ -1001,8 +1001,8 @@ describe("ClaudeAdapter.sendTurn()", () => {
 			.calls as Array<[CanonicalEvent]>;
 		const eventTypes = pushCalls.map((call) => call[0].type);
 
-		// Should have tool.started (from block_start) and text.delta events
-		expect(eventTypes).toContain("tool.started");
+		// Text blocks no longer emit tool.started — content streams via delta directly.
+		// Should have text.delta from the partial message content.
 		expect(eventTypes).toContain("text.delta");
 		// And also the error event
 		expect(eventTypes).toContain("turn.error");

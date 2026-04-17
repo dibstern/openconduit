@@ -197,7 +197,7 @@ describe("ClaudeEventTranslator", () => {
 
 	// ─── 4. stream_event (content_block_start: text) ─────────────────────
 
-	it("translates content_block_start text to tool.started for __text", async () => {
+	it("registers text block in inFlightTools without emitting tool.started", async () => {
 		await translator.translate(
 			ctx,
 			makeStreamEvent({
@@ -207,16 +207,16 @@ describe("ClaudeEventTranslator", () => {
 			}),
 		);
 
+		// Text blocks do not emit tool.started — content streams via delta directly
 		const started = sink.events.find((e) => e.type === "tool.started");
-		expect(started).toBeDefined();
-		const data = dataOf(started);
-		expect(data["toolName"]).toBe("__text");
+		expect(started).toBeUndefined();
+		// But the in-flight tracking is still registered for subsequent deltas
 		expect(ctx.inFlightTools.get(0)?.toolName).toBe("__text");
 	});
 
 	// ─── 5. stream_event (content_block_start: thinking) ─────────────────
 
-	it("translates content_block_start thinking to tool.started for __thinking", async () => {
+	it("translates content_block_start thinking to thinking.start", async () => {
 		await translator.translate(
 			ctx,
 			makeStreamEvent({
@@ -226,10 +226,16 @@ describe("ClaudeEventTranslator", () => {
 			}),
 		);
 
-		const started = sink.events.find((e) => e.type === "tool.started");
-		expect(started).toBeDefined();
-		const data = dataOf(started);
-		expect(data["toolName"]).toBe("__thinking");
+		// Thinking blocks emit thinking.start (not tool.started)
+		const thinkingStart = sink.events.find((e) => e.type === "thinking.start");
+		expect(thinkingStart).toBeDefined();
+		const data = dataOf(thinkingStart);
+		// thinking.start carries messageId and partId
+		expect(typeof data["partId"]).toBe("string");
+		// No tool.started should be emitted for thinking blocks
+		const toolStarted = sink.events.find((e) => e.type === "tool.started");
+		expect(toolStarted).toBeUndefined();
+		// In-flight tracking registered for subsequent deltas
 		expect(ctx.inFlightTools.get(0)?.toolName).toBe("__thinking");
 	});
 

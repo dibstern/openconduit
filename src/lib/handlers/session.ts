@@ -137,6 +137,7 @@ function toSessionSwitchDeps(deps: HandlerDeps): SessionSwitchDeps {
 		sessionMgr: deps.sessionMgr,
 		wsHandler: deps.wsHandler,
 		statusPoller: deps.statusPoller,
+		overrides: deps.overrides,
 		pollerManager: deps.pollerManager,
 		log: deps.log,
 		getInputDraft: getSessionInputDraft,

@@ -67,6 +67,10 @@ export interface SessionSwitchDeps {
 		setClientSession(clientId: string, sessionId: string): void;
 	};
 	readonly statusPoller?: { isProcessing(sessionId: string): boolean };
+	/** Check if a Claude SDK turn is in progress (processing timeout active). */
+	readonly overrides?: {
+		hasActiveProcessingTimeout(sessionId: string): boolean;
+	};
 	readonly pollerManager?: {
 		isPolling(sessionId: string): boolean;
 		startPolling(sessionId: string, messages?: unknown[]): void;
@@ -326,10 +330,13 @@ export async function switchClientToSession(
 	});
 	deps.wsHandler.sendTo(clientId, message);
 
-	// Send processing status
+	// Send processing status — check both OpenCode poller and Claude SDK timeout
+	const isProcessing =
+		deps.statusPoller?.isProcessing(sessionId) ||
+		deps.overrides?.hasActiveProcessingTimeout(sessionId);
 	deps.wsHandler.sendTo(clientId, {
 		type: "status",
-		status: deps.statusPoller?.isProcessing(sessionId) ? "processing" : "idle",
+		status: isProcessing ? "processing" : "idle",
 	});
 
 	// Start poller without seeding — the poller will self-seed on first poll.

@@ -221,6 +221,11 @@ export class SessionOverrides extends TrackedService {
 		}
 	}
 
+	/** Check if a session has an active processing timeout (Claude turn in progress). */
+	hasActiveProcessingTimeout(sessionId: string): boolean {
+		return this.sessions.get(sessionId)?.processingTimer != null;
+	}
+
 	// ─── Lifecycle ──────────────────────────────────────────────────────────
 
 	/** Cleanup — clears all processing timeouts. Safe to call multiple times. */

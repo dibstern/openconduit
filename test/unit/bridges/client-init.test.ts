@@ -351,6 +351,7 @@ describe("handleClientConnected — defaultModel priority", () => {
 					getVariant: vi.fn().mockReturnValue(""),
 					getModel: vi.fn().mockReturnValue(undefined),
 					defaultVariant: "",
+					hasActiveProcessingTimeout: vi.fn().mockReturnValue(false),
 				} as unknown as ClientInitDeps["overrides"],
 			}),
 		);
@@ -380,6 +381,7 @@ describe("handleClientConnected — defaultModel priority", () => {
 					getVariant: vi.fn().mockReturnValue(""),
 					getModel: vi.fn().mockReturnValue(undefined),
 					defaultVariant: "",
+					hasActiveProcessingTimeout: vi.fn().mockReturnValue(false),
 				} as unknown as ClientInitDeps["overrides"],
 			}),
 		);

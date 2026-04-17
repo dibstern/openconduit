@@ -36,6 +36,19 @@ export interface RelayEventSinkDeps {
 	readonly resetTimeout?: () => void;
 	/** Optional: persist events to SQLite for session history survival. */
 	readonly persist?: RelayEventSinkPersist;
+	/** Optional: permission bridge for tracking pending permissions (enables replay on session switch). */
+	readonly permissionBridge?: {
+		trackPending(entry: {
+			requestId: PermissionId;
+			sessionId: string;
+			toolName: string;
+			toolInput: Record<string, unknown>;
+			always: string[];
+			timestamp: number;
+		}): void;
+		/** Clean up the bridge entry when a permission is resolved. */
+		onPermissionReplied(requestId: string): boolean;
+	};
 }
 
 export interface RelayEventSink extends EventSink {
@@ -95,6 +108,18 @@ export function createRelayEventSink(deps: RelayEventSinkDeps): RelayEventSink {
 			request: PermissionRequest,
 		): Promise<PermissionResponse> {
 			reset();
+			// Register with the permission bridge so this permission can be
+			// replayed when the user switches sessions and comes back.
+			if (deps.permissionBridge) {
+				deps.permissionBridge.trackPending({
+					requestId: request.requestId as PermissionId,
+					sessionId,
+					toolName: request.toolName,
+					toolInput: request.toolInput as Record<string, unknown>,
+					always: request.always ?? [],
+					timestamp: Date.now(),
+				});
+			}
 			send({
 				type: "permission_request",
 				sessionId,
@@ -137,6 +162,11 @@ export function createRelayEventSink(deps: RelayEventSinkDeps): RelayEventSink {
 				return;
 			}
 			pendingPermissions.delete(requestId);
+			// Clean up the bridge entry so it is no longer replayed on
+			// session switch / reconnect.
+			if (deps.permissionBridge) {
+				deps.permissionBridge.onPermissionReplied(requestId);
+			}
 			deferred.resolve(response);
 		},
 

@@ -158,6 +158,7 @@ export async function handleMessage(
 						...(deps.claudeEventPersist != null
 							? { persist: deps.claudeEventPersist }
 							: {}),
+						permissionBridge: deps.permissionBridge,
 					})
 				: NOOP_EVENT_SINK;
 		const sendTurnInput: SendTurnInput = {
@@ -248,6 +249,31 @@ export async function handleCancel(
 	if (activeId) {
 		deps.log.info(`client=${clientId} session=${activeId} Aborting`);
 		deps.overrides.clearProcessingTimeout(activeId);
+
+		// Route through OrchestrationEngine for Claude sessions so the
+		// interrupt reaches ClaudeAdapter.interruptTurn() and aborts the
+		// in-process SDK query.
+		if (deps.orchestrationEngine) {
+			const providerId =
+				deps.orchestrationEngine.getProviderForSession(activeId);
+			if (providerId === "claude") {
+				try {
+					await deps.orchestrationEngine.dispatch({
+						type: "interrupt_turn",
+						sessionId: activeId,
+					});
+				} catch (err) {
+					deps.log.warn(
+						`client=${clientId} session=${activeId} engine interrupt_turn failed:`,
+						formatErrorDetail(err),
+					);
+				}
+				deps.wsHandler.sendToSession(activeId, { type: "done", code: 1 });
+				return;
+			}
+		}
+
+		// OpenCode path: abort via REST API
 		try {
 			await deps.client.session.abort(activeId);
 		} catch (abortErr) {

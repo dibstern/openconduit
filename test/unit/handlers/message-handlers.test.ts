@@ -38,7 +38,6 @@ import {
 } from "../../../src/lib/handlers/index.js";
 import { createSilentLogger } from "../../../src/lib/logger.js";
 import type { PermissionId } from "../../../src/lib/shared-types.js";
-import type { RelayMessage } from "../../../src/lib/types.js";
 import { createMockHandlerDeps } from "../../helpers/mock-factories.js";
 
 /** Cast a plain string to PermissionId for test data. */

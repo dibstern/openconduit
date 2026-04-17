@@ -291,6 +291,7 @@ describe("handleForkSession (ticket 5.3)", () => {
 	it("calls clearSession on the source session", async () => {
 		deps.overrides = {
 			clearSession: vi.fn(),
+			hasActiveProcessingTimeout: vi.fn().mockReturnValue(false),
 		} as unknown as HandlerDeps["overrides"];
 
 		await handleForkSession(deps, "client-1", {
