@@ -123,6 +123,22 @@ export async function handleMessage(
 				const now = Date.now();
 				const userMsgId = crypto.randomUUID();
 				deps.claudeEventPersist.ensureSession(activeId);
+				// Emit session.created so SessionProjector + ProviderProjector
+				// create the session row and session_providers binding.
+				// ON CONFLICT DO UPDATE in SessionProjector makes this idempotent.
+				const storedSession = deps.claudeEventPersist.eventStore.append(
+					canonicalEvent(
+						"session.created",
+						activeId,
+						{
+							sessionId: activeId,
+							title: "Claude Session",
+							provider: "claude",
+						},
+						{ provider: "claude", createdAt: now },
+					),
+				);
+				deps.claudeEventPersist.projectionRunner.projectEvent(storedSession);
 				const storedCreated = deps.claudeEventPersist.eventStore.append(
 					canonicalEvent(
 						"message.created",
