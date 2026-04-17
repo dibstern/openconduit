@@ -427,6 +427,18 @@ export class ClaudeAdapter implements ProviderAdapter {
 				}
 			}
 		} catch (err) {
+			// Clear stale resume cursor so next turn starts a fresh SDK session
+			const errMsg = err instanceof Error ? err.message : String(err);
+			if (
+				ctx.resumeSessionId &&
+				/invalid.session|session.*not.*found|session.*expired/i.test(errMsg)
+			) {
+				ctx.resumeSessionId = undefined;
+				log.warn(
+					`Session ${ctx.sessionId}: stale resume cursor cleared after: ${errMsg}`,
+				);
+			}
+
 			try {
 				await translator.translateError(ctx, err);
 			} catch (translateErr) {

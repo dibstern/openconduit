@@ -1063,6 +1063,251 @@ describe("ClaudeAdapter.sendTurn()", () => {
 		expect(queryFactorySpy).toHaveBeenCalledTimes(2);
 	});
 
+	// ── Group 3: Stale resume cursor fallback ────────────────────────────
+
+	it("clears resumeSessionId when stream error matches 'Invalid session'", async () => {
+		// biome-ignore lint/correctness/useYield: intentionally throws before yielding
+		const gen = (async function* () {
+			throw new Error("Invalid session: session has expired or been deleted");
+		})();
+
+		const mockQuery = Object.assign(gen, {
+			interrupt: vi.fn(async () => {}),
+			close: vi.fn(),
+			setModel: vi.fn(async () => {}),
+			setPermissionMode: vi.fn(async () => {}),
+			streamInput: vi.fn(async () => {}),
+			setMaxThinkingTokens: vi.fn(async () => {}),
+			applyFlagSettings: vi.fn(async () => {}),
+			initializationResult: vi.fn(async () => ({})),
+			supportedCommands: vi.fn(async () => []),
+			supportedModels: vi.fn(async () => []),
+			supportedAgents: vi.fn(async () => []),
+			mcpServerStatus: vi.fn(async () => []),
+			getContextUsage: vi.fn(async () => ({})),
+			reloadPlugins: vi.fn(async () => ({})),
+			accountInfo: vi.fn(async () => ({})),
+			rewindFiles: vi.fn(async () => ({ canRewind: false })),
+			seedReadState: vi.fn(async () => {}),
+			reconnectMcpServer: vi.fn(async () => {}),
+			toggleMcpServer: vi.fn(async () => {}),
+			setMcpServers: vi.fn(async () => ({})),
+			stopTask: vi.fn(async () => {}),
+			next: gen.next.bind(gen),
+			return: gen.return.bind(gen),
+			throw: gen.throw.bind(gen),
+			[Symbol.asyncIterator]: () => gen,
+		}) as unknown as Query;
+
+		queryFactorySpy = vi.fn(() => mockQuery);
+		const adapter = new ClaudeAdapter({
+			workspaceRoot: workspace,
+			queryFactory: queryFactorySpy,
+		});
+
+		const sink = createMockEventSink();
+		const input = makeBaseSendTurnInput({
+			sessionId: "session-stale-resume",
+			eventSink: sink,
+			providerState: { resumeSessionId: "stale-sdk-session-xyz" },
+		});
+
+		const result = await adapter.sendTurn(input);
+
+		expect(result.status).toBe("error");
+
+		// Verify the resume cursor was cleared on the session context
+		const ctx = (
+			adapter as unknown as {
+				sessions: Map<string, { resumeSessionId: string | undefined }>;
+			}
+		).sessions.get("session-stale-resume");
+		expect(ctx).toBeDefined();
+		expect(ctx!.resumeSessionId).toBeUndefined();
+	});
+
+	it("clears resumeSessionId for 'session not found' variant", async () => {
+		// biome-ignore lint/correctness/useYield: intentionally throws before yielding
+		const gen = (async function* () {
+			throw new Error("Session not found");
+		})();
+
+		const mockQuery = Object.assign(gen, {
+			interrupt: vi.fn(async () => {}),
+			close: vi.fn(),
+			setModel: vi.fn(async () => {}),
+			setPermissionMode: vi.fn(async () => {}),
+			streamInput: vi.fn(async () => {}),
+			setMaxThinkingTokens: vi.fn(async () => {}),
+			applyFlagSettings: vi.fn(async () => {}),
+			initializationResult: vi.fn(async () => ({})),
+			supportedCommands: vi.fn(async () => []),
+			supportedModels: vi.fn(async () => []),
+			supportedAgents: vi.fn(async () => []),
+			mcpServerStatus: vi.fn(async () => []),
+			getContextUsage: vi.fn(async () => ({})),
+			reloadPlugins: vi.fn(async () => ({})),
+			accountInfo: vi.fn(async () => ({})),
+			rewindFiles: vi.fn(async () => ({ canRewind: false })),
+			seedReadState: vi.fn(async () => {}),
+			reconnectMcpServer: vi.fn(async () => {}),
+			toggleMcpServer: vi.fn(async () => {}),
+			setMcpServers: vi.fn(async () => ({})),
+			stopTask: vi.fn(async () => {}),
+			next: gen.next.bind(gen),
+			return: gen.return.bind(gen),
+			throw: gen.throw.bind(gen),
+			[Symbol.asyncIterator]: () => gen,
+		}) as unknown as Query;
+
+		queryFactorySpy = vi.fn(() => mockQuery);
+		const adapter = new ClaudeAdapter({
+			workspaceRoot: workspace,
+			queryFactory: queryFactorySpy,
+		});
+
+		const sink = createMockEventSink();
+		const input = makeBaseSendTurnInput({
+			sessionId: "session-not-found-resume",
+			eventSink: sink,
+			providerState: { resumeSessionId: "dead-sdk-session-abc" },
+		});
+
+		const result = await adapter.sendTurn(input);
+
+		expect(result.status).toBe("error");
+
+		const ctx = (
+			adapter as unknown as {
+				sessions: Map<string, { resumeSessionId: string | undefined }>;
+			}
+		).sessions.get("session-not-found-resume");
+		expect(ctx).toBeDefined();
+		expect(ctx!.resumeSessionId).toBeUndefined();
+	});
+
+	it("does NOT clear resumeSessionId for unrelated errors", async () => {
+		// biome-ignore lint/correctness/useYield: intentionally throws before yielding
+		const gen = (async function* () {
+			throw new Error("Network timeout");
+		})();
+
+		const mockQuery = Object.assign(gen, {
+			interrupt: vi.fn(async () => {}),
+			close: vi.fn(),
+			setModel: vi.fn(async () => {}),
+			setPermissionMode: vi.fn(async () => {}),
+			streamInput: vi.fn(async () => {}),
+			setMaxThinkingTokens: vi.fn(async () => {}),
+			applyFlagSettings: vi.fn(async () => {}),
+			initializationResult: vi.fn(async () => ({})),
+			supportedCommands: vi.fn(async () => []),
+			supportedModels: vi.fn(async () => []),
+			supportedAgents: vi.fn(async () => []),
+			mcpServerStatus: vi.fn(async () => []),
+			getContextUsage: vi.fn(async () => ({})),
+			reloadPlugins: vi.fn(async () => ({})),
+			accountInfo: vi.fn(async () => ({})),
+			rewindFiles: vi.fn(async () => ({ canRewind: false })),
+			seedReadState: vi.fn(async () => {}),
+			reconnectMcpServer: vi.fn(async () => {}),
+			toggleMcpServer: vi.fn(async () => {}),
+			setMcpServers: vi.fn(async () => ({})),
+			stopTask: vi.fn(async () => {}),
+			next: gen.next.bind(gen),
+			return: gen.return.bind(gen),
+			throw: gen.throw.bind(gen),
+			[Symbol.asyncIterator]: () => gen,
+		}) as unknown as Query;
+
+		queryFactorySpy = vi.fn(() => mockQuery);
+		const adapter = new ClaudeAdapter({
+			workspaceRoot: workspace,
+			queryFactory: queryFactorySpy,
+		});
+
+		const sink = createMockEventSink();
+		const input = makeBaseSendTurnInput({
+			sessionId: "session-unrelated-err",
+			eventSink: sink,
+			providerState: { resumeSessionId: "valid-sdk-session-123" },
+		});
+
+		const result = await adapter.sendTurn(input);
+
+		expect(result.status).toBe("error");
+
+		// The resume cursor should still be set — this error is not a stale session
+		const ctx = (
+			adapter as unknown as {
+				sessions: Map<string, { resumeSessionId: string | undefined }>;
+			}
+		).sessions.get("session-unrelated-err");
+		expect(ctx).toBeDefined();
+		expect(ctx!.resumeSessionId).toBe("valid-sdk-session-123");
+	});
+
+	it("does NOT clear resumeSessionId when it was not set", async () => {
+		// biome-ignore lint/correctness/useYield: intentionally throws before yielding
+		const gen = (async function* () {
+			throw new Error("Invalid session: something");
+		})();
+
+		const mockQuery = Object.assign(gen, {
+			interrupt: vi.fn(async () => {}),
+			close: vi.fn(),
+			setModel: vi.fn(async () => {}),
+			setPermissionMode: vi.fn(async () => {}),
+			streamInput: vi.fn(async () => {}),
+			setMaxThinkingTokens: vi.fn(async () => {}),
+			applyFlagSettings: vi.fn(async () => {}),
+			initializationResult: vi.fn(async () => ({})),
+			supportedCommands: vi.fn(async () => []),
+			supportedModels: vi.fn(async () => []),
+			supportedAgents: vi.fn(async () => []),
+			mcpServerStatus: vi.fn(async () => []),
+			getContextUsage: vi.fn(async () => ({})),
+			reloadPlugins: vi.fn(async () => ({})),
+			accountInfo: vi.fn(async () => ({})),
+			rewindFiles: vi.fn(async () => ({ canRewind: false })),
+			seedReadState: vi.fn(async () => {}),
+			reconnectMcpServer: vi.fn(async () => {}),
+			toggleMcpServer: vi.fn(async () => {}),
+			setMcpServers: vi.fn(async () => ({})),
+			stopTask: vi.fn(async () => {}),
+			next: gen.next.bind(gen),
+			return: gen.return.bind(gen),
+			throw: gen.throw.bind(gen),
+			[Symbol.asyncIterator]: () => gen,
+		}) as unknown as Query;
+
+		queryFactorySpy = vi.fn(() => mockQuery);
+		const adapter = new ClaudeAdapter({
+			workspaceRoot: workspace,
+			queryFactory: queryFactorySpy,
+		});
+
+		const sink = createMockEventSink();
+		// No resumeSessionId in providerState
+		const input = makeBaseSendTurnInput({
+			sessionId: "session-no-cursor",
+			eventSink: sink,
+		});
+
+		const result = await adapter.sendTurn(input);
+
+		expect(result.status).toBe("error");
+
+		// ctx.resumeSessionId was never set, so it should still be undefined
+		const ctx = (
+			adapter as unknown as {
+				sessions: Map<string, { resumeSessionId: string | undefined }>;
+			}
+		).sessions.get("session-no-cursor");
+		expect(ctx).toBeDefined();
+		expect(ctx!.resumeSessionId).toBeUndefined();
+	});
+
 	it("SDK throws after first result but before second turn enqueues", async () => {
 		const result1 = makeSuccessResult();
 
