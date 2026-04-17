@@ -346,6 +346,14 @@ export class ClaudeEventTranslator {
 							sessionId: ctx.sessionId,
 						}),
 					);
+					// Emit session.status: busy so TurnProjector transitions
+					// the turn from "pending" → "running".
+					await this.push(
+						makeCanonicalEvent("session.status", ctx.sessionId, {
+							sessionId: ctx.sessionId,
+							status: "busy",
+						}),
+					);
 				}
 			}
 			return;

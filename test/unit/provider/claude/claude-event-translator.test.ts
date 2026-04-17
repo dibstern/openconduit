@@ -195,6 +195,51 @@ describe("ClaudeEventTranslator", () => {
 		expect(meta["correlationId"]).toMatch(/next in 2\.2s/);
 	});
 
+	// ─── 3c. stream_event (message_start) emits session.status: busy ─────
+
+	it("emits session.status busy after message.created on message_start", async () => {
+		await translator.translate(
+			ctx,
+			makeStreamEvent({
+				type: "message_start",
+				message: { id: "msg-busy-1", type: "message", role: "assistant" },
+			}),
+		);
+
+		// Should have exactly two events: message.created then session.status
+		expect(sink.events).toHaveLength(2);
+
+		const first = sink.events[0];
+		const second = sink.events[1];
+		expect(first).toBeDefined();
+		expect(second).toBeDefined();
+
+		// First event: message.created
+		expect(first!.type).toBe("message.created");
+		const createdData = dataOf(first);
+		expect(createdData["messageId"]).toBe("msg-busy-1");
+		expect(createdData["role"]).toBe("assistant");
+		expect(createdData["sessionId"]).toBe("sess-1");
+
+		// Second event: session.status with status "busy"
+		expect(second!.type).toBe("session.status");
+		const statusData = dataOf(second);
+		expect(statusData["sessionId"]).toBe("sess-1");
+		expect(statusData["status"]).toBe("busy");
+	});
+
+	it("does not emit session.status busy if message_start has no message id", async () => {
+		await translator.translate(
+			ctx,
+			makeStreamEvent({
+				type: "message_start",
+				message: { type: "message", role: "assistant" },
+			}),
+		);
+
+		expect(sink.events).toHaveLength(0);
+	});
+
 	// ─── 4. stream_event (content_block_start: text) ─────────────────────
 
 	it("registers text block in inFlightTools without emitting tool.started", async () => {
