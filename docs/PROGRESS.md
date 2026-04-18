@@ -1,6 +1,6 @@
 # OpenCode-Relay — Progress Tracker
 
-> Last updated: 2026-04-10
+> Last updated: 2026-04-18
 
 ## Current Status: Svelte 5 Migration — Phase S8 Complete (Cutover Done)
 
@@ -409,14 +409,14 @@
 | Production code | ~47,200 lines across 241 server modules |
 | Svelte frontend | ~12,400 lines across 102 modules (8 stores, 8 utils, 41 components, 3 pages, types, App, 41 story files, mocks) |
 | Frontend bundle | 379KB JS + 64KB CSS (Svelte 5 SPA) |
-| Test code (unit/fixture) | ~88,900 lines across 237 test files |
+| Test code (unit/fixture) | ~88,900 lines across 248 test files |
 | Test code (integration) | ~1,200 lines across 8 test files + 2 helpers |
 | Test code (contract) | ~680 lines across 7 test files |
 | Storybook stories | 41 story files, ~153 stories total |
-| Tests passing (unit/fixture) | 4263 / 4263 |
+| Tests passing (unit/fixture) | 4402 / 4402 |
 | Tests passing (integration) | 108 / 108 |
 | Tests (Playwright E2E) | 280 across 9 spec files × 5 viewports |
-| Tests total | 4651 (4263 unit + 108 integration + 280 E2E) |
+| Tests total | 4790 (4402 unit + 108 integration + 280 E2E) |
 | Test duration (unit) | ~5.7s |
 | Test duration (integration) | ~91s |
 | E2E test code | ~1,950 lines across 21 files (3 helpers, 9 page objects, 9 specs) |
@@ -872,3 +872,20 @@
   - **Rewrote** `sse-backoff.stateful.test.ts` (641 -> ~320 lines) — kept health tracker state machine, removed FilterEvents/ParseSSE/ClassifyEvent commands
 - **Net reduction**: ~1,733 source lines deleted, ~600 test lines deleted
 - **Verification**: `pnpm check` clean, `pnpm test:unit` — 235 test files, 4273 tests passing, lint clean on modified files
+
+### 2026-04-18 — Claude SDK Event Parity Fixes
+
+**Bugs fixed:**
+- Thinking animations never stopped (missing `thinking.end` event)
+- Tool calls/thinking blocks disappeared on session reload
+- PROCESSING_TIMEOUT on rejoin after navigating away
+- Sessions never auto-renamed from default title
+
+**Files changed:**
+- `src/lib/provider/claude/claude-event-translator.ts` — emit `thinking.end` for thinking blocks
+- `src/lib/frontend/stores/chat.svelte.ts` — safety net in `handleDone`
+- `src/lib/handlers/prompt.ts` — auto-rename after first Claude turn
+- `src/lib/provider/claude/event-type-guard.ts` — compile-time exhaustiveness guard (new)
+
+**Tests added:** 14 tests (1 updated + 13 new) across 5 files
+- **Verification**: `pnpm check` clean, `pnpm test:unit` — 248 test files, 4402 tests passing
