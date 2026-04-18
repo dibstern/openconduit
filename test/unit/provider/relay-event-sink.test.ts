@@ -360,3 +360,51 @@ describe("createRelayEventSink — permission/question", () => {
 		expect(response.decision).toBe("once");
 	});
 });
+
+describe("createRelayEventSink — thinking lifecycle", () => {
+	it("translates full thinking lifecycle to relay messages with messageId", async () => {
+		const sent: RelayMessage[] = [];
+		const sink = createRelayEventSink({
+			sessionId: "ses-1",
+			send: (msg) => sent.push(msg),
+		});
+
+		await sink.push(
+			makeEvent("thinking.start", {
+				messageId: "msg-1",
+				partId: "part-1",
+			}),
+		);
+
+		await sink.push(
+			makeEvent("thinking.delta", {
+				messageId: "msg-1",
+				partId: "part-1",
+				text: "Let me think...",
+			}),
+		);
+
+		await sink.push(
+			makeEvent("thinking.end", {
+				messageId: "msg-1",
+				partId: "part-1",
+			}),
+		);
+
+		const types = sent.map((m) => m.type);
+		expect(types).toContain("thinking_start");
+		expect(types).toContain("thinking_delta");
+		expect(types).toContain("thinking_stop");
+
+		// No tool_result should appear for thinking lifecycle
+		expect(types).not.toContain("tool_result");
+
+		// Verify messageId propagates through to relay messages
+		const start = sent.find((m) => m.type === "thinking_start");
+		const delta = sent.find((m) => m.type === "thinking_delta");
+		const stop = sent.find((m) => m.type === "thinking_stop");
+		expect((start as Record<string, unknown>)["messageId"]).toBe("msg-1");
+		expect((delta as Record<string, unknown>)["messageId"]).toBe("msg-1");
+		expect((stop as Record<string, unknown>)["messageId"]).toBe("msg-1");
+	});
+});
