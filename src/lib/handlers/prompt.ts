@@ -231,6 +231,45 @@ export async function handleMessage(
 						// Non-fatal — resume is a convenience, not a requirement
 					}
 				}
+				// Auto-rename Claude sessions after first successful turn.
+				// OpenCode auto-titles sessions server-side, but Claude SDK
+				// bypasses OpenCode's REST API — the prompt never reaches
+				// OpenCode, so it never auto-titles.
+				//
+				// Guard: only rename when turnCount is 1 AND the session still
+				// has a default title. This prevents spurious renames when the
+				// SDK context is recreated (restart, endSession, eviction) —
+				// turnCount resets to 0 on recreation, so the next turn would
+				// otherwise overwrite the original title.
+				if (result.status !== "error" && providerId === "claude") {
+					const turnCount = result.providerStateUpdates?.find(
+						(u) => u.key === "turnCount",
+					)?.value;
+					if (Number(turnCount) === 1) {
+						const title = text.length > 60 ? `${text.slice(0, 57)}...` : text;
+						// Only rename if title is still the default placeholder.
+						// Prevents overwriting user-renamed or previously auto-renamed
+						// sessions when the SDK context is recreated.
+						deps.sessionMgr
+							.listSessions()
+							.then(async (sessions) => {
+								const session = sessions.find((s) => s.id === activeId);
+								const currentTitle = session?.title ?? "";
+								const isDefault =
+									!currentTitle ||
+									currentTitle === "Claude Session" ||
+									currentTitle.startsWith("New session");
+								if (isDefault) {
+									await deps.sessionMgr.renameSession(activeId, title);
+								}
+							})
+							.catch((err) => {
+								deps.log.warn(
+									`Auto-rename failed for ${activeId}: ${err instanceof Error ? err.message : err}`,
+								);
+							});
+					}
+				}
 			})
 			.catch((sendErr) => {
 				deps.log.warn(
