@@ -12,6 +12,9 @@ import {
 	type TestHarness,
 } from "../../helpers/persistence-factories.js";
 
+const SEED = 42;
+const NUM_RUNS = 100;
+
 // ─── Arbitraries ────────────────────────────────────────────────────────────
 
 type Block =
@@ -169,7 +172,7 @@ describe("Pipeline property-based tests", () => {
 					harness.close();
 				}
 			}),
-			{ numRuns: 100 },
+			{ seed: SEED, numRuns: NUM_RUNS, endOnFailure: true },
 		);
 	});
 
@@ -216,7 +219,7 @@ describe("Pipeline property-based tests", () => {
 					harness.close();
 				}
 			}),
-			{ numRuns: 100 },
+			{ seed: SEED, numRuns: NUM_RUNS, endOnFailure: true },
 		);
 	});
 
@@ -245,7 +248,7 @@ describe("Pipeline property-based tests", () => {
 					harness.close();
 				}
 			}),
-			{ numRuns: 100 },
+			{ seed: SEED, numRuns: NUM_RUNS, endOnFailure: true },
 		);
 	});
 
@@ -298,7 +301,7 @@ describe("Pipeline property-based tests", () => {
 					harness.close();
 				}
 			}),
-			{ numRuns: 50 },
+			{ seed: SEED, numRuns: 50, endOnFailure: true },
 		);
 	});
 
@@ -323,7 +326,7 @@ describe("Pipeline property-based tests", () => {
 					harness.close();
 				}
 			}),
-			{ numRuns: 200 },
+			{ seed: SEED, numRuns: 200, endOnFailure: true },
 		);
 	});
 });
@@ -471,7 +474,7 @@ describe("Pipeline PBT — invalid/corrupted event sequences", () => {
 					harness.close();
 				}
 			}),
-			{ numRuns: 100 },
+			{ seed: SEED, numRuns: NUM_RUNS, endOnFailure: true },
 		);
 	});
 
@@ -597,7 +600,7 @@ describe("Pipeline PBT — invalid/corrupted event sequences", () => {
 					}
 				},
 			),
-			{ numRuns: 100 },
+			{ seed: SEED, numRuns: NUM_RUNS, endOnFailure: true },
 		);
 	});
 
@@ -719,7 +722,39 @@ describe("Pipeline PBT — invalid/corrupted event sequences", () => {
 					}
 				},
 			),
-			{ numRuns: 100 },
+			{ seed: SEED, numRuns: NUM_RUNS, endOnFailure: true },
 		);
 	});
+});
+
+// ─── PBT Regression Cases ───────────────────────────────────────────────────
+// When a PBT fails, add the shrunk counterexample here as a deterministic
+// regression test. This ensures past failures remain covered even when the
+// random seed produces different sequences.
+//
+// Imports used by regression cases should match those used by the PBTs above
+// (createTestHarness, MessageProjector, projectBlocks, readPipeline, Block).
+//
+// Format:
+//   it("REGRESSION <date>: <description>", () => {
+//     const blocks: Block[] = [/* shrunk counterexample */];
+//     const harness = createTestHarness();
+//     try {
+//       harness.seedSession("ses-reg");
+//       projectBlocks(harness, new MessageProjector(), "ses-reg", "msg-reg", blocks);
+//       const chat = readPipeline(harness, "ses-reg");
+//       /* assertion that failed */
+//     } finally {
+//       harness.close();
+//     }
+//   });
+
+describe("PBT regression cases", () => {
+	// When a PBT fails:
+	// 1. Note the seed and path from the failure output
+	// 2. Run with --verbose to get the shrunk counterexample
+	// 3. Replace this todo with a real it(...) test containing the counterexample
+	// 4. Fix the bug
+	// 5. Verify both the regression test and the PBT pass
+	it.todo("add shrunk counterexamples here when PBTs fail");
 });
