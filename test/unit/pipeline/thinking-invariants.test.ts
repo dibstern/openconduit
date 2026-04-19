@@ -262,3 +262,80 @@ describe("Error → recovery cycle", () => {
 		expect(thinking!.done).toBe(false);
 	});
 });
+
+describe("clearMessages + active thinking race", () => {
+	beforeEach(() => {
+		vi.useFakeTimers();
+		clearMessages();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	it("clearMessages mid-thinking — subsequent delta silently dropped, no crash", () => {
+		handleThinkingStart(msg("thinking_start"));
+		handleThinkingDelta(msg("thinking_delta", { text: "part 1" }));
+
+		// Mid-stream clear (simulates session switch)
+		clearMessages();
+
+		// Delta arrives after clear — no target message exists
+		handleThinkingDelta(msg("thinking_delta", { text: "part 2" }));
+
+		// No crash, no orphan thinking block
+		expect(chatState.messages).toHaveLength(0);
+	});
+
+	it("clearMessages mid-thinking — subsequent stop silently dropped, no crash", () => {
+		handleThinkingStart(msg("thinking_start"));
+		handleThinkingDelta(msg("thinking_delta", { text: "content" }));
+
+		clearMessages();
+
+		// Stop arrives after clear
+		handleThinkingStop(msg("thinking_stop"));
+
+		expect(chatState.messages).toHaveLength(0);
+	});
+
+	it("clearMessages mid-thinking — subsequent handleDone is clean no-op", () => {
+		handleThinkingStart(msg("thinking_start"));
+		handleThinkingDelta(msg("thinking_delta", { text: "active" }));
+
+		clearMessages();
+
+		// handleDone after clear — should not crash or create zombie thinking
+		handleDone(msg("done", { code: 0 }));
+
+		// No orphan thinking blocks with done=false
+		const zombies = chatState.messages.filter(
+			(m): m is ThinkingMessage => m.type === "thinking" && !m.done,
+		);
+		expect(zombies).toHaveLength(0);
+	});
+
+	it("new thinking after clearMessages — fresh lifecycle works correctly", () => {
+		// First thinking
+		handleThinkingStart(msg("thinking_start"));
+		handleThinkingDelta(msg("thinking_delta", { text: "old" }));
+
+		clearMessages();
+
+		// New thinking after clear
+		handleThinkingStart(msg("thinking_start"));
+		handleThinkingDelta(msg("thinking_delta", { text: "fresh" }));
+		handleThinkingStop(msg("thinking_stop"));
+		handleDone(msg("done", { code: 0 }));
+
+		const thinkingBlocks = chatState.messages.filter(
+			(m): m is ThinkingMessage => m.type === "thinking",
+		);
+		// Only the fresh thinking block — old one was cleared
+		expect(thinkingBlocks).toHaveLength(1);
+		// biome-ignore lint/style/noNonNullAssertion: length checked
+		expect(thinkingBlocks[0]!.text).toBe("fresh");
+		// biome-ignore lint/style/noNonNullAssertion: length checked
+		expect(thinkingBlocks[0]!.done).toBe(true);
+	});
+});
