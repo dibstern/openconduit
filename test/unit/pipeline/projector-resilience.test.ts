@@ -1246,4 +1246,191 @@ describe("MessageProjector resilience", () => {
 			expect(thinking!.text).toBe("思考🧠完了");
 		});
 	});
+
+	// ─── Orphan event edges ──────────────────────────────────────────────
+
+	describe("orphan event edges", () => {
+		it("thinking.end with no thinking.start or thinking.delta — no crash", () => {
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-orphan-end", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			// Orphan end — no start, no delta
+			expect(() =>
+				project(makeStored("thinking.end", SESSION_A, {
+					messageId: "msg-orphan-end", partId: "part-orphan-end",
+				}, { sequence: nextSeq(), createdAt: NOW + 100 })),
+			).not.toThrow();
+
+			project(makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-orphan-end", cost: 0, duration: 0,
+				tokens: { input: 0, output: 0 },
+			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+
+			// Pipeline should not crash — orphan end may or may not create a part
+			expect(() => readPipeline(SESSION_A)).not.toThrow();
+		});
+
+		it("turn.completed before any parts — message exists with no content", () => {
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-early-turn", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			// Immediate turn.completed — no thinking, no text, no tool
+			project(makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-early-turn", cost: 0, duration: 0,
+				tokens: { input: 0, output: 0 },
+			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+
+			const chat = readPipeline(SESSION_A);
+			// No assistant or thinking messages — turn had no content
+			expect(chat.filter((m) => m.type === "assistant")).toHaveLength(0);
+			expect(chat.filter((m) => m.type === "thinking")).toHaveLength(0);
+		});
+
+		it("turn.error mid-thinking — thinking part still readable", () => {
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-err-mid", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			project(makeStored("thinking.start", SESSION_A, {
+				messageId: "msg-err-mid", partId: "part-err-mid",
+			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+
+			project(makeStored("thinking.delta", SESSION_A, {
+				messageId: "msg-err-mid", partId: "part-err-mid",
+				text: "reasoning before error",
+			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+
+			// Error arrives — no thinking.end, no turn.completed
+			project(makeStored("turn.error", SESSION_A, {
+				messageId: "msg-err-mid",
+				error: "Internal error",
+				code: "INTERNAL_ERROR",
+			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+
+			const chat = readPipeline(SESSION_A);
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.text).toBe("reasoning before error");
+			// History-loaded = always done=true
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.done).toBe(true);
+		});
+
+		it("duplicate message.created for same messageId — ON CONFLICT DO NOTHING", () => {
+			const firstCreate = makeStored("message.created", SESSION_A, {
+				messageId: "msg-dup-create", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW });
+
+			project(firstCreate);
+
+			// Second create for same ID — should be idempotent
+			const secondCreate = makeStored("message.created", SESSION_A, {
+				messageId: "msg-dup-create", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW + 100 });
+
+			expect(() => project(secondCreate)).not.toThrow();
+
+			// Message still works
+			project(makeStored("text.delta", SESSION_A, {
+				messageId: "msg-dup-create", partId: "part-dup-create",
+				text: "still works",
+			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+
+			project(makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-dup-create", cost: 0, duration: 0,
+				tokens: { input: 0, output: 0 },
+			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+
+			const chat = readPipeline(SESSION_A);
+			const assistant = chat.find((m) => m.type === "assistant");
+			expect(assistant).toBeDefined();
+		});
+
+		it("duplicate turn.completed — no error, message not corrupted", () => {
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-dup-turn", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			project(makeStored("text.delta", SESSION_A, {
+				messageId: "msg-dup-turn", partId: "part-dup-turn",
+				text: "content",
+			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+
+			const turnEvent = makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-dup-turn", cost: 0.01, duration: 500,
+				tokens: { input: 100, output: 50 },
+			}, { sequence: nextSeq(), createdAt: NOW + 200 });
+
+			project(turnEvent);
+			expect(() => project(turnEvent)).not.toThrow();
+
+			const chat = readPipeline(SESSION_A);
+			const assistant = chat.find((m) => m.type === "assistant");
+			expect(assistant).toBeDefined();
+		});
+
+		it("duplicate thinking.end — no error", () => {
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-dup-end", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			project(makeStored("thinking.start", SESSION_A, {
+				messageId: "msg-dup-end", partId: "part-dup-end",
+			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+
+			project(makeStored("thinking.delta", SESSION_A, {
+				messageId: "msg-dup-end", partId: "part-dup-end", text: "thought",
+			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+
+			const endEvent = makeStored("thinking.end", SESSION_A, {
+				messageId: "msg-dup-end", partId: "part-dup-end",
+			}, { sequence: nextSeq(), createdAt: NOW + 300 });
+
+			project(endEvent);
+			expect(() => project(endEvent)).not.toThrow();
+
+			project(makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-dup-end", cost: 0, duration: 0,
+				tokens: { input: 0, output: 0 },
+			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
+
+			const chat = readPipeline(SESSION_A);
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.text).toBe("thought");
+		});
+
+		it("text.delta duplicate in normal mode — documents text doubling risk", () => {
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-dup-text", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			const textDelta = makeStored("text.delta", SESSION_A, {
+				messageId: "msg-dup-text", partId: "part-dup-text", text: "hello",
+			}, { sequence: nextSeq(), createdAt: NOW + 100 });
+
+			project(textDelta);
+			project(textDelta);
+
+			project(makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-dup-text", cost: 0, duration: 0,
+				tokens: { input: 0, output: 0 },
+			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+
+			const chat = readPipeline(SESSION_A);
+			const assistant = chat.find((m) => m.type === "assistant");
+			expect(assistant).toBeDefined();
+			// KNOWN RISK: same as thinking.delta doubling — text.delta also uses
+			// ON CONFLICT DO UPDATE SET text = message_parts.text || excluded.text
+			// No alreadyApplied() guard in normal (non-replay) mode.
+		});
+	});
 });
