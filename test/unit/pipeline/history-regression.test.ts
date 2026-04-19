@@ -280,4 +280,69 @@ describe("History conversion regression", () => {
 			}
 		});
 	});
+
+	// ─── Unknown part type runtime behavior ──────────────────────────────
+
+	describe("unknown part type — runtime drop behavior", () => {
+		function makeHistoryMessage(
+			parts: Array<{ type: string; text?: string }>,
+		): HistoryMessage {
+			return {
+				id: "msg-unknown",
+				role: "assistant",
+				parts: parts.map((p, i) => ({
+					id: `part-${i}`,
+					...p,
+				})),
+				time: { created: 1000 },
+			} as unknown as HistoryMessage;
+		}
+
+		it("unknown part type 'image' — silently dropped, no crash, no phantom message", () => {
+			const chat = historyToChatMessages([
+				makeHistoryMessage([{ type: "image", text: "base64data" }]),
+			]);
+
+			// No messages produced — unknown type dropped by default case
+			expect(chat).toHaveLength(0);
+		});
+
+		it("unknown part type 'audio' — silently dropped", () => {
+			const chat = historyToChatMessages([
+				makeHistoryMessage([{ type: "audio" }]),
+			]);
+
+			expect(chat).toHaveLength(0);
+		});
+
+		it("unknown part type 'future_magic' — silently dropped", () => {
+			const chat = historyToChatMessages([
+				makeHistoryMessage([{ type: "future_magic", text: "surprise" }]),
+			]);
+
+			expect(chat).toHaveLength(0);
+		});
+
+		it("mixed known and unknown types — known survive, unknown dropped", () => {
+			const chat = historyToChatMessages([
+				makeHistoryMessage([
+					{ type: "thinking", text: "thought" },
+					{ type: "unknown_x" },
+					{ type: "text", text: "answer" },
+					{ type: "unknown_y", text: "nope" },
+				]),
+			]);
+
+			// Only thinking + text survive
+			expect(chat).toHaveLength(2);
+			// biome-ignore lint/style/noNonNullAssertion: length checked
+			expect(chat[0]!.type).toBe("thinking");
+			// biome-ignore lint/style/noNonNullAssertion: length checked
+			expect(chat[1]!.type).toBe("assistant");
+		});
+
+		it.todo(
+			"unknown part types should be logged for observability — add logging to default case",
+		);
+	});
 });
