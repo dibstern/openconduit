@@ -191,4 +191,77 @@ describe("History conversion regression", () => {
 			}
 		});
 	});
+
+	// ─── Pre-existing data round-trip (migration safety) ─────────────────
+
+	describe("pre-existing data round-trip", () => {
+		it("pre-existing type='thinking' rows in SQLite round-trip after Task 0 fix", () => {
+			let harness: TestHarness | undefined;
+			try {
+				harness = createTestHarness();
+				harness.seedSession("ses-migrate");
+
+				// Seed directly into DB — simulates data created before code fix
+				harness.seedMessage("msg-migrate", "ses-migrate", {
+					role: "assistant",
+					parts: [
+						{ id: "part-think-old", type: "thinking", text: "pre-existing thought", sortOrder: 0 },
+						{ id: "part-text-old", type: "text", text: "pre-existing answer", sortOrder: 1 },
+					],
+				});
+
+				const readQuery = new ReadQueryService(harness.db);
+				const rows = readQuery.getSessionMessagesWithParts("ses-migrate");
+				const { messages } = messageRowsToHistory(rows, { pageSize: 50 });
+				const chatMessages = historyToChatMessages(messages);
+
+				// Thinking block from pre-existing data
+				const thinking = chatMessages.find(
+					(m): m is ThinkingMessage => m.type === "thinking",
+				);
+				expect(thinking).toBeDefined();
+				// biome-ignore lint/style/noNonNullAssertion: asserted above
+				expect(thinking!.text).toBe("pre-existing thought");
+				// biome-ignore lint/style/noNonNullAssertion: asserted above
+				expect(thinking!.done).toBe(true);
+
+				// Assistant text also present
+				const assistant = chatMessages.find((m) => m.type === "assistant");
+				expect(assistant).toBeDefined();
+			} finally {
+				harness?.close();
+			}
+		});
+
+		it("pre-existing type='thinking' row with empty text — does not crash pipeline", () => {
+			let harness: TestHarness | undefined;
+			try {
+				harness = createTestHarness();
+				harness.seedSession("ses-migrate-empty");
+
+				harness.seedMessage("msg-migrate-empty", "ses-migrate-empty", {
+					role: "assistant",
+					parts: [
+						{ id: "part-think-empty", type: "thinking", text: "", sortOrder: 0 },
+					],
+				});
+
+				const readQuery = new ReadQueryService(harness.db);
+				const rows = readQuery.getSessionMessagesWithParts("ses-migrate-empty");
+				const { messages } = messageRowsToHistory(rows, { pageSize: 50 });
+				const chatMessages = historyToChatMessages(messages);
+
+				const thinking = chatMessages.find(
+					(m): m is ThinkingMessage => m.type === "thinking",
+				);
+				expect(thinking).toBeDefined();
+				// biome-ignore lint/style/noNonNullAssertion: asserted above
+				expect(thinking!.text).toBe("");
+				// biome-ignore lint/style/noNonNullAssertion: asserted above
+				expect(thinking!.done).toBe(true);
+			} finally {
+				harness?.close();
+			}
+		});
+	});
 });
