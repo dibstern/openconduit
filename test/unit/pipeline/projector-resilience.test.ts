@@ -427,6 +427,128 @@ describe("MessageProjector resilience", () => {
 			project(startEvent);
 			expect(() => project(startEvent)).not.toThrow();
 		});
+
+		it("SSE reconnection replay — overlap events skipped, new events applied", () => {
+			// Phase 1: Normal streaming — events seq 1-3
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: MSG_ID,
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: 1, createdAt: NOW },
+				),
+			);
+
+			project(
+				makeStored(
+					"thinking.start",
+					SESSION_A,
+					{ messageId: MSG_ID, partId: "part-reconnect" },
+					{ sequence: 2, createdAt: NOW + 100 },
+				),
+			);
+
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{ messageId: MSG_ID, partId: "part-reconnect", text: "first" },
+					{ sequence: 3, createdAt: NOW + 200 },
+				),
+			);
+
+			// Phase 2: SSE reconnects — replays events 2-5 (overlap: 2,3; new: 4,5)
+			const replayCtx = { replaying: true };
+
+			// Event seq 2 replay — should be skipped
+			project(
+				makeStored(
+					"thinking.start",
+					SESSION_A,
+					{ messageId: MSG_ID, partId: "part-reconnect" },
+					{ sequence: 2, createdAt: NOW + 100 },
+				),
+				replayCtx,
+			);
+
+			// Event seq 3 replay — should be skipped
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{ messageId: MSG_ID, partId: "part-reconnect", text: "first" },
+					{ sequence: 3, createdAt: NOW + 200 },
+				),
+				replayCtx,
+			);
+
+			// Event seq 4 — NEW, should be applied
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{ messageId: MSG_ID, partId: "part-reconnect", text: " second" },
+					{ sequence: 4, createdAt: NOW + 300 },
+				),
+				replayCtx,
+			);
+
+			// Event seq 5 — NEW, should be applied
+			project(
+				makeStored(
+					"thinking.end",
+					SESSION_A,
+					{ messageId: MSG_ID, partId: "part-reconnect" },
+					{ sequence: 5, createdAt: NOW + 400 },
+				),
+				replayCtx,
+			);
+
+			// Normal mode resumes
+			project(
+				makeStored(
+					"text.delta",
+					SESSION_A,
+					{
+						messageId: MSG_ID,
+						partId: "part-text-reconnect",
+						text: "answer",
+					},
+					{ sequence: 6, createdAt: NOW + 500 },
+				),
+			);
+
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: MSG_ID,
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: 7, createdAt: NOW + 600 },
+				),
+			);
+
+			const chat = readPipeline(SESSION_A);
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// Text should be "first second" — NOT "firstfirst second" (overlap not doubled)
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.text).toBe("first second");
+
+			// Assistant text also present
+			const assistant = chat.find((m) => m.type === "assistant");
+			expect(assistant).toBeDefined();
+		});
 	});
 
 	// ─── Edge cases ─────────────────────────────────────────────────────
