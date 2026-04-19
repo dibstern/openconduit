@@ -1005,4 +1005,130 @@ describe("MessageProjector resilience", () => {
 			expect(chatB.some((m) => m.type === "thinking")).toBe(false);
 		});
 	});
+
+	// ─── Malformed / adversarial payloads ────────────────────────────────
+
+	describe("malformed and adversarial payloads", () => {
+		it("thinking.delta with empty string text — concatenates to empty", () => {
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-empty", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			project(makeStored("thinking.start", SESSION_A, {
+				messageId: "msg-empty", partId: "part-empty",
+			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+
+			project(makeStored("thinking.delta", SESSION_A, {
+				messageId: "msg-empty", partId: "part-empty", text: "",
+			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+
+			project(makeStored("thinking.end", SESSION_A, {
+				messageId: "msg-empty", partId: "part-empty",
+			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+
+			project(makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-empty", cost: 0, duration: 0,
+				tokens: { input: 0, output: 0 },
+			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
+
+			const chat = readPipeline(SESSION_A);
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.text).toBe("");
+		});
+
+		it("text.delta with SQL-injection-like string — parameterized queries prevent injection", () => {
+			const evilText = "'; DROP TABLE message_parts; --";
+
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-sql", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			project(makeStored("text.delta", SESSION_A, {
+				messageId: "msg-sql", partId: "part-sql", text: evilText,
+			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+
+			project(makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-sql", cost: 0, duration: 0,
+				tokens: { input: 0, output: 0 },
+			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+
+			// Table still exists (not dropped)
+			const chat = readPipeline(SESSION_A);
+			const assistant = chat.find((m) => m.type === "assistant");
+			expect(assistant).toBeDefined();
+		});
+
+		it("thinking.delta with very long text (100KB) — stored and retrieved intact", () => {
+			const longText = "x".repeat(100_000);
+
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-long", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			project(makeStored("thinking.start", SESSION_A, {
+				messageId: "msg-long", partId: "part-long",
+			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+
+			project(makeStored("thinking.delta", SESSION_A, {
+				messageId: "msg-long", partId: "part-long", text: longText,
+			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+
+			project(makeStored("thinking.end", SESSION_A, {
+				messageId: "msg-long", partId: "part-long",
+			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+
+			project(makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-long", cost: 0, duration: 0,
+				tokens: { input: 0, output: 0 },
+			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
+
+			const chat = readPipeline(SESSION_A);
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.text).toBe(longText);
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.text.length).toBe(100_000);
+		});
+
+		it("thinking.delta with HTML entities — stored raw, not escaped at DB layer", () => {
+			const htmlText = '<script>alert("xss")</script>&amp;';
+
+			project(makeStored("message.created", SESSION_A, {
+				messageId: "msg-html", role: "assistant", sessionId: SESSION_A,
+			}, { sequence: nextSeq(), createdAt: NOW }));
+
+			project(makeStored("thinking.start", SESSION_A, {
+				messageId: "msg-html", partId: "part-html",
+			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+
+			project(makeStored("thinking.delta", SESSION_A, {
+				messageId: "msg-html", partId: "part-html", text: htmlText,
+			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+
+			project(makeStored("thinking.end", SESSION_A, {
+				messageId: "msg-html", partId: "part-html",
+			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+
+			project(makeStored("turn.completed", SESSION_A, {
+				messageId: "msg-html", cost: 0, duration: 0,
+				tokens: { input: 0, output: 0 },
+			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
+
+			const chat = readPipeline(SESSION_A);
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// DB stores raw text — sanitization is frontend's responsibility
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.text).toBe(htmlText);
+		});
+	});
 });
