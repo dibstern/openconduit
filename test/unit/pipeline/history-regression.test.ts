@@ -1,0 +1,194 @@
+import { describe, expect, it } from "vitest";
+import { historyToChatMessages } from "../../../src/lib/frontend/utils/history-logic.js";
+import type { ThinkingMessage } from "../../../src/lib/frontend/types.js";
+import { ReadQueryService } from "../../../src/lib/persistence/read-query-service.js";
+import { messageRowsToHistory } from "../../../src/lib/persistence/session-history-adapter.js";
+import type {
+	HistoryMessage,
+	HistoryMessagePart,
+} from "../../../src/lib/shared-types.js";
+import {
+	createTestHarness,
+	type TestHarness,
+} from "../../helpers/persistence-factories.js";
+
+describe("History conversion regression", () => {
+	// ─── Part type regression guard ─────────────────────────────────────
+
+	describe("part type regression guard", () => {
+		/**
+		 * Constructs a minimal HistoryMessage with the given parts.
+		 * Uses `as HistoryMessage` because HistoryMessagePart.type is PartType
+		 * which may not include "thinking" — the DB stores it but the type union
+		 * reflects the OpenCode SDK types. The cast is intentional.
+		 */
+		function makeHistoryMessage(
+			parts: Array<{ type: string; text?: string; time?: unknown }>,
+		): HistoryMessage {
+			return {
+				id: "msg-1",
+				role: "assistant",
+				parts: parts.map((p, i) => ({
+					id: `part-${i}`,
+					...p,
+				})) as HistoryMessagePart[],
+				time: { created: 1000 },
+			} as HistoryMessage;
+		}
+
+		it("'reasoning' part type → ThinkingMessage (OpenCode SDK path)", () => {
+			const chat = historyToChatMessages([
+				makeHistoryMessage([{ type: "reasoning", text: "reasoning text" }]),
+			]);
+
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.text).toBe("reasoning text");
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.done).toBe(true);
+		});
+
+		it("'thinking' part type → ThinkingMessage (Task 0 fix — projected path)", () => {
+			const chat = historyToChatMessages([
+				makeHistoryMessage([{ type: "thinking", text: "thinking text" }]),
+			]);
+
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.text).toBe("thinking text");
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.done).toBe(true);
+		});
+
+		it("'reasoning' and 'thinking' produce identical output shape", () => {
+			const chatR = historyToChatMessages([
+				makeHistoryMessage([{ type: "reasoning", text: "same" }]),
+			]);
+			const chatT = historyToChatMessages([
+				makeHistoryMessage([{ type: "thinking", text: "same" }]),
+			]);
+
+			const thinkR = chatR.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			const thinkT = chatT.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+
+			expect(thinkR).toBeDefined();
+			expect(thinkT).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinkR!.text).toBe(thinkT!.text);
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinkR!.done).toBe(thinkT!.done);
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinkR!.type).toBe(thinkT!.type);
+		});
+	});
+
+	// ─── Duration calculation ───────────────────────────────────────────
+
+	describe("duration calculation", () => {
+		function makeThinkingMsg(
+			partTime?: { start?: number; end?: number },
+		): HistoryMessage {
+			return {
+				id: "msg-dur",
+				role: "assistant",
+				parts: [
+					{
+						id: "part-dur",
+						type: "reasoning",
+						text: "reasoning",
+						...(partTime != null && { time: partTime }),
+					},
+				],
+				time: { created: 1000 },
+			} as HistoryMessage;
+		}
+
+		it("duration computed correctly when time.start and time.end present", () => {
+			const chat = historyToChatMessages([
+				makeThinkingMsg({ start: 1000, end: 3500 }),
+			]);
+
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.duration).toBe(2500);
+		});
+
+		it("duration undefined when only time.start present", () => {
+			const chat = historyToChatMessages([makeThinkingMsg({ start: 1000 })]);
+
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.duration).toBeUndefined();
+		});
+
+		it("duration undefined when only time.end present", () => {
+			const chat = historyToChatMessages([makeThinkingMsg({ end: 3500 })]);
+
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.duration).toBeUndefined();
+		});
+
+		it("duration undefined when no time data on part", () => {
+			const chat = historyToChatMessages([makeThinkingMsg()]);
+
+			const thinking = chat.find(
+				(m): m is ThinkingMessage => m.type === "thinking",
+			);
+			expect(thinking).toBeDefined();
+			// biome-ignore lint/style/noNonNullAssertion: asserted above
+			expect(thinking!.duration).toBeUndefined();
+		});
+	});
+
+	// ─── Pagination guard ───────────────────────────────────────────────
+
+	describe("pagination guard", () => {
+		it("message with multiple parts stays intact at pageSize=1", () => {
+			// Future-proofing guard: getSessionMessagesWithParts() currently
+			// returns ALL messages (no pagination), but messageRowsToHistory
+			// accepts pageSize. This verifies a multi-part message isn't split.
+			let harness: TestHarness | undefined;
+			try {
+				harness = createTestHarness();
+				harness.seedSession("ses-page");
+				harness.seedMessage("msg-page", "ses-page", {
+					role: "assistant",
+					parts: [
+						{ id: "p1", type: "thinking", text: "thought", sortOrder: 0 },
+						{ id: "p2", type: "text", text: "answer", sortOrder: 1 },
+					],
+				});
+
+				const readQuery = new ReadQueryService(harness.db);
+				const rows = readQuery.getSessionMessagesWithParts("ses-page");
+				const { messages } = messageRowsToHistory(rows, { pageSize: 1 });
+
+				// Message should have both parts intact
+				expect(messages).toHaveLength(1);
+				expect(messages[0]!.parts?.length).toBeGreaterThanOrEqual(2);
+			} finally {
+				harness?.close();
+			}
+		});
+	});
+});
