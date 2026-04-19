@@ -6,6 +6,18 @@ import {
 } from "../../../src/lib/provider/relay-event-sink.js";
 import type { RelayMessage } from "../../../src/lib/types.js";
 
+/**
+ * SNAPSHOT STRATEGY: These tests intentionally use toEqual() for exact shape matching.
+ * When RelayMessage types change (new fields, renamed fields), these tests MUST break
+ * to force explicit review of the event translation layer.
+ *
+ * If you need to add a new optional field to RelayMessage that shouldn't break these
+ * snapshots, use toMatchObject() for that specific test. But prefer toEqual() as default.
+ *
+ * The "structural minimum" tests below use toMatchObject() as a safety net — they verify
+ * the minimum required fields exist even if the exact-match tests are relaxed later.
+ */
+
 const SESSION_ID = "ses-snap-1";
 
 function createCaptureSink(overrides?: Partial<RelayEventSinkDeps>) {
@@ -107,6 +119,53 @@ describe("Event translation snapshots — thinking lifecycle", () => {
 			}),
 		);
 		expect(sent).toHaveLength(0);
+	});
+});
+
+describe("Event translation — structural minimum (safety net)", () => {
+	it("thinking_start has at minimum: type + messageId", async () => {
+		const { sink, sent } = createCaptureSink();
+		await sink.push(canonicalEvent("thinking.start", SESSION_ID, {
+			messageId: "msg-struct", partId: "part-struct",
+		}));
+		expect(sent[0]).toMatchObject({
+			type: "thinking_start",
+			messageId: "msg-struct",
+		});
+	});
+
+	it("thinking_delta has at minimum: type + text + messageId", async () => {
+		const { sink, sent } = createCaptureSink();
+		await sink.push(canonicalEvent("thinking.delta", SESSION_ID, {
+			messageId: "msg-struct", partId: "part-struct", text: "content",
+		}));
+		expect(sent[0]).toMatchObject({
+			type: "thinking_delta",
+			text: "content",
+			messageId: "msg-struct",
+		});
+	});
+
+	it("thinking_stop has at minimum: type + messageId", async () => {
+		const { sink, sent } = createCaptureSink();
+		await sink.push(canonicalEvent("thinking.end", SESSION_ID, {
+			messageId: "msg-struct", partId: "part-struct",
+		}));
+		expect(sent[0]).toMatchObject({
+			type: "thinking_stop",
+			messageId: "msg-struct",
+		});
+	});
+
+	it("done message has at minimum: type", async () => {
+		const { sink, sent } = createCaptureSink();
+		await sink.push(canonicalEvent("turn.completed", SESSION_ID, {
+			messageId: "msg-struct", cost: 0.01, duration: 1000,
+			tokens: { input: 100, output: 50 },
+		}));
+		const done = sent.find((m) => m.type === "done");
+		expect(done).toBeDefined();
+		expect(done).toMatchObject({ type: "done" });
 	});
 });
 
