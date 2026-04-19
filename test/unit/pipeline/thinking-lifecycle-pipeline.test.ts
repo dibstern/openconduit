@@ -150,4 +150,76 @@ describe("Thinking lifecycle — full pipeline", () => {
 		const assistantIdx = chatMessages.findIndex((m) => m.type === "assistant");
 		expect(thinkingIdx).toBeLessThan(assistantIdx);
 	});
+
+	it("thinking block round-trips through SQLite — simulated reload", () => {
+		// Project a thinking lifecycle
+		project(
+			makeStored(
+				"message.created",
+				SESSION_ID,
+				{
+					messageId: "msg-reload",
+					role: "assistant",
+					sessionId: SESSION_ID,
+				},
+				{ sequence: nextSeq(), createdAt: NOW },
+			),
+		);
+
+		project(
+			makeStored(
+				"thinking.start",
+				SESSION_ID,
+				{
+					messageId: "msg-reload",
+					partId: "part-think-reload",
+				},
+				{ sequence: nextSeq(), createdAt: NOW + 100 },
+			),
+		);
+
+		project(
+			makeStored(
+				"thinking.delta",
+				SESSION_ID,
+				{
+					messageId: "msg-reload",
+					partId: "part-think-reload",
+					text: "Deep reasoning about the problem...",
+				},
+				{ sequence: nextSeq(), createdAt: NOW + 200 },
+			),
+		);
+
+		project(
+			makeStored(
+				"thinking.end",
+				SESSION_ID,
+				{
+					messageId: "msg-reload",
+					partId: "part-think-reload",
+				},
+				{ sequence: nextSeq(), createdAt: NOW + 500 },
+			),
+		);
+
+		// Simulate reload: create a NEW ReadQueryService (as if reconnecting)
+		const freshReadQuery = new ReadQueryService(db);
+		const rows = freshReadQuery.getSessionMessagesWithParts(SESSION_ID);
+		const { messages } = messageRowsToHistory(rows, { pageSize: 50 });
+		const chatMessages = historyToChatMessages(messages);
+
+		const thinking = chatMessages.find(
+			(m): m is ThinkingMessage => m.type === "thinking",
+		);
+		expect(thinking).toBeDefined();
+		// biome-ignore lint/style/noNonNullAssertion: asserted above
+		expect(thinking!.done).toBe(true);
+		// biome-ignore lint/style/noNonNullAssertion: asserted above
+		expect(thinking!.text).toBe("Deep reasoning about the problem...");
+		// Duration is undefined — MessageProjector doesn't store timing on parts,
+		// and partRowToHistoryPart doesn't produce a time field. Known gap.
+		// biome-ignore lint/style/noNonNullAssertion: asserted above
+		expect(thinking!.duration).toBeUndefined();
+	});
 });
