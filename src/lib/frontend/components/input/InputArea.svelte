@@ -106,6 +106,17 @@
 	const canSend = $derived(inputText.trim().length > 0 || pendingImages.length > 0);
 	const showContextMini = $derived(uiState.contextPercent > 0);
 
+	// ─── Mobile detection ─────────────────────────────────────────────────────
+	// On mobile, Enter inserts a newline (default textarea behavior) and the
+	// user taps the Send button. On desktop, Enter sends the message.
+
+	function isMobile(): boolean {
+		return (
+			/Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+			(navigator.maxTouchPoints > 0 && window.innerWidth < 768)
+		);
+	}
+
 	// ─── Auto-resize textarea ──────────────────────────────────────────────────
 
 	function autoResize() {
@@ -159,6 +170,11 @@
 			return;
 		}
 		if (e.key === "Enter" && !e.shiftKey) {
+			if (isMobile()) {
+				// Mobile: Enter inserts newline (default textarea behavior).
+				// User taps Send button to send.
+				return;
+			}
 			e.preventDefault();
 			sendMessage();
 		}
@@ -477,7 +493,7 @@
 					rows="1"
 					placeholder="Message OpenCode&hellip;"
 					autocomplete="off"
-					enterkeyhint="send"
+					enterkeyhint={isMobile() ? "enter" : "send"}
 					class="flex-1 min-w-0 bg-transparent border-none text-text text-base font-sans leading-[1.4] pt-2 pb-1 px-2.5 resize-none outline-none min-h-6 max-h-[120px] overflow-y-auto placeholder:text-text-muted"
 					bind:value={inputText}
 					bind:this={textareaEl}
