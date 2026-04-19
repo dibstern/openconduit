@@ -143,9 +143,9 @@ function mapToolStatus(
 /**
  * Convert a single assistant message's parts into ChatMessage[].
  * Each part type maps to the corresponding ChatMessage variant:
- *   - "text"      → AssistantMessage
- *   - "reasoning" → ThinkingMessage
- *   - "tool"      → ToolMessage
+ *   - "text"                    → AssistantMessage
+ *   - "reasoning" | "thinking"  → ThinkingMessage
+ *   - "tool"                    → ToolMessage
  *   - Others (step_start, step_finish, snapshot, agent) → skipped
  *
  * @param renderHtml Optional function to render markdown to HTML.
