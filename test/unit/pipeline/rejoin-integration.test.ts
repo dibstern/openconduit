@@ -174,3 +174,153 @@ describe("Rejoin integration — delivery layer fidelity", () => {
 		expect(true).toBe(true); // Placeholder — remove when implementing
 	});
 });
+
+describe("Multi-client / multi-tab delivery", () => {
+	let delivery: ReturnType<typeof createDeliveryLayer>;
+
+	beforeEach(() => {
+		delivery = createDeliveryLayer();
+	});
+
+	it("two clients on same session — both receive events", async () => {
+		delivery.connect("tab-1");
+		delivery.connect("tab-2");
+		delivery.switchSession("tab-1", SESSION);
+		delivery.switchSession("tab-2", SESSION);
+
+		const sink = createRelayEventSink({
+			sessionId: SESSION,
+			send: (msg) => delivery.deliverToSession(SESSION, msg),
+		});
+
+		await sink.push(
+			canonicalEvent("text.delta", SESSION, {
+				messageId: "msg-1",
+				partId: "p1",
+				text: "shared delta",
+			}),
+		);
+
+		// Both tabs received the event
+		expect(
+			delivery.getInbox("tab-1").filter((m) => m.type === "delta"),
+		).toHaveLength(1);
+		expect(
+			delivery.getInbox("tab-2").filter((m) => m.type === "delta"),
+		).toHaveLength(1);
+	});
+
+	it("one tab navigates away — other tab still receives events", async () => {
+		delivery.connect("tab-1");
+		delivery.connect("tab-2");
+		delivery.switchSession("tab-1", SESSION);
+		delivery.switchSession("tab-2", SESSION);
+
+		const sink = createRelayEventSink({
+			sessionId: SESSION,
+			send: (msg) => delivery.deliverToSession(SESSION, msg),
+		});
+
+		// tab-1 navigates away
+		delivery.switchSession("tab-1", "other-session");
+
+		await sink.push(
+			canonicalEvent("text.delta", SESSION, {
+				messageId: "msg-1",
+				partId: "p1",
+				text: "only tab-2",
+			}),
+		);
+
+		// tab-2 received, tab-1 did not
+		expect(
+			delivery.getInbox("tab-2").filter((m) => m.type === "delta"),
+		).toHaveLength(1);
+		expect(
+			delivery.getInbox("tab-1").filter((m) => m.type === "delta"),
+		).toHaveLength(0);
+	});
+
+	it("tab-1 returns — both tabs receive subsequent events", async () => {
+		delivery.connect("tab-1");
+		delivery.connect("tab-2");
+		delivery.switchSession("tab-1", SESSION);
+		delivery.switchSession("tab-2", SESSION);
+
+		const sink = createRelayEventSink({
+			sessionId: SESSION,
+			send: (msg) => delivery.deliverToSession(SESSION, msg),
+		});
+
+		// tab-1 leaves and returns
+		delivery.switchSession("tab-1", "other");
+		delivery.switchSession("tab-1", SESSION);
+
+		await sink.push(
+			canonicalEvent("text.delta", SESSION, {
+				messageId: "msg-1",
+				partId: "p1",
+				text: "after return",
+			}),
+		);
+
+		expect(
+			delivery.getInbox("tab-1").filter((m) => m.type === "delta"),
+		).toHaveLength(1);
+		expect(
+			delivery.getInbox("tab-2").filter((m) => m.type === "delta"),
+		).toHaveLength(1);
+	});
+
+	it("both tabs navigate away simultaneously — events continue server-side, both return", async () => {
+		delivery.connect("tab-1");
+		delivery.connect("tab-2");
+		delivery.switchSession("tab-1", SESSION);
+		delivery.switchSession("tab-2", SESSION);
+
+		const sink = createRelayEventSink({
+			sessionId: SESSION,
+			send: (msg) => delivery.deliverToSession(SESSION, msg),
+		});
+
+		// Both leave
+		delivery.switchSession("tab-1", "other-1");
+		delivery.switchSession("tab-2", "other-2");
+
+		await sink.push(
+			canonicalEvent("text.delta", SESSION, {
+				messageId: "msg-1",
+				partId: "p1",
+				text: "while both away",
+			}),
+		);
+
+		// Neither received
+		expect(
+			delivery.getInbox("tab-1").filter((m) => m.type === "delta"),
+		).toHaveLength(0);
+		expect(
+			delivery.getInbox("tab-2").filter((m) => m.type === "delta"),
+		).toHaveLength(0);
+
+		// Both return
+		delivery.switchSession("tab-1", SESSION);
+		delivery.switchSession("tab-2", SESSION);
+
+		await sink.push(
+			canonicalEvent("text.delta", SESSION, {
+				messageId: "msg-1",
+				partId: "p1",
+				text: "after both return",
+			}),
+		);
+
+		// Both received the new event
+		expect(
+			delivery.getInbox("tab-1").filter((m) => m.type === "delta"),
+		).toHaveLength(1);
+		expect(
+			delivery.getInbox("tab-2").filter((m) => m.type === "delta"),
+		).toHaveLength(1);
+	});
+});
