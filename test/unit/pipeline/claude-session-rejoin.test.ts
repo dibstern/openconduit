@@ -153,4 +153,51 @@ describe("Claude session rejoin — event flow contracts", () => {
 		const deltas = sent.filter((m) => m.type === "delta");
 		expect(deltas.length).toBe(3);
 	});
+
+	it("thinking lifecycle completes across navigate-away and back", async () => {
+		const sent: RelayMessage[] = [];
+		const sink = createRelayEventSink({
+			sessionId: SESSION_ID,
+			send: (msg) => sent.push(msg),
+		});
+
+		// thinking.start while client is viewing
+		wsHandler.setClientSession(CLIENT_ID, SESSION_ID);
+		await sink.push(
+			canonicalEvent("thinking.start", SESSION_ID, {
+				messageId: "msg-1",
+				partId: "part-think-1",
+			}),
+		);
+		expect(sent.some((m) => m.type === "thinking_start")).toBe(true);
+
+		// thinking.delta while client navigated away
+		wsHandler.setClientSession(CLIENT_ID, "other-session");
+		await sink.push(
+			canonicalEvent("thinking.delta", SESSION_ID, {
+				messageId: "msg-1",
+				partId: "part-think-1",
+				text: "reasoning while user is away...",
+			}),
+		);
+
+		// thinking.end arrives, client still away
+		await sink.push(
+			canonicalEvent("thinking.end", SESSION_ID, {
+				messageId: "msg-1",
+				partId: "part-think-1",
+			}),
+		);
+
+		// Client returns
+		wsHandler.setClientSession(CLIENT_ID, SESSION_ID);
+
+		// Verify full thinking lifecycle was emitted by sink
+		const types = sent.map((m) => m.type);
+		expect(types).toContain("thinking_start");
+		expect(types).toContain("thinking_delta");
+		expect(types).toContain("thinking_stop");
+		// No spurious tool_result for thinking
+		expect(types.filter((t) => t === "tool_result")).toHaveLength(0);
+	});
 });
