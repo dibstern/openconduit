@@ -45,10 +45,10 @@ const textBlockArb: fc.Arbitrary<Block> = fc
 	}));
 
 /** A valid event sequence: 1–8 interleaved thinking/text blocks */
-const eventSequenceArb = fc.array(
-	fc.oneof(thinkingBlockArb, textBlockArb),
-	{ minLength: 1, maxLength: 8 },
-);
+const eventSequenceArb = fc.array(fc.oneof(thinkingBlockArb, textBlockArb), {
+	minLength: 1,
+	maxLength: 8,
+});
 
 // ─── Shared helpers ─────────────────────────────────────────────────────────
 
@@ -265,8 +265,12 @@ describe("Pipeline property-based tests", () => {
 					const chatB = readPipeline(harness, "ses-iso-b");
 
 					// Count expected thinking blocks per session
-					const expectedThinkingA = blocksA.filter((b) => b.type === "thinking").length;
-					const expectedThinkingB = blocksB.filter((b) => b.type === "thinking").length;
+					const expectedThinkingA = blocksA.filter(
+						(b) => b.type === "thinking",
+					).length;
+					const expectedThinkingB = blocksB.filter(
+						(b) => b.type === "thinking",
+					).length;
 					const expectedTextA = blocksA.filter(
 						(b) => b.type === "text" && b.deltas.some((d) => d.length > 0),
 					).length;
@@ -342,15 +346,17 @@ function shuffle<T>(arr: T[], rng: () => number): T[] {
  * - "drop": randomly removes 1-3 events (excluding message.created)
  * - "duplicate": randomly duplicates 1-3 events
  */
-const corruptedSequenceArb = fc.tuple(
-	eventSequenceArb,
-	fc.oneof(
-		fc.constant("shuffle" as const),
-		fc.constant("drop" as const),
-		fc.constant("duplicate" as const),
-	),
-	fc.integer({ min: 1, max: 2_000_000_000 }), // RNG seed
-).map(([blocks, strategy, seed]) => ({ blocks, strategy, seed }));
+const corruptedSequenceArb = fc
+	.tuple(
+		eventSequenceArb,
+		fc.oneof(
+			fc.constant("shuffle" as const),
+			fc.constant("drop" as const),
+			fc.constant("duplicate" as const),
+		),
+		fc.integer({ min: 1, max: 2_000_000_000 }), // RNG seed
+	)
+	.map(([blocks, strategy, seed]) => ({ blocks, strategy, seed }));
 
 describe("Pipeline PBT — invalid/corrupted event sequences", () => {
 	it("PBT: pipeline never crashes on shuffled event order", () => {
@@ -366,35 +372,85 @@ describe("Pipeline PBT — invalid/corrupted event sequences", () => {
 
 					// Build full event list
 					events.push(
-						makeStored("message.created", "ses-shuffle", {
-							messageId: "msg-s", role: "assistant", sessionId: "ses-shuffle",
-						}, { sequence: ++seq, createdAt: ts++ }),
+						makeStored(
+							"message.created",
+							"ses-shuffle",
+							{
+								messageId: "msg-s",
+								role: "assistant",
+								sessionId: "ses-shuffle",
+							},
+							{ sequence: ++seq, createdAt: ts++ },
+						),
 					);
 					for (const block of blocks) {
 						if (block.type === "thinking") {
-							events.push(makeStored("thinking.start", "ses-shuffle", {
-								messageId: "msg-s", partId: block.partId,
-							}, { sequence: ++seq, createdAt: ts++ }));
+							events.push(
+								makeStored(
+									"thinking.start",
+									"ses-shuffle",
+									{
+										messageId: "msg-s",
+										partId: block.partId,
+									},
+									{ sequence: ++seq, createdAt: ts++ },
+								),
+							);
 							for (const text of block.deltas) {
-								events.push(makeStored("thinking.delta", "ses-shuffle", {
-									messageId: "msg-s", partId: block.partId, text,
-								}, { sequence: ++seq, createdAt: ts++ }));
+								events.push(
+									makeStored(
+										"thinking.delta",
+										"ses-shuffle",
+										{
+											messageId: "msg-s",
+											partId: block.partId,
+											text,
+										},
+										{ sequence: ++seq, createdAt: ts++ },
+									),
+								);
 							}
-							events.push(makeStored("thinking.end", "ses-shuffle", {
-								messageId: "msg-s", partId: block.partId,
-							}, { sequence: ++seq, createdAt: ts++ }));
+							events.push(
+								makeStored(
+									"thinking.end",
+									"ses-shuffle",
+									{
+										messageId: "msg-s",
+										partId: block.partId,
+									},
+									{ sequence: ++seq, createdAt: ts++ },
+								),
+							);
 						} else {
 							for (const text of block.deltas) {
-								events.push(makeStored("text.delta", "ses-shuffle", {
-									messageId: "msg-s", partId: block.partId, text,
-								}, { sequence: ++seq, createdAt: ts++ }));
+								events.push(
+									makeStored(
+										"text.delta",
+										"ses-shuffle",
+										{
+											messageId: "msg-s",
+											partId: block.partId,
+											text,
+										},
+										{ sequence: ++seq, createdAt: ts++ },
+									),
+								);
 							}
 						}
 					}
-					events.push(makeStored("turn.completed", "ses-shuffle", {
-						messageId: "msg-s", cost: 0, duration: 0,
-						tokens: { input: 0, output: 0 },
-					}, { sequence: ++seq, createdAt: ts++ }));
+					events.push(
+						makeStored(
+							"turn.completed",
+							"ses-shuffle",
+							{
+								messageId: "msg-s",
+								cost: 0,
+								duration: 0,
+								tokens: { input: 0, output: 0 },
+							},
+							{ sequence: ++seq, createdAt: ts++ },
+						),
+					);
 
 					// Shuffle using deterministic RNG
 					let rngState = seed;
@@ -433,34 +489,86 @@ describe("Pipeline PBT — invalid/corrupted event sequences", () => {
 						let seq = 0;
 						let ts = 1_000_000_000_000;
 
-						events.push(makeStored("message.created", "ses-drop", {
-							messageId: "msg-d", role: "assistant", sessionId: "ses-drop",
-						}, { sequence: ++seq, createdAt: ts++ }));
+						events.push(
+							makeStored(
+								"message.created",
+								"ses-drop",
+								{
+									messageId: "msg-d",
+									role: "assistant",
+									sessionId: "ses-drop",
+								},
+								{ sequence: ++seq, createdAt: ts++ },
+							),
+						);
 						for (const block of blocks) {
 							if (block.type === "thinking") {
-								events.push(makeStored("thinking.start", "ses-drop", {
-									messageId: "msg-d", partId: block.partId,
-								}, { sequence: ++seq, createdAt: ts++ }));
+								events.push(
+									makeStored(
+										"thinking.start",
+										"ses-drop",
+										{
+											messageId: "msg-d",
+											partId: block.partId,
+										},
+										{ sequence: ++seq, createdAt: ts++ },
+									),
+								);
 								for (const text of block.deltas) {
-									events.push(makeStored("thinking.delta", "ses-drop", {
-										messageId: "msg-d", partId: block.partId, text,
-									}, { sequence: ++seq, createdAt: ts++ }));
+									events.push(
+										makeStored(
+											"thinking.delta",
+											"ses-drop",
+											{
+												messageId: "msg-d",
+												partId: block.partId,
+												text,
+											},
+											{ sequence: ++seq, createdAt: ts++ },
+										),
+									);
 								}
-								events.push(makeStored("thinking.end", "ses-drop", {
-									messageId: "msg-d", partId: block.partId,
-								}, { sequence: ++seq, createdAt: ts++ }));
+								events.push(
+									makeStored(
+										"thinking.end",
+										"ses-drop",
+										{
+											messageId: "msg-d",
+											partId: block.partId,
+										},
+										{ sequence: ++seq, createdAt: ts++ },
+									),
+								);
 							} else {
 								for (const text of block.deltas) {
-									events.push(makeStored("text.delta", "ses-drop", {
-										messageId: "msg-d", partId: block.partId, text,
-									}, { sequence: ++seq, createdAt: ts++ }));
+									events.push(
+										makeStored(
+											"text.delta",
+											"ses-drop",
+											{
+												messageId: "msg-d",
+												partId: block.partId,
+												text,
+											},
+											{ sequence: ++seq, createdAt: ts++ },
+										),
+									);
 								}
 							}
 						}
-						events.push(makeStored("turn.completed", "ses-drop", {
-							messageId: "msg-d", cost: 0, duration: 0,
-							tokens: { input: 0, output: 0 },
-						}, { sequence: ++seq, createdAt: ts++ }));
+						events.push(
+							makeStored(
+								"turn.completed",
+								"ses-drop",
+								{
+									messageId: "msg-d",
+									cost: 0,
+									duration: 0,
+									tokens: { input: 0, output: 0 },
+								},
+								{ sequence: ++seq, createdAt: ts++ },
+							),
+						);
 
 						// Drop random events (skip first — message.created)
 						let rngState = seed;
@@ -507,34 +615,86 @@ describe("Pipeline PBT — invalid/corrupted event sequences", () => {
 						let seq = 0;
 						let ts = 1_000_000_000_000;
 
-						events.push(makeStored("message.created", "ses-dup", {
-							messageId: "msg-dp", role: "assistant", sessionId: "ses-dup",
-						}, { sequence: ++seq, createdAt: ts++ }));
+						events.push(
+							makeStored(
+								"message.created",
+								"ses-dup",
+								{
+									messageId: "msg-dp",
+									role: "assistant",
+									sessionId: "ses-dup",
+								},
+								{ sequence: ++seq, createdAt: ts++ },
+							),
+						);
 						for (const block of blocks) {
 							if (block.type === "thinking") {
-								events.push(makeStored("thinking.start", "ses-dup", {
-									messageId: "msg-dp", partId: block.partId,
-								}, { sequence: ++seq, createdAt: ts++ }));
+								events.push(
+									makeStored(
+										"thinking.start",
+										"ses-dup",
+										{
+											messageId: "msg-dp",
+											partId: block.partId,
+										},
+										{ sequence: ++seq, createdAt: ts++ },
+									),
+								);
 								for (const text of block.deltas) {
-									events.push(makeStored("thinking.delta", "ses-dup", {
-										messageId: "msg-dp", partId: block.partId, text,
-									}, { sequence: ++seq, createdAt: ts++ }));
+									events.push(
+										makeStored(
+											"thinking.delta",
+											"ses-dup",
+											{
+												messageId: "msg-dp",
+												partId: block.partId,
+												text,
+											},
+											{ sequence: ++seq, createdAt: ts++ },
+										),
+									);
 								}
-								events.push(makeStored("thinking.end", "ses-dup", {
-									messageId: "msg-dp", partId: block.partId,
-								}, { sequence: ++seq, createdAt: ts++ }));
+								events.push(
+									makeStored(
+										"thinking.end",
+										"ses-dup",
+										{
+											messageId: "msg-dp",
+											partId: block.partId,
+										},
+										{ sequence: ++seq, createdAt: ts++ },
+									),
+								);
 							} else {
 								for (const text of block.deltas) {
-									events.push(makeStored("text.delta", "ses-dup", {
-										messageId: "msg-dp", partId: block.partId, text,
-									}, { sequence: ++seq, createdAt: ts++ }));
+									events.push(
+										makeStored(
+											"text.delta",
+											"ses-dup",
+											{
+												messageId: "msg-dp",
+												partId: block.partId,
+												text,
+											},
+											{ sequence: ++seq, createdAt: ts++ },
+										),
+									);
 								}
 							}
 						}
-						events.push(makeStored("turn.completed", "ses-dup", {
-							messageId: "msg-dp", cost: 0, duration: 0,
-							tokens: { input: 0, output: 0 },
-						}, { sequence: ++seq, createdAt: ts++ }));
+						events.push(
+							makeStored(
+								"turn.completed",
+								"ses-dup",
+								{
+									messageId: "msg-dp",
+									cost: 0,
+									duration: 0,
+									tokens: { input: 0, output: 0 },
+								},
+								{ sequence: ++seq, createdAt: ts++ },
+							),
+						);
 
 						// Duplicate random events
 						let rngState = seed;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { historyToChatMessages } from "../../../src/lib/frontend/utils/history-logic.js";
 import type { ThinkingMessage } from "../../../src/lib/frontend/types.js";
+import { historyToChatMessages } from "../../../src/lib/frontend/utils/history-logic.js";
 import { ReadQueryService } from "../../../src/lib/persistence/read-query-service.js";
 import { messageRowsToHistory } from "../../../src/lib/persistence/session-history-adapter.js";
 import type {
@@ -95,9 +95,10 @@ describe("History conversion regression", () => {
 	// ─── Duration calculation ───────────────────────────────────────────
 
 	describe("duration calculation", () => {
-		function makeThinkingMsg(
-			partTime?: { start?: number; end?: number },
-		): HistoryMessage {
+		function makeThinkingMsg(partTime?: {
+			start?: number;
+			end?: number;
+		}): HistoryMessage {
 			return {
 				id: "msg-dur",
 				role: "assistant",
@@ -205,8 +206,18 @@ describe("History conversion regression", () => {
 				harness.seedMessage("msg-migrate", "ses-migrate", {
 					role: "assistant",
 					parts: [
-						{ id: "part-think-old", type: "thinking", text: "pre-existing thought", sortOrder: 0 },
-						{ id: "part-text-old", type: "text", text: "pre-existing answer", sortOrder: 1 },
+						{
+							id: "part-think-old",
+							type: "thinking",
+							text: "pre-existing thought",
+							sortOrder: 0,
+						},
+						{
+							id: "part-text-old",
+							type: "text",
+							text: "pre-existing answer",
+							sortOrder: 1,
+						},
 					],
 				});
 
@@ -242,7 +253,12 @@ describe("History conversion regression", () => {
 				harness.seedMessage("msg-migrate-empty", "ses-migrate-empty", {
 					role: "assistant",
 					parts: [
-						{ id: "part-think-empty", type: "thinking", text: "", sortOrder: 0 },
+						{
+							id: "part-think-empty",
+							type: "thinking",
+							text: "",
+							sortOrder: 0,
+						},
 					],
 				});
 

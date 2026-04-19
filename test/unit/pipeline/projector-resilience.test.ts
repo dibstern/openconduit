@@ -1181,20 +1181,45 @@ describe("MessageProjector resilience", () => {
 		it("KNOWN RISK: mismatched StoredEvent.sessionId vs payload.sessionId — data leaks to wrong session", () => {
 			// StoredEvent wrapper says SESSION_A, but payload says SESSION_B
 			// MessageProjector uses payload.sessionId for the FK insert
-			const mismatchEvent = makeStored("message.created", SESSION_A, {
-				messageId: "msg-inject", role: "assistant", sessionId: SESSION_B,
-			}, { sequence: nextSeq(), createdAt: NOW });
+			const mismatchEvent = makeStored(
+				"message.created",
+				SESSION_A,
+				{
+					messageId: "msg-inject",
+					role: "assistant",
+					sessionId: SESSION_B,
+				},
+				{ sequence: nextSeq(), createdAt: NOW },
+			);
 
 			project(mismatchEvent);
 
-			project(makeStored("text.delta", SESSION_A, {
-				messageId: "msg-inject", partId: "part-inject", text: "injected",
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"text.delta",
+					SESSION_A,
+					{
+						messageId: "msg-inject",
+						partId: "part-inject",
+						text: "injected",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-inject", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-inject",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
 			// Message lands in SESSION_B despite event being "from" SESSION_A
 			const chatB = readPipeline(SESSION_B);
@@ -1218,26 +1243,69 @@ describe("MessageProjector resilience", () => {
 
 	describe("malformed and adversarial payloads", () => {
 		it("thinking.delta with empty string text — concatenates to empty", () => {
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-empty", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-empty",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
-			project(makeStored("thinking.start", SESSION_A, {
-				messageId: "msg-empty", partId: "part-empty",
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"thinking.start",
+					SESSION_A,
+					{
+						messageId: "msg-empty",
+						partId: "part-empty",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
-			project(makeStored("thinking.delta", SESSION_A, {
-				messageId: "msg-empty", partId: "part-empty", text: "",
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{
+						messageId: "msg-empty",
+						partId: "part-empty",
+						text: "",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
-			project(makeStored("thinking.end", SESSION_A, {
-				messageId: "msg-empty", partId: "part-empty",
-			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+			project(
+				makeStored(
+					"thinking.end",
+					SESSION_A,
+					{
+						messageId: "msg-empty",
+						partId: "part-empty",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 300 },
+				),
+			);
 
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-empty", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-empty",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 400 },
+				),
+			);
 
 			const chat = readPipeline(SESSION_A);
 			const thinking = chat.find(
@@ -1251,18 +1319,45 @@ describe("MessageProjector resilience", () => {
 		it("text.delta with SQL-injection-like string — parameterized queries prevent injection", () => {
 			const evilText = "'; DROP TABLE message_parts; --";
 
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-sql", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-sql",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
-			project(makeStored("text.delta", SESSION_A, {
-				messageId: "msg-sql", partId: "part-sql", text: evilText,
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"text.delta",
+					SESSION_A,
+					{
+						messageId: "msg-sql",
+						partId: "part-sql",
+						text: evilText,
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-sql", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-sql",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
 			// Table still exists (not dropped)
 			const chat = readPipeline(SESSION_A);
@@ -1273,26 +1368,69 @@ describe("MessageProjector resilience", () => {
 		it("thinking.delta with very long text (100KB) — stored and retrieved intact", () => {
 			const longText = "x".repeat(100_000);
 
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-long", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-long",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
-			project(makeStored("thinking.start", SESSION_A, {
-				messageId: "msg-long", partId: "part-long",
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"thinking.start",
+					SESSION_A,
+					{
+						messageId: "msg-long",
+						partId: "part-long",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
-			project(makeStored("thinking.delta", SESSION_A, {
-				messageId: "msg-long", partId: "part-long", text: longText,
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{
+						messageId: "msg-long",
+						partId: "part-long",
+						text: longText,
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
-			project(makeStored("thinking.end", SESSION_A, {
-				messageId: "msg-long", partId: "part-long",
-			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+			project(
+				makeStored(
+					"thinking.end",
+					SESSION_A,
+					{
+						messageId: "msg-long",
+						partId: "part-long",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 300 },
+				),
+			);
 
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-long", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-long",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 400 },
+				),
+			);
 
 			const chat = readPipeline(SESSION_A);
 			const thinking = chat.find(
@@ -1308,26 +1446,69 @@ describe("MessageProjector resilience", () => {
 		it("thinking.delta with HTML entities — stored raw, not escaped at DB layer", () => {
 			const htmlText = '<script>alert("xss")</script>&amp;';
 
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-html", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-html",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
-			project(makeStored("thinking.start", SESSION_A, {
-				messageId: "msg-html", partId: "part-html",
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"thinking.start",
+					SESSION_A,
+					{
+						messageId: "msg-html",
+						partId: "part-html",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
-			project(makeStored("thinking.delta", SESSION_A, {
-				messageId: "msg-html", partId: "part-html", text: htmlText,
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{
+						messageId: "msg-html",
+						partId: "part-html",
+						text: htmlText,
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
-			project(makeStored("thinking.end", SESSION_A, {
-				messageId: "msg-html", partId: "part-html",
-			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+			project(
+				makeStored(
+					"thinking.end",
+					SESSION_A,
+					{
+						messageId: "msg-html",
+						partId: "part-html",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 300 },
+				),
+			);
 
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-html", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-html",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 400 },
+				),
+			);
 
 			const chat = readPipeline(SESSION_A);
 			const thinking = chat.find(
@@ -1343,27 +1524,78 @@ describe("MessageProjector resilience", () => {
 	// ─── Unicode and encoding stress ─────────────────────────────────────
 
 	describe("unicode and encoding stress", () => {
-		function projectThinkingWithText(msgId: string, partId: string, text: string) {
-			project(makeStored("message.created", SESSION_A, {
-				messageId: msgId, role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
-			project(makeStored("thinking.start", SESSION_A, {
-				messageId: msgId, partId,
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
-			project(makeStored("thinking.delta", SESSION_A, {
-				messageId: msgId, partId, text,
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
-			project(makeStored("thinking.end", SESSION_A, {
-				messageId: msgId, partId,
-			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: msgId, cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
+		function projectThinkingWithText(
+			msgId: string,
+			partId: string,
+			text: string,
+		) {
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: msgId,
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
+			project(
+				makeStored(
+					"thinking.start",
+					SESSION_A,
+					{
+						messageId: msgId,
+						partId,
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{
+						messageId: msgId,
+						partId,
+						text,
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
+			project(
+				makeStored(
+					"thinking.end",
+					SESSION_A,
+					{
+						messageId: msgId,
+						partId,
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 300 },
+				),
+			);
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: msgId,
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 400 },
+				),
+			);
 		}
 
 		it("emoji round-trips through pipeline", () => {
-			projectThinkingWithText("msg-emoji", "part-emoji", "🧠 Let me think 🤔💭");
+			projectThinkingWithText(
+				"msg-emoji",
+				"part-emoji",
+				"🧠 Let me think 🤔💭",
+			);
 			const chat = readPipeline(SESSION_A);
 			const thinking = chat.find(
 				(m): m is ThinkingMessage => m.type === "thinking",
@@ -1421,28 +1653,80 @@ describe("MessageProjector resilience", () => {
 		});
 
 		it("multi-byte concatenation via multiple deltas — boundary not corrupted", () => {
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-concat", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
-			project(makeStored("thinking.start", SESSION_A, {
-				messageId: "msg-concat", partId: "part-concat",
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-concat",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
+			project(
+				makeStored(
+					"thinking.start",
+					SESSION_A,
+					{
+						messageId: "msg-concat",
+						partId: "part-concat",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
 			// Two deltas with multi-byte chars at boundaries
-			project(makeStored("thinking.delta", SESSION_A, {
-				messageId: "msg-concat", partId: "part-concat", text: "思考",
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
-			project(makeStored("thinking.delta", SESSION_A, {
-				messageId: "msg-concat", partId: "part-concat", text: "🧠完了",
-			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{
+						messageId: "msg-concat",
+						partId: "part-concat",
+						text: "思考",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{
+						messageId: "msg-concat",
+						partId: "part-concat",
+						text: "🧠完了",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 300 },
+				),
+			);
 
-			project(makeStored("thinking.end", SESSION_A, {
-				messageId: "msg-concat", partId: "part-concat",
-			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-concat", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 500 }));
+			project(
+				makeStored(
+					"thinking.end",
+					SESSION_A,
+					{
+						messageId: "msg-concat",
+						partId: "part-concat",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 400 },
+				),
+			);
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-concat",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 500 },
+				),
+			);
 
 			const chat = readPipeline(SESSION_A);
 			const thinking = chat.find(
@@ -1459,36 +1743,80 @@ describe("MessageProjector resilience", () => {
 
 	describe("orphan event edges", () => {
 		it("thinking.end with no thinking.start or thinking.delta — no crash", () => {
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-orphan-end", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-orphan-end",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
 			// Orphan end — no start, no delta
 			expect(() =>
-				project(makeStored("thinking.end", SESSION_A, {
-					messageId: "msg-orphan-end", partId: "part-orphan-end",
-				}, { sequence: nextSeq(), createdAt: NOW + 100 })),
+				project(
+					makeStored(
+						"thinking.end",
+						SESSION_A,
+						{
+							messageId: "msg-orphan-end",
+							partId: "part-orphan-end",
+						},
+						{ sequence: nextSeq(), createdAt: NOW + 100 },
+					),
+				),
 			).not.toThrow();
 
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-orphan-end", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-orphan-end",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
 			// Pipeline should not crash — orphan end may or may not create a part
 			expect(() => readPipeline(SESSION_A)).not.toThrow();
 		});
 
 		it("turn.completed before any parts — message exists with no content", () => {
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-early-turn", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-early-turn",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
 			// Immediate turn.completed — no thinking, no text, no tool
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-early-turn", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-early-turn",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
 			const chat = readPipeline(SESSION_A);
 			// No assistant or thinking messages — turn had no content
@@ -1497,25 +1825,57 @@ describe("MessageProjector resilience", () => {
 		});
 
 		it("turn.error mid-thinking — thinking part still readable", () => {
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-err-mid", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-err-mid",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
-			project(makeStored("thinking.start", SESSION_A, {
-				messageId: "msg-err-mid", partId: "part-err-mid",
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"thinking.start",
+					SESSION_A,
+					{
+						messageId: "msg-err-mid",
+						partId: "part-err-mid",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
-			project(makeStored("thinking.delta", SESSION_A, {
-				messageId: "msg-err-mid", partId: "part-err-mid",
-				text: "reasoning before error",
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{
+						messageId: "msg-err-mid",
+						partId: "part-err-mid",
+						text: "reasoning before error",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
 			// Error arrives — no thinking.end, no turn.completed
-			project(makeStored("turn.error", SESSION_A, {
-				messageId: "msg-err-mid",
-				error: "Internal error",
-				code: "INTERNAL_ERROR",
-			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+			project(
+				makeStored(
+					"turn.error",
+					SESSION_A,
+					{
+						messageId: "msg-err-mid",
+						error: "Internal error",
+						code: "INTERNAL_ERROR",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 300 },
+				),
+			);
 
 			const chat = readPipeline(SESSION_A);
 			const thinking = chat.find(
@@ -1530,29 +1890,60 @@ describe("MessageProjector resilience", () => {
 		});
 
 		it("duplicate message.created for same messageId — ON CONFLICT DO NOTHING", () => {
-			const firstCreate = makeStored("message.created", SESSION_A, {
-				messageId: "msg-dup-create", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW });
+			const firstCreate = makeStored(
+				"message.created",
+				SESSION_A,
+				{
+					messageId: "msg-dup-create",
+					role: "assistant",
+					sessionId: SESSION_A,
+				},
+				{ sequence: nextSeq(), createdAt: NOW },
+			);
 
 			project(firstCreate);
 
 			// Second create for same ID — should be idempotent
-			const secondCreate = makeStored("message.created", SESSION_A, {
-				messageId: "msg-dup-create", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW + 100 });
+			const secondCreate = makeStored(
+				"message.created",
+				SESSION_A,
+				{
+					messageId: "msg-dup-create",
+					role: "assistant",
+					sessionId: SESSION_A,
+				},
+				{ sequence: nextSeq(), createdAt: NOW + 100 },
+			);
 
 			expect(() => project(secondCreate)).not.toThrow();
 
 			// Message still works
-			project(makeStored("text.delta", SESSION_A, {
-				messageId: "msg-dup-create", partId: "part-dup-create",
-				text: "still works",
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"text.delta",
+					SESSION_A,
+					{
+						messageId: "msg-dup-create",
+						partId: "part-dup-create",
+						text: "still works",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-dup-create", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 300 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-dup-create",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 300 },
+				),
+			);
 
 			const chat = readPipeline(SESSION_A);
 			const assistant = chat.find((m) => m.type === "assistant");
@@ -1560,19 +1951,43 @@ describe("MessageProjector resilience", () => {
 		});
 
 		it("duplicate turn.completed — no error, message not corrupted", () => {
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-dup-turn", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-dup-turn",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
-			project(makeStored("text.delta", SESSION_A, {
-				messageId: "msg-dup-turn", partId: "part-dup-turn",
-				text: "content",
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"text.delta",
+					SESSION_A,
+					{
+						messageId: "msg-dup-turn",
+						partId: "part-dup-turn",
+						text: "content",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
-			const turnEvent = makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-dup-turn", cost: 0.01, duration: 500,
-				tokens: { input: 100, output: 50 },
-			}, { sequence: nextSeq(), createdAt: NOW + 200 });
+			const turnEvent = makeStored(
+				"turn.completed",
+				SESSION_A,
+				{
+					messageId: "msg-dup-turn",
+					cost: 0.01,
+					duration: 500,
+					tokens: { input: 100, output: 50 },
+				},
+				{ sequence: nextSeq(), createdAt: NOW + 200 },
+			);
 
 			project(turnEvent);
 			expect(() => project(turnEvent)).not.toThrow();
@@ -1583,29 +1998,70 @@ describe("MessageProjector resilience", () => {
 		});
 
 		it("duplicate thinking.end — no error", () => {
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-dup-end", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-dup-end",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
-			project(makeStored("thinking.start", SESSION_A, {
-				messageId: "msg-dup-end", partId: "part-dup-end",
-			}, { sequence: nextSeq(), createdAt: NOW + 100 }));
+			project(
+				makeStored(
+					"thinking.start",
+					SESSION_A,
+					{
+						messageId: "msg-dup-end",
+						partId: "part-dup-end",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 100 },
+				),
+			);
 
-			project(makeStored("thinking.delta", SESSION_A, {
-				messageId: "msg-dup-end", partId: "part-dup-end", text: "thought",
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"thinking.delta",
+					SESSION_A,
+					{
+						messageId: "msg-dup-end",
+						partId: "part-dup-end",
+						text: "thought",
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
-			const endEvent = makeStored("thinking.end", SESSION_A, {
-				messageId: "msg-dup-end", partId: "part-dup-end",
-			}, { sequence: nextSeq(), createdAt: NOW + 300 });
+			const endEvent = makeStored(
+				"thinking.end",
+				SESSION_A,
+				{
+					messageId: "msg-dup-end",
+					partId: "part-dup-end",
+				},
+				{ sequence: nextSeq(), createdAt: NOW + 300 },
+			);
 
 			project(endEvent);
 			expect(() => project(endEvent)).not.toThrow();
 
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-dup-end", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 400 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-dup-end",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 400 },
+				),
+			);
 
 			const chat = readPipeline(SESSION_A);
 			const thinking = chat.find(
@@ -1617,21 +2073,46 @@ describe("MessageProjector resilience", () => {
 		});
 
 		it("text.delta duplicate in normal mode — documents text doubling risk", () => {
-			project(makeStored("message.created", SESSION_A, {
-				messageId: "msg-dup-text", role: "assistant", sessionId: SESSION_A,
-			}, { sequence: nextSeq(), createdAt: NOW }));
+			project(
+				makeStored(
+					"message.created",
+					SESSION_A,
+					{
+						messageId: "msg-dup-text",
+						role: "assistant",
+						sessionId: SESSION_A,
+					},
+					{ sequence: nextSeq(), createdAt: NOW },
+				),
+			);
 
-			const textDelta = makeStored("text.delta", SESSION_A, {
-				messageId: "msg-dup-text", partId: "part-dup-text", text: "hello",
-			}, { sequence: nextSeq(), createdAt: NOW + 100 });
+			const textDelta = makeStored(
+				"text.delta",
+				SESSION_A,
+				{
+					messageId: "msg-dup-text",
+					partId: "part-dup-text",
+					text: "hello",
+				},
+				{ sequence: nextSeq(), createdAt: NOW + 100 },
+			);
 
 			project(textDelta);
 			project(textDelta);
 
-			project(makeStored("turn.completed", SESSION_A, {
-				messageId: "msg-dup-text", cost: 0, duration: 0,
-				tokens: { input: 0, output: 0 },
-			}, { sequence: nextSeq(), createdAt: NOW + 200 }));
+			project(
+				makeStored(
+					"turn.completed",
+					SESSION_A,
+					{
+						messageId: "msg-dup-text",
+						cost: 0,
+						duration: 0,
+						tokens: { input: 0, output: 0 },
+					},
+					{ sequence: nextSeq(), createdAt: NOW + 200 },
+				),
+			);
 
 			const chat = readPipeline(SESSION_A);
 			const assistant = chat.find((m) => m.type === "assistant");

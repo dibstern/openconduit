@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { RelayMessage } from "../../../src/lib/frontend/types.js";
-import { createRelayEventSink } from "../../../src/lib/provider/relay-event-sink.js";
 import { canonicalEvent } from "../../../src/lib/persistence/events.js";
+import { createRelayEventSink } from "../../../src/lib/provider/relay-event-sink.js";
 
 /**
  * These tests specify the EXPECTED behavior for Claude session rejoin.

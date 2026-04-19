@@ -125,9 +125,12 @@ describe("Event translation snapshots — thinking lifecycle", () => {
 describe("Event translation — structural minimum (safety net)", () => {
 	it("thinking_start has at minimum: type + messageId", async () => {
 		const { sink, sent } = createCaptureSink();
-		await sink.push(canonicalEvent("thinking.start", SESSION_ID, {
-			messageId: "msg-struct", partId: "part-struct",
-		}));
+		await sink.push(
+			canonicalEvent("thinking.start", SESSION_ID, {
+				messageId: "msg-struct",
+				partId: "part-struct",
+			}),
+		);
 		expect(sent[0]).toMatchObject({
 			type: "thinking_start",
 			messageId: "msg-struct",
@@ -136,9 +139,13 @@ describe("Event translation — structural minimum (safety net)", () => {
 
 	it("thinking_delta has at minimum: type + text + messageId", async () => {
 		const { sink, sent } = createCaptureSink();
-		await sink.push(canonicalEvent("thinking.delta", SESSION_ID, {
-			messageId: "msg-struct", partId: "part-struct", text: "content",
-		}));
+		await sink.push(
+			canonicalEvent("thinking.delta", SESSION_ID, {
+				messageId: "msg-struct",
+				partId: "part-struct",
+				text: "content",
+			}),
+		);
 		expect(sent[0]).toMatchObject({
 			type: "thinking_delta",
 			text: "content",
@@ -148,9 +155,12 @@ describe("Event translation — structural minimum (safety net)", () => {
 
 	it("thinking_stop has at minimum: type + messageId", async () => {
 		const { sink, sent } = createCaptureSink();
-		await sink.push(canonicalEvent("thinking.end", SESSION_ID, {
-			messageId: "msg-struct", partId: "part-struct",
-		}));
+		await sink.push(
+			canonicalEvent("thinking.end", SESSION_ID, {
+				messageId: "msg-struct",
+				partId: "part-struct",
+			}),
+		);
 		expect(sent[0]).toMatchObject({
 			type: "thinking_stop",
 			messageId: "msg-struct",
@@ -159,10 +169,14 @@ describe("Event translation — structural minimum (safety net)", () => {
 
 	it("done message has at minimum: type", async () => {
 		const { sink, sent } = createCaptureSink();
-		await sink.push(canonicalEvent("turn.completed", SESSION_ID, {
-			messageId: "msg-struct", cost: 0.01, duration: 1000,
-			tokens: { input: 100, output: 50 },
-		}));
+		await sink.push(
+			canonicalEvent("turn.completed", SESSION_ID, {
+				messageId: "msg-struct",
+				cost: 0.01,
+				duration: 1000,
+				tokens: { input: 100, output: 50 },
+			}),
+		);
 		const done = sent.find((m) => m.type === "done");
 		expect(done).toBeDefined();
 		expect(done).toMatchObject({ type: "done" });
